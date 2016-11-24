@@ -1,5 +1,5 @@
 #########################################
-# Author:: Almudena Bocinos Rioboo
+
 # This class provided the methods to check if the necesary software is installed in the user system
  #########################################
 

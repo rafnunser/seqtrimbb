@@ -1,5 +1,5 @@
 ########################################################
-# Author: Almudena Bocinos Rioboo
+
 #
 # Defines the main methods that are necessary to execute a plugin
 #

@@ -1,5 +1,5 @@
 #########################################
-# Author:: Almudena Bocinos Rioboo
+
 # This class provided the methods to read the parameter's file and to create the structure where will be storaged the param's name and the param's numeric-value
 #########################################
 require 'scbi_fasta'

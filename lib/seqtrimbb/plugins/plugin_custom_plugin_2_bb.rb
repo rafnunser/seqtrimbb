@@ -1,7 +1,7 @@
 require "plugin"
 
 ########################################################
-# Author: Almudena Bocinos Rioboo
+
 #
 # Defines the main methods that are necessary to execute Plugin
 # Inherit: Plugin

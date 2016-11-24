@@ -1,5 +1,5 @@
 ######################################
-# Author: Almudena Bocinos Rioboo
+
 # This is the main class.
 ######################################
 

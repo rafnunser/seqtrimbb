@@ -1,5 +1,4 @@
 #########################################
-# Author:: Almudena Bocinos Rioboo
 # This class provided the methods to manage the execution of the plugins
  #########################################
 

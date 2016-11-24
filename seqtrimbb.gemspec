@@ -6,8 +6,8 @@ require 'seqtrimbb/version'
 Gem::Specification.new do |spec|
   spec.name          = "seqtrimbb"
   spec.version       = Seqtrimbb::VERSION
-  spec.authors       = ["Rafael", ""]
-  spec.email         = ["rafnunser@gmail.com", ""]
+  spec.authors       = ["Rafael Nuñez", "Dario Guerrero"]
+  spec.email         = ["rafnunser@gmail.com", "dariogf@gmail.com"]
   spec.summary       = %q{Sequences preprocessing and cleaning software}
   spec.description   = %q{Seqtrimbb is a plugin based system to preprocess and clean sequences from multiple NGS sequencing platforms}
   spec.homepage      = ""
