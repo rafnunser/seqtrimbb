@@ -1,11 +1,11 @@
 require 'open-uri'
 
+# Download databases from SCBI, and unzip them
+
 class InstallDatabase
   
-  
   def initialize(type,db_path)
-    
-    
+     
     types=['core','cont_bacteria','cont_fungi','cont_mitochondrias','cont_plastids','cont_ribosome','cont_viruses']
     
     if types.include?(type)

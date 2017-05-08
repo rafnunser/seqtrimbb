@@ -4,41 +4,26 @@
 
 == DESCRIPTION:
 
-SeqtrimBB is a customizable and distributed pre-processing software for NGS (Next Generation Sequencing) biological data. It makes use of scbi_mapreduce gem to be able to run in parallel and distributed environments. It is specially suited for Roche 454 (normal and paired-end) & Ilumina datasets, although it could be easyly adapted to any other situation.
+SeqtrimBB is a customizable and distributed pre-processing software for NGS (Next Generation Sequencing) biological data. It makes use BBtools, a versatile software suite. It is specially suited for Ilumina datasets, although it could be easyly adapted to any other situation.
  
 == FEATURES:
 
 * SeqtrimBB is very flexible since it's architecture is based on plugins.
 * You can add new plugins if needed.
-* SeqtrimBB uses scbi_mapreduce and thus is able to exploit all the benefits of a cluster environment. It also works in multi-core machines big shared-memory servers.
 
 == Default templates for genomics & transcriptomics are provided
 
-<b>genomics_454.txt</b>:: cleans genomics data from Roche 454 sequencer.
-<b>genomics_454_with_paired.txt</b>:: cleans genomic data from a paired-end experiment sequenced with a Roche 454 sequencer.
-<b>low_quality.txt</b>:: trims low quality.
-<b>low_quality_and_low_complexity.txt</b>:: trims low quality and low complexity.
-<b>transcriptomics_454.txt</b>:: cleans transcriptomics data from a Roche 454 sequencer.
-<b>transcriptomics_plants.txt</b>:: cleans transcriptomics data from a Roche 454 sequencer with extra databases for plants.
-<b>amplicons.txt</b>:: filters amplicons.
+<b>genomics.txt</b>:: cleans general genomics data from Illumina's sequencers.
+<b>transcriptomics.txt</b>:: cleans transcriptomics data from Illumina's sequencer.
   
 == You can define your own templates using a combination of available plugins:
 
-<b>PluginKey</b>:: to remove sequencing keys from 454 input sequences.
-<b>PluginMids</b>:: to remove MIDS (barcodes) from 454 sequences.
-<b>PluginLinker</b>:: splits sequences into two inserts when a valid linker is found (paired-end experiments only)
-<b>PluginAbAdapters</b>:: removes AB adapters from sequences using a predefined DB or one provided by the user.
+<b>PluginAdapters</b>:: removes AB adapters from sequences using a predefined DB or one provided by the user.
 <b>PluginFindPolyAt</b>:: removes polyA and polyT from sequences.
 <b>PluginLowComplexity</b>:: filters sequences with low complexity regions
 <b>PluginAdapters</b>:: removes Adapters from sequences using a predefined DB or one provided by the user.
-<b>PluginLowHighSize</b>:: removes sequences too small or too big.
 <b>PluginVectors</b>:: remove vectors from sequences using a predefined database or one provided by the user.
-<b>PluginAmplicons</b>:: filters amplicons using user predefined primers.
-<b>PluginIndeterminations</b>:: removes indeterminations (N) from the sequence.
-<b>PluginLowQuality</b>:: eliminate low quality regions from sequences.
 <b>PluginContaminants</b>:: remove contaminants from sequences or rejects contaminated ones. It uses a core database, but it can be expanded with user provided ones.
-
-
 
 == SYNOPSIS:
 
@@ -52,7 +37,7 @@ Databases will be installed nearby SeqtrimBB by default, but you can override th
 
 If you with your database installed at /var:
 
-  $> export BLASTDB=/var/DB/formatted
+  $> export BLASTDB=/var/DB/
 
 Be sure that this environment variable is always loaded before SeqtrimBB execution (Eg.: add it to /etc/profile.local).
 
@@ -62,42 +47,19 @@ There are aditional databases. To list them:
 
 To perform an analisys using a predefined template with a FASTQ file format using 4 cpus:
 
-  $> seqtrimBB -t genomics_454.txt -Q input_file_in_FASTQ -w 4
+  $> seqtrimBB -t genomics.txt -Q input_file_in_FASTQ -w 4
   
-To perform an analisys using a predefined template with a FASTQ file format:
+To perform an analisys using a predefined template with a FASTA file format with QUAL file:
   
-  $> seqtrimBB -t genomics_454.txt -f input_file_in_FASTA -q input_file_in_QUAL
+  $> seqtrimBB -t genomics.txt -Q input_file_in_FASTA -q input_file_in_QUAL
 
-To clean illumina fastq files, with paired-ends and qualities encoded in illumina 1.5 format, using 4 cpus and disabling verbose output:
+To clean fastq files, with paired-ends reads in two files, using 4 cpus and output:
 
-  $> seqtrimBB -t genomics_short_reads.txt -F illumina15 -Q p1.fastq,p2.fastq -w 4 -K
-
-To clean illumina fastq files, with paired-ends and qualities encoded in standard phred format, using 4 cpus and disabling verbose output:
-
-  $> seqtrimBB -t genomics_short_reads.txt  -Q p1.fastq,p2.fastq -w 4 -K
+  $> seqtrimBB -t genomics.txt -Q p1.fastq,p2.fastq -w 4 
 
 To get additional help and list available templates and databases:
 
   $> seqtrimBB -h
-
-=== CLUSTERED EXECUTION:
-
-To take full advantage of a clustered installation, you can launch SeqtrimBB in distributed mode. You only need to provide it a list of machine names (or IPs) where workers will be launched. 
-
-Setup a workers file like this:
-    
-    machine1
-    machine1
-    machine2
-    machine2
-    machine2
-
-And launch SeqtrimBB this way:
-
-    $> seqtrimBB -t genomics_454.txt -Q input_file_in_FASTQ -w workers_file -s 10.0.0
-    
-This will launch 2 workers on machine1 and 3 workers on machine2 using the network whose ip starts with 10.0.0 to communicate.
-
   
 == TEMPLATE MODIFICATIONS
 
@@ -118,8 +80,7 @@ remove_clonality = false
 
 5- Launch SeqtrimBB with params.txt file instead of a default template:
 
-  $> seqtrimBB -t params.txt -f input_file_in_FASTA -q input_file_in_QUAL
-
+  $> seqtrimBB -t params.txt -Q input_file_in_FASTA -q input_file_in_QUAL
 
 
 The same way you can modify any of the parameters. You can find all parameters and their description in any used_params.txt file generated by a previous SeqtrimBB execution. Parameters not especified in a template are automatically set to their default value at execution time.
@@ -129,33 +90,10 @@ The same way you can modify any of the parameters. You can find all parameters a
 == REQUIREMENTS:
 
 * Ruby 1.9.2 or greater
-* CD-HIT 4.5.3 or greater
-* Blast plus 2.24 or greater (prior versions have bugs that produces bad results)
-* [Optional] - GnuPlot version 4.4.2 or greater (prior versions may produce wrong graphs)
-* [Optional] - pdflatex - Optional, to produce a detailed report with results 
+* BBmap 37.17 or greater
 
 
 == INSTALL:
-
-=== Installing CD-HIT
-
-*Download the latest version from http://code.google.com/p/cdhit/downloads/list
-*You can also use a precompiled version if you like
-*To install from source, decompress the downloaded file, cd to the decompressed folder, and issue the following commands:
-
-  make
-  sudo make install
-
-=== Installing Blast
-
-*Download the latest version of Blast+ from ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
-*You can also use a precompiled version if you like
-*To install from source, decompress the downloaded file, cd to the decompressed folder, and issue the following commands:
-
-  ./configure
-  make
-  sudo make install
-
 
 === Installing Ruby 1.9
 

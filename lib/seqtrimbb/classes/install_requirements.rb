@@ -1,5 +1,4 @@
 #########################################
-
 # This class provided the methods to check if the necesary software is installed in the user system
  #########################################
 
@@ -7,18 +6,18 @@ class InstallRequirements
   
  
   def initialize 
+
     @external_requirements = {}
     @ruby_requirements = {}  
     load_requirements
     
-    
   end
   
-   def check_install_requirements   
+  def check_install_requirements   
+
 		  res = true
 		  
-		  errors = check_system_requirements
-		  
+		  errors = check_system_requirements  
 		  if !errors.empty?
 		  
 		    $stderr.puts ' Unable to find these external requeriments:'
@@ -59,8 +58,6 @@ private
   
   def check_ruby_requirements(install=true)
       errors=[]
-
-      
       
         @ruby_requirements.each do |cmd,msg|
           if !system("gem list #{cmd} | grep #{cmd} > /dev/null")
@@ -84,22 +81,11 @@ private
   # seqtrim's requirements are specified here
   def load_requirements
    
-    @external_requirements['blastn']= "You need to install Blast+ 2.2.24 or greater and make sure it is available in your path (export PATH=$PATH:path_to_blast).\nYou can download it from ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/"
-    @external_requirements['cd-hit-454']= "Download from http://code.google.com/p/cdhit/downloads/list"
+    @external_requirements['bbmap.sh']= "You need to install BBmap and make sure it is available in your path (export PATH=$PATH:path_to_bbmap).\nYou can download it from http://sourceforge.net/projects/bbmap/"
+    @external_requirements['fastqc']= "You need to install FASTQC and make sure it is available.\nYou can download it from http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"
     # @external_requirements['gnuplot']= "Download from http://www.gnuplot.info/download.html"
                 
-    # @ruby_requirements = { 'n2array' => "" ,    
-    @ruby_requirements['narray'] = ''
-    # @ruby_requirements['gnuplot'] = ''
-    @ruby_requirements['term-ansicolor'] = ''
-    @ruby_requirements['xml-simple'] = ''
-    @ruby_requirements['scbi_blast'] = ''
-    @ruby_requirements['scbi_mapreduce'] = ''
-    @ruby_requirements['scbi_fasta'] = ''
-    @ruby_requirements['scbi_fastq'] = ''
-    @ruby_requirements['scbi_plot'] = ''
-    @ruby_requirements['scbi_math'] = ''
-    # @ruby_requirements['scbi_fastq2'] = ''
+    # @ruby_requirements =  
     
   end # end  def
   

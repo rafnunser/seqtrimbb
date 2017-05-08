@@ -21,16 +21,16 @@ class Seqtrim
 
     # check plugin list
     comment='Plugins applied to every sequence, separated by commas. Order is important'
-    # default_value='PluginLowHighSize,PluginMids,PluginIndeterminations,PluginAbAdapters,PluginContaminants,PluginLinker,PluginVectors,PluginLowQuality'
+    # default_value='PluginAdapters,PluginContaminants,PluginLowQuality'
     #    params.check_param(errors,'plugin_list','String',default_value,comment)
     params.check_param(errors,'plugin_list','PluginList',nil,comment)
 
     comment='Generate initial stats'
-    default_value='true'
+    default_value='false'
     params.check_param(errors,'generate_initial_stats','String',default_value,comment)
 
     comment='Generate final stats'
-    default_value='true'
+    default_value='false'
     params.check_param(errors,'generate_final_stats','String',default_value,comment)
 
     comment='Seqtrim version'
@@ -49,7 +49,6 @@ class Seqtrim
   end
 
 
-
   def initialize(options)
     
     @@exit_status=0
@@ -58,6 +57,10 @@ class Seqtrim
     params_path=options[:template]
 
     workers=options[:workers]
+
+    max_ram=options[:max_ram]
+
+    sample_type=options[:sample_type]
 
     $LOG.info "Loading params"
     # Reads the parameter's file
@@ -69,25 +72,56 @@ class Seqtrim
     end
 
     # load plugins
+
     plugin_list = params.get_param('plugin_list') # puts in plugin_list the plugins's array
     $LOG.info "Loading plugins [#{plugin_list}]"
 
+    # Mate Pairs treatment
+
+    if plugin_list.include?('PluginMatePairs')
+
+      $LOG.info("Mate Pairs treatment")
+
+      require 'plugin_mate_pairs.rb'
+
+      PluginMatePairs.new(params)
+
+      list = plugin_list.split(",")
+
+      list.delete('PluginMatePairs')
+
+      plugin_list = list.join(",")
+
+      outlongmate = File.join(File.expand_path(OUTPUT_PATH),"longmate.fastq.gz")
+      outunknown = File.join(File.expand_path(OUTPUT_PATH),"unknown.fastq.gz")
+      FileUtils.rm(outlongmate)
+      FileUtils.rm(outunknown)
+
+      puts $SAMPLEFILES
+
+    end
 
     plugin_manager = PluginManager.new(plugin_list,params) # creates an instance from PluginManager. This must storage the plugins and load it
-
 
     if !Dir.exists?(OUTPUT_PATH)
       Dir.mkdir(OUTPUT_PATH)
     end
 
+    if !Dir.exists?(DEFAULT_FINAL_OUTPUT_PATH)
+      Dir.mkdir(DEFAULT_FINAL_OUTPUT_PATH)
+    end
+
     # Extract global stats
     if params.get_param('generate_initial_stats').to_s=='true'
       $LOG.info "Calculating initial stats: i.e. FastQC"
-      #Launch fastqc
+      
+      prefiles = $SAMPLEFILES.join(" ")
+      cmd="fastqc -o #{OUTPUT_PATH} #{prefiles}"
+
+      system(cmd)
     else
       $LOG.info "Skipping calculating initial stats phase."
     end
-
 
     # load plugin params
     $LOG.info "Check plugin params"
@@ -107,12 +141,17 @@ class Seqtrim
     $LOG.info("CMD_TO_EXECUTE:\n#{cmd}")
     
     # EXECUTE CMD:
+    
     system(cmd)
 
     # Extract global stats
     if params.get_param('generate_final_stats').to_s=='true'
       $LOG.info "Calculating final stats: i.e. FastQC"
-      #Launch fastqc
+
+      postfiles = $OUTPUTFILES.join(" ")
+      cmd='fastqc -o #{OUTPUT_PATH} #{postfiles}'
+
+      system(cmd)
     else
       $LOG.info "Skipping calculating final stats phase."
     end

@@ -11,4 +11,8 @@
 # Help: <li>PluginCustomPlugin2Bb: explain it.... </li>
 # Help: </ul>
 
-plugin_list = PluginCustomPluginBb,PluginCustomPlugin2Bb
+plugin_list = PluginMatePairs,PluginAdapters
+
+linker_literal_seq = AGCTAGCTAGCTAGCT
+
+

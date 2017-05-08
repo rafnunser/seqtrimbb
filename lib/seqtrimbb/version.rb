@@ -1,4 +1,4 @@
 module Seqtrimbb
-  VERSION = "3.1.0"
+  VERSION = "1.0.0"
   SEQTRIM_VERSION = VERSION
 end

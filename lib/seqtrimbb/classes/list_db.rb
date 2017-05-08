@@ -6,44 +6,56 @@
 class ListDb
 
 def initialize(path,db)
-    
-		filename=File.join(path,'formatted',db)
-	  if File.exists?(filename)
-	  
-				f = File.open(filename)
-		
-				f.grep(/^>(.*)$/) do |line|
-					puts $1
-				end
-				f.close
-		else
-				puts "File #{filename} doesn't exists"
-				puts ''
-				puts "Available databases:"
-				puts '-'*20
-				d=Dir.glob(File.join(path,'formatted','*.fasta'))
-   	  	d.entries.map{|e| puts File.basename(e)}
+  
+ pre=['old_fastas_',db,'.txt']
+ prejoin=pre.join("")
+ filename=File.join(path,db,prejoin)
 
-				
-#		cmd= "grep '^>' #{File.join(path,'formatted',db+'.fasta')}"
-		
-#		system(cmd)
-	  end
+ if !File.exists?(filename)
+
+  puts "File #{filename} doesn't exists"
+  puts ''
+  puts "Available databases:"
+  puts '-'*2
+  
+  ignore_folders=['.','..','status_info','formatted']			
+  dbs=Dir.open(path)
+  
+  dbs.entries.each do |db_name|
+   if !ignore_folders.include?(db_name)
+    puts "      "+db_name
+   end
+  end	  
+
+ else
+
+  f = File.open(filename)
+  		
+  f.each do |line|
+    
+    splitted_line = line.split("/")
+    fasta_name = splitted_line.last
+    puts "      "+fasta_name
+
+  end
+  f.close
+
+ end
 
 end
 
 def self.list_databases(path)
-  res = []
-  
-  if File.exists?(path)
-    d=Dir.glob(File.join(path,'formatted','*.fasta'))
-  
-	  res = d.entries.map{|e| File.basename(e)}
-  end
-  return res
-	
-	
-end
 
+  if File.exists?(path)
+   ignore_folders=['.','..','status_info','formatted']			
+   dbs=Dir.open(path)
+   dbs.entries.each do |db_name|
+    if !ignore_folders.include?(db_name)
+     puts "      "+db_name
+    end
+   end
+  end
+
+end
 
 end

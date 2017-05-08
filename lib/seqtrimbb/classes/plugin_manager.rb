@@ -24,9 +24,6 @@ class PluginManager
     cmds=[]
 
     if !@plugin_names.empty?
-      # keeps a list of rejected sequences
-      
-      rejected_seqs = []
 
       @plugin_names.each do |plugin_name|
           
@@ -84,8 +81,6 @@ class PluginManager
   
   # Iterates by the files from the folder 'plugins', and load it
   def load_plugins_from_files
-           
-    # DONE - CARGAR los plugins que hay en @plugin_names en vez de todos 
     
     # the plugin_name changes to file using plugin_name.decamelize    
     @plugin_names.each do |plugin_name|

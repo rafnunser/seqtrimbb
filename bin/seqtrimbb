@@ -2,9 +2,10 @@
 # encoding: utf-8
 
 #     SeqTrimBB: Next generation sequencing preprocessor
-#     Copyright (C) <2011>
-#     Authors: Almudena Bocinos Rioboo, Diego Dario Guerrero Fernandez,
-#              Rocio Bautista Moreno, Juan Falgueras Cano & M. Gonzalo Claros
+#     Copyright (C) <2017>
+#     Authors: Almudena Bocinos Rioboo, Diego Dario Guerrero Fernandez, Rafael
+#              Nuñez Serrano, Rocio Bautista Moreno, Juan Falgueras Cano 
+#              & M. Gonzalo Claros
 #              email: soporte@scbi.uma.es - http://www.scbi.uma.es
 #
 #     This program is free software: you can redistribute it and/or modify
@@ -46,10 +47,11 @@ require 'scbi_headers'
 def put_header
   header = ScbiHeader.new('SeqTrimBB',Seqtrimbb::SEQTRIM_VERSION)
 
-  header.description="SeqtrimBB is a customizable and distributed pre-processing software for NGS (Next Generation Sequencing) biological data. It makes use of scbi_mapreduce gem to be able to run in parallel and distributed environments. It is specially suited for Roche 454 (normal and paired-end) & Ilumina datasets, although it could be easyly adapted to any other situation."
+  header.description="SeqtrimBB is a customizable pre-processing software for NGS (Next Generation Sequencing) biological data based on BBtools suite. It is specially suited for Illumina datasets (normal and paired-end), although it could be easyly adapted to any other situation."
 
-  header.copyright='2011'
+  header.copyright='SeqtrimBB 2017. BBTools Copyright (c) 2014, The Regents of the University of California, through Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy).  All rights reserved.'
 
+  header.authors<< "Rafael Núñez"
   header.authors<< "Darío Guerrero"
   header.authors<< "Almudena Bocinos"
   header.authors<< "Rocío Bautista"
@@ -68,19 +70,22 @@ end
 put_header
 
 ############ PATHS #######################
+
 $SEQTRIM_PATH = ROOT_PATH
 
 OUTPUT_PATH='output_files_tmp'
 DEFAULT_FINAL_OUTPUT_PATH='output_files'
 
-$FORMATTED_DB_PATH = File.expand_path(File.join(ROOT_PATH, "DB",'formatted'))
+$DB_PATH = File.expand_path(File.join(ROOT_PATH, "DB"))
 
 # TODO - COMENTAR todas las clases y metodos para que salga la descripcion cuando hagas rdoc en el terminal
 
 #Checks install requeriments
+
 require 'install_requirements'
 
 ins = InstallRequirements.new
+
 if (!ins.check_install_requirements)
   exit(-1)
 end
@@ -93,17 +98,18 @@ require "plugin.rb"
 require "plugin_manager.rb"
 require 'list_db'
 require 'install_database'
-
+require 'check_database' 
+require 'getset_memory'
 
 def show_additional_help
 
   puts "\n"*3
   puts "E.g.: processing a fastq sequences file"
-  puts "#{File.basename($0)} -t genomics_454.txt -Q sequences.fastq"
+  puts "#{File.basename($0)} -t genomics_basic.txt -Q sequences.fastq"
   puts "\n"*2
 
   puts "E.g.: processing a fasta file with qual"
-  puts "#{File.basename($0)} -t genomics_454.txt -f sequences.fasta -q sequences.qual"
+  puts "#{File.basename($0)} -t genomics_basic.txt -Q sequences.fasta -q sequences_quality.qual"
 
   templates = Dir.glob(File.join($SEQTRIM_PATH,'templates','*.txt')).map{|t| File.basename(t)}
 
@@ -119,7 +125,7 @@ def show_additional_help
   puts "  Databases at: #{$DB_PATH}"
   puts "  ========================================================================================================\n\n"
 
-  ListDb.list_databases($DB_PATH).map{|e| puts "      "+e}
+  ListDb.list_databases($DB_PATH)
 
   exit
 
@@ -127,32 +133,38 @@ end
 
 
 # Reads the parameters from console. For this is used ARGV, that is an array.
+
 options = {}
 
 optparse = OptionParser.new do |opts|
 
   # Set a banner, displayed at the top
   # of the help screen.
-  opts.banner = "Usage: #{$0} -t template_file \{-Q fastaQ_file | -f fasta_file -q qual_file\} [options]"
+  opts.banner = "Usage: #{$0} -t template_file \{-Q seq_file\} [options]"
 
   options[:workers] = 1
 
-  opts.on( '-w', '--workers COUNT', 'Number of workers' ) do |workers|
+  opts.on( '-w', '--workers COUNT', 'Number of threads' ) do |workers|
       begin
         options[:workers] = Integer(workers)
       rescue
-        STDERR.puts "ERROR:Invalid workers parameter #{options[:workers]}"
+        STDERR.puts "ERROR:Invalid threads parameter #{options[:workers]}"
         exit -1
       end
   end
 
+  options[:max_ram] = false
+  opts.on( '-m', '--max_RAM', 'Max RAM to use, for example, 1G means 1 gig' ) do |max_ram|
+    options[:max_ram] = max_ram.upcase
+  end
+
   options[:check_db] = false
-  opts.on( '-c', '--check_databases', 'Check Blast databases and reformat if necessary' ) do
+  opts.on( '-c', '--check_databases', 'Check databases' ) do
     options[:check_db] = true
   end
 
   options[:install_db] = nil
-  opts.on( '-i', '--install_databases TYPE', 'Install base databases and reformat them if necessary') do |db_type|
+  opts.on( '-i', '--install_databases TYPE', 'Install base databases') do |db_type|
     options[:install_db] = db_type
   end
 
@@ -161,30 +173,13 @@ optparse = OptionParser.new do |opts|
     options[:logfile] = file
   end
 
-  options[:fastq] = nil
-  opts.on( '-Q', '--fastq FILE1,FILE2',Array, 'Fastq input file. Use - for <STDIN>' ) do |file|
-    options[:fastq] = file
-    puts "FILES:",file,file.class
-
-  end
-
-  options[:format] = nil
-  opts.on( '-F', '--fastq_quality_format FORMAT', 'Fastq input quality format use sanger or illumina18 for phred+33 based scores. Use illumina15 for phred+64 based scores (default is sanger) file. Use - for <STDIN>' ) do |value|
-    options[:format] = value
-    if !['sanger','illumina15', 'illumina18'].include?(value)
-      STDERR.puts "ERROR: Invalid FASTQ format parameter #{value}"
-      exit -1
-    end
-  end
-
-
-  options[:fasta] = nil
-  opts.on( '-f', '--fasta FILE', 'Fasta input file' ) do |file|
-    options[:fasta] = file
+  options[:file] = nil
+  opts.on( '-Q', '-- FILE FILE1,FILE2',Array, 'Input fastq/fasta file' ) do |file|
+    options[:file] = file
   end
 
   options[:qual] = nil
-  opts.on( '-q', '--qual FILE', 'Qual input file' ) do |file|
+  opts.on( '-q', '--qual FILE1,FILE2',Array, 'Qual input file' ) do |file|
     options[:qual] = file
   end
 
@@ -211,9 +206,9 @@ optparse = OptionParser.new do |opts|
     options[:skip_report] = true
   end
 
-  options[:write_in_gzip] = false
+  options[:write_in_gzip] = true
   opts.on( '-z', '--gzip', 'Generate output files in gzip format.' ) do
-    options[:write_in_gzip] = true
+    options[:write_in_gzip] = false
   end
 
   options[:final_output_path] = DEFAULT_FINAL_OUTPUT_PATH
@@ -221,8 +216,9 @@ optparse = OptionParser.new do |opts|
     options[:final_output_path] = folder
   end
 
-  # This displays the help screen, all programs are
-  # assumed to have this option.
+# This displays the help screen, all programs are
+# assumed to have this option.
+
   opts.on_tail( '-h', '--help', 'Display this screen' ) do
     puts opts
     show_additional_help
@@ -231,6 +227,7 @@ optparse = OptionParser.new do |opts|
 end
 
 # parse options and remove from ARGV
+
 optparse.parse!
 
 if options[:list_db] then
@@ -245,8 +242,17 @@ if options[:gen_params] then
   exit -1
 end
 
+# Setting RAM usage
+
+if !options[:max_ram] then
+ 
+   options[:max_ram] = getset_memory
+
+end
+
 #set logger
 #system('rm logs/*')
+
 FileUtils.mkdir('logs') if !File.exists?('logs')
 
 $LOG = Logger.new(options[:logfile])
@@ -260,27 +266,37 @@ $LOG.info("Command: #{$0}")
 
 $LOG.info("Using options: \n"+ JSON::pretty_generate(options))
 
+# Install/Check databases on DB_PATH
+
 if options[:install_db] then
+
   #install databases
+
   InstallDatabase.new(options[:install_db],$DB_PATH)
 
-  # reformat databases
-  # TODO - 
-  # MakeBlastDb.new($DB_PATH)
+  # make bbsplit index
+  
+  CheckDatabase.new($DB_PATH,options[:workers],options[:max_ram])
+
   exit
+
 end
 
 if options[:check_db] then
-  # check and format blast databases
-  # TODO - 
-   # MakeBlastDb.new($DB_PATH)
+
+  # checks for old bbsplit indexes and update them
+  
+  CheckDatabase.new($DB_PATH,options[:workers],options[:max_ram])
+
   exit
+
 end
 
-required_options = options[:template] && (options[:fastq] || (options[:fasta]))
+# checks for essential arguments
 
-# if ((ARGV.count != 2) && (ARGV.count != 3)) # con esto vemos si hay argumentos,
-if (ARGV.count != 0) || (!required_options) # con esto vemos si hay argumentos,
+required_options = options[:template] && options[:file]
+
+if (ARGV.count != 0) || (!required_options) 
   puts "You must provide all required options"
   puts ""
   puts optparse.help
@@ -292,7 +308,8 @@ if File.exists?(options[:final_output_path])
   exit(-1)
 end
 
-# check for template
+# check for template's existence
+
 if (!File.exists?(options[:template]))
   if File.exists?(File.join($SEQTRIM_PATH,'templates',options[:template]))
     options[:template] = File.join($SEQTRIM_PATH,'templates',options[:template])
@@ -305,28 +322,81 @@ end
 
 $LOG.info "Using params file: #{options[:template]}"
 
-# check file existence
+# check file's existence and automatic format detection
+ 
+if options[:file]
 
-if options[:fastq]
-  options[:fastq].each do |fastq_file|
-    # fastq file
-    if (!fastq_file.nil? && fastq_file!='-' && !File.exists?(File.expand_path(fastq_file)))
-      $LOG.error "Input file: #{fastq_file} doesn't exists"
+  nfiles = options[:file].count 
+
+  $SAMPLEFILES = []
+
+  options[:file].each do |seq_file|
+
+    # file
+    if (!seq_file.nil? && seq_file!='-' && !File.exists?(File.expand_path(seq_file)))
+      $LOG.error "Input file: #{seq_file} doesn't exists"
       exit(-1)
     end
-  end
-end
 
-# fasta file
-if (!options[:fasta].nil? && !File.exists?(options[:fasta]))
-  $LOG.error "Input file: #{options[:fasta]} doesn't exists"
-  exit(-1)
+    file_to_test = File.expand_path(seq_file)
+
+    $SAMPLEFILES << file_to_test
+
+    # automatic format detection
+    format = %x[testformat.sh #{file_to_test}].chop.split("\t")
+
+    options[:qual_format] = format[0]
+    options[:file_format] = format[1]
+    options[:sample_type] = format[3]
+
+    if (nfiles != 1)
+     format[3] = "paired"
+    end
+
+  end	
+
+  #preloading params 
+
+  output = File.expand_path(DEFAULT_FINAL_OUTPUT_PATH)
+
+  if options[:sample_type] == 'paired'
+
+       file_one = File.join(output,'paired_1.fastq')
+       file_two = File.join(output,'paired_2.fastq')
+
+       $OUTPUTFILES = ['paired_1.fastq','paired_2.fastq']
+       $OUTPUTFILES = ['paired_2.fastq.gz','paired_2.fastq.gz'] if options[:write_in_gzip]
+
+    elsif options[:sample_type] == 'interleaved'
+
+       file_one = File.join(output,'interleaved.fastq')
+
+       $OUTPUTFILES = ['interleaved.fastq']
+       $OUTPUTFILES = ['interleaved.fastq.gz'] if options[:write_in_gzip]
+
+    else
+    
+       file_one = File.join(output,'sequences_.fastq')
+
+       $OUTPUTFILES = ['sequences_.fastq']
+       $OUTPUTFILES = ['sequences_.fastq.gz'] if options[:write_in_gzip]
+
+    end
+  
 end
 
 # qual file
-if ((!options[:qual].nil?)&&(!File.exists?(options[:qual])))
-  $LOG.error "Input file: #{options[:qual]} doesn't exists"
-  exit(-1)
+if options[:qual]
+
+  options[:qual].each do |qual_file|
+    # qual file
+    if (!qual_file.nil? && qual_file!='-' && !File.exists?(File.expand_path(qual_file)))
+      $LOG.error "Input file: #{qual_file} doesn't exists"
+      exit(-1)
+    end
+  end
+  $SAMPLEQUALS = options[:qual].split(",")
+
 end
 
 s = Seqtrim.new(options)
