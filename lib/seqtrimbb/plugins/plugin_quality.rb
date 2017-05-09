@@ -20,7 +20,7 @@ class PluginQuality < Plugin
   # Quality's trimming params
 
     quality_threshold = @params.get_param('quality_threshold')
-    quality_trimming_position = @params.get_param('adapters_trimming_position')
+    quality_trimming_position = @params.get_param('quality_trimming_position')
     quality_aditional_params = @params.get_param('quality_aditional_params')
 
   # Creates an array to store the necessary fragments to assemble the call
