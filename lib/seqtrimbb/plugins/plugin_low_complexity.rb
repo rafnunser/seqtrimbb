@@ -15,7 +15,7 @@ class PluginLowComplexity < Plugin
     max_ram = @params.get_param('max_ram')
     cores = @params.get_param('workers')
     sample_type = @params.get_param('sample_type')
-    save_singles = @params.get_param('save_unpaired')
+    save_singles = @params.get_param('save_singles')
 
   # Adapter's trimming params
 
@@ -89,7 +89,7 @@ class PluginLowComplexity < Plugin
 
     comment='Save reads which became unpaired after every step? true or false (default)'
     default_value = 'false'
-    params.check_param(errors,'save_unpaired','String',default_value,comment)
+    params.check_param(errors,'save_singles','String',default_value,comment)
 
     comment='Complexity threshold to be applied. Complexity is calculated using the counts of unique short kmers that occur in a window, such that the more unique kmers occur within the window - and the more even the distribution of counts - the closer the value approaches 1. Complexity_threshold = 0.01 for example will only filter homopolymers' 
     default_value = '0.01'

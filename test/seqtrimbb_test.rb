@@ -151,15 +151,148 @@ class SeqtrimbbTest < Minitest::Test
 
     assert_equal(result,test)
 
-
   end
 
   def test_plugin_contaminants
 
-    params
+   require 'plugin_contaminants.rb'
+
+    @params['max_ram'] = '1G'
+    @params['cores'] = '1'
+    @params['sample_type'] = 'paired'
+
+    outstats = File.join(File.expand_path(OUTPUT_PATH),"contaminants_contaminants_stats.txt")
+
+    @params['contaminants_dbs'] = contaminants_db
+    @params['contaminants_minratio'] = 0.56
+    @params['contaminants_decontamination_mode'] = 'normal'
+    @params['contaminants_additional_params'] = 'false'
+    @params['sample_species'] = 1
 
     plugin_list = 'PluginContaminants'
 
+# Single-ended file
+
+    contaminants_db = File.join($DB_PATH,'contaminants')
+
+    @params['sample_type'] = 'single'
+    
+    plugin_list = 'PluginContaminants'
+
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 ref=#{contaminants_db} path=#{contaminants_db} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+# Aditional params
+
+    @params['contaminants_additional_params'] = 'add_param=test'
+
+    contaminants_db = File.join($DB_PATH,'contaminants')
+
+    @params['sample_type'] = 'single'
+    
+    plugin_list = 'PluginContaminants'
+
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{contaminants_db} add_param=test in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+
+# External single file database
+
+    contaminants_db = File.join($DB_PATH,'contaminants','Candida_albicans.fasta')
+    path_to_db_file = File.dirname(contaminants_db)
+
+    @params['contaminants_dbs'] = contaminants_db
+    
+    plugin_list = 'PluginContaminants'
+
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{path_to_db_file} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+# External database
+
+    contaminants_db = File.join($DB_PATH,'contaminants')
+
+    @params['contaminants_dbs'] = contaminants_db
+    
+    plugin_list = 'PluginContaminants'
+
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{contaminants_db} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+# Exclude mode : species
+
+    @params['contaminants_decontamination_mode'] = 'exclude species'
+
+    @params['sample_species'] = 'Candida albicans'
+
+    path_to_contaminants = 
+    
+    plugin_list = 'PluginContaminants'
+
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{contaminants_db} add_param=test in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+
+# Exclude mode :  genus
+
+    @params['contaminants_decontamination_mode'] = 'exclude genus'
+
+    @params['sample_species'] = 'Candida albicans'
+
+    path_to_contaminants = 
+    
+    plugin_list = 'PluginContaminants'
+
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{contaminants_db} add_param=test in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+# Two databases
+    
+    contaminants_db1 = File.join($DB_PATH,'contaminants')
+
+    contaminants_db2 = File.join($DB_PATH,'vectors')
+
+    @params['contaminants_dbs'] = 'contaminants,vectors'
+    
+    plugin_list = 'PluginContaminants'
+
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db1} path=#{contaminants_db1} in=stdin.fastq out=stdout.fastq refstats=#{outstats} | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db2} path=#{contaminants_db2} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)    
 
   end
 
@@ -262,15 +395,75 @@ class SeqtrimbbTest < Minitest::Test
 
     assert_equal(result,test)
 
-
   end
 
   def test_plugin_lowcomplexity
 
-    params
+    require 'plugin_low_complexity.rb'
+
+    @params['max_ram'] = '1G'
+    @params['cores'] = '1'
+    @params['sample_type'] = 'paired'
+    @params['save_singles'] = 'false'
+
+    @params['complexity_threshold'] = 0.01
+    @params['minlength'] = 50
+    @params['low_complexity_aditional_params'] = 'false'
 
     plugin_list = 'PluginLowComplexity'
 
+
+# Filtering single-ended sample
+
+    @params['sample_type'] = 'single'
+
+    result = "bbduk2.sh -Xmx1G t=1 entropy=0.01 entropywindow=50 in=stdin.fastq out=stdout.fastq"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+  end
+
+# Minlength < 50
+
+    @params['minlength'] = 49
+
+    result = "bbduk2.sh -Xmx1G t=1 entropy=0.01 entropywindow=49 int=t in=stdin.fastq out=stdout.fastq"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+ # Saving singles
+
+    @params['save_singles'] = 'true'
+
+    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_low_complexity_trimming.fastq.gz")
+
+    result = "bbduk2.sh -Xmx1G t=1 entropy=0.01 entropywindow=50 int=t outs=#{outsingles} in=stdin.fastq out=stdout.fastq"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+ # Adding additional params
+
+    @params['low_complexity_aditional_params'] = 'add_param=test'
+
+    result = "bbduk2.sh -Xmx1G t=1 entropy=0.01 entropywindow=50 int=t add_param=test in=stdin.fastq out=stdout.fastq"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
 
   end
 
@@ -294,19 +487,190 @@ class SeqtrimbbTest < Minitest::Test
 
   def test_plugin_input
 
-    params
+    require 'plugin_read_input_bb.rb'
+
+    @params['max_ram'] = '1G'
+    @params['cores'] = '1'
+    @params['sample_type'] = 'paired'
+    @params['file_format'] = 'fastq'
 
     plugin_list = 'PluginReadInputBb'
 
+
+ # Single-ended sample
+
+   @params['sample_type'] = 'single-ended'
+
+   file = "testfile.fastq"
+
+   $SAMPLEFILES = []
+
+   $SAMPLEFILES[0] = file
+
+   result = "reformat.sh -Xmx1G t=1 in=#{file} out=stdout.fastq"
+
+   manager = PluginManager.new(plugin_list,params)
+
+   test = manager.execute_plugings()
+
+   assert_equal(result,test)
+
+ # Interleaved sample
+
+   @params['sample_type'] = 'interleaved'
+
+   file = "testfile.fastq"
+
+   $SAMPLEFILES = []
+
+   $SAMPLEFILES[0] = file
+
+   result = "reformat.sh -Xmx1G t=1 in=#{file} int=t out=stdout.fastq"
+
+   manager = PluginManager.new(plugin_list,params)
+
+   test = manager.execute_plugings()
+
+   assert_equal(result,test)
+
+ # Paired sample
+
+   @params['sample_type'] = 'paired'
+
+   file1 = "testfile_1.fastq"
+   file2 = "testfile_2.fastq"
+
+   $SAMPLEFILES = []
+
+   $SAMPLEFILES[0] = file1
+   $SAMPLEFILES[1] = file2
+
+   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} out=stdout.fastq"
+
+   manager = PluginManager.new(plugin_list,params)
+
+   test = manager.execute_plugings()
+
+   assert_equal(result,test)
+
+ # Fasta sample with qual
+
+   @params['sample_type'] = 'paired'
+   @params['file_format'] = 'fasta'
+
+   file1 = "testfile_1.fasta"
+   file2 = "testfile_2.fasta"
+   qual1 = "testqual_1.qual"
+   qual2 = "testqual_2.qual"
+
+   $SAMPLEFILES = []
+
+   $SAMPLEFILES[0] = file1
+   $SAMPLEFILES[1] = file2
+
+   $SAMPLEQUALS = []
+
+   $SAMPLEQUALS[0] = qual1
+   $SAMPLEQUALS[1] = qual2
+
+   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} qual=#{qual1} qual1=#{qual2} out=stdout.fastq"
+
+   manager = PluginManager.new(plugin_list,params)
+
+   test = manager.execute_plugings()
+
+   assert_equal(result,test)
+
+
+ # Fasta sample without qual
+
+   @params['sample_type'] = 'paired'
+   @params['file_format'] = 'fasta'
+
+   file1 = "testfile_1.fasta"
+   file2 = "testfile_2.fasta"
+
+   $SAMPLEFILES = []
+
+   $SAMPLEFILES[0] = file1
+   $SAMPLEFILES[1] = file2
+
+   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} q=40 out=stdout.fastq"
+
+   manager = PluginManager.new(plugin_list,params)
+
+   test = manager.execute_plugings()
+
+   assert_equal(result,test)
 
   end
 
   def test_plugin_save
 
-    params
+    require 'plugin_save_results_bb.rb'
+
+    @params['max_ram'] = '1G'
+    @params['cores'] = '1'
+    @params['sample_type'] = 'paired'
+    @params['minlength'] = 50
 
     plugin_list = 'PluginSaveResultsBb'
 
+ # Single-ended sample
+
+   @params['sample_type'] = 'single-ended'
+
+   file = "testoutfile.fastq"
+
+   $OUTPUTFILES = []
+
+   $OUTPUTFILES[0] = file
+
+   result = "reformat.sh -Xmx1G t=1 in=stdin.fastq out=#{file}"
+
+   manager = PluginManager.new(plugin_list,params)
+
+   test = manager.execute_plugings()
+
+   assert_equal(result,test)
+
+ # Interleaved sample
+
+   @params['sample_type'] = 'interleaved'
+
+   file = "testoutfile.fastq"
+
+   $OUTPUTFILES = []
+
+   $OUTPUTFILES[0] = file
+
+   result = "reformat.sh -Xmx1G t=1 int=t in=stdin.fastq out=#{file}"
+
+   manager = PluginManager.new(plugin_list,params)
+
+   test = manager.execute_plugings()
+
+   assert_equal(result,test)
+
+ # Paired sample
+
+   @params['sample_type'] = 'paired'
+
+   file1 = "testoutfile_1.fastq"
+   file2 = "testoutfile_2.fastq"
+
+   $OUTPUTFILES = []
+
+   $OUTPUTFILES[0] = file1
+   $OUTPUTFILES[1] = file2
+
+   result = "reformat.sh -Xmx1G t=1 int=t in=stdin.fastq out=#{file1} out2=#{file2}"
+
+   manager = PluginManager.new(plugin_list,params)
+
+   test = manager.execute_plugings()
+
+   assert_equal(result,test)
 
   end
 
