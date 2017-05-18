@@ -19,7 +19,7 @@ class PluginUserFilter < Plugin
   # User's Filtering params
 
     user_filter_dbs = @params.get_param('user_filter_dbs')
-    minratio = @params.get_param('filter_minratio')
+    minratio = @params.get_param('user_filter_minratio')
     user_filter_aditional_params = @params.get_param('user_filter_aditional_params')
     user_filter_species = @params.get_param('user_filter_species')
 
@@ -181,7 +181,7 @@ class PluginUserFilter < Plugin
 
     comment='Minimal ratio of sequence of interest kmers in a read to be filtered' 
     default_value = '0.56'
-    params.check_param(errors,'filter_minratio','String',default_value,comment)
+    params.check_param(errors,'user_filter_minratio','String',default_value,comment)
   
     comment='list of species (fasta files names in database comma separated) to filter out' 
     default_value = 
