@@ -62,6 +62,8 @@ class Seqtrim
 
     sample_type=options[:sample_type]
 
+    ext_cmd=options[:ext_cmd]
+
     $LOG.info "Loading params"
     # Reads the parameter's file
     params = Params.new(params_path,options)
@@ -137,6 +139,18 @@ class Seqtrim
     cmds = plugin_manager.execute_plugins()
 
     $LOG.info("Plugin_results=#{cmds.join("\n")}")
+
+    # ADDING A CALL TO MAP OR ASSEMBLE THE SAMPLE (USING AN EXTERNAL TOOL)
+
+    if ext_cmd
+
+      cmds.pop
+      cmds.push(ext_cmd)
+
+      $LOG.info("CMD_TO_MAP/ASSEMBLE:\n#{ext_cmd}")
+
+    end
+
     cmd=cmds.join("|")
     $LOG.info("CMD_TO_EXECUTE:\n#{cmd}")
     

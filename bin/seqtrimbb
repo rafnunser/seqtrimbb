@@ -201,6 +201,16 @@ optparse = OptionParser.new do |opts|
     options[:template] = file
   end
 
+  options[:overwrite_params] = nil
+  opts.on( '-P', '--overwrite_params PARAM1,PARAM2',Array, 'Params and their values to overwrite default and templates parameters' ) do |oparams|
+    options[:overwrite_params] = oparams
+  end
+
+  options[:ext_cmd] = nil
+  opts.on( '-E', '--external_cmd External call to insert in the pipe', 'Add one call (or more already piped between them) to an assembler or mapping tool' ) do |cmd|
+    options[:ext_cmd] = cmd
+  end
+
   options[:skip_report] = false
   opts.on( '-R', '--no-report', 'Do not generate final PDF report (gem scbi_seqtrimbb_report required if you want to generate PDF report).' ) do
     options[:skip_report] = true

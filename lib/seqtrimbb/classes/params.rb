@@ -25,8 +25,27 @@ class Params
 
     #save options
     options.each do |opt_name,opt_value|
+
+      if opt_name.to_s == 'overwrite_params' && opt_value != nil
+
+        opt_value.each do |param_to_overwrite|
+
+          param_splitted = param_to_overwrite.split("=")
+
+          oparameter = param_splitted[0]
+          oparameter_value = param_splitted[1]
+
+          set_param(oparameter.to_s,oparameter_value,"#{oparameter} value from input options")
+
+        end
+
+      else
+
       set_param(opt_name.to_s,opt_value,"#{opt_name} value from input options")
+
+      end
     end
+
     #puts @params.to_json
   end
 
