@@ -29,7 +29,7 @@ class PluginUserFilter < Plugin
 
   # Iteration to assemble individual calls
 
-   user_filter_dbs.split(",").each do |db|
+   user_filter_dbs.split(/ |,/).each do |db|
 
      # Name and path for the statistics to be generated in the filtering process
 

@@ -30,7 +30,7 @@ class PluginContaminants < Plugin
 
   # Iteration to assemble individual calls
 
-  contaminants_dbs.split(",").each do |db|
+  contaminants_dbs.split(/ |,/).each do |db|
 
      # Name and path for the statistics to be generated in the decontamination process
 
