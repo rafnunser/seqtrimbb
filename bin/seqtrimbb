@@ -45,6 +45,7 @@ require 'scbi_headers'
 
 
 def put_header
+  
   header = ScbiHeader.new('SeqTrimBB',Seqtrimbb::SEQTRIM_VERSION)
 
   header.description="SeqtrimBB is a customizable pre-processing software for NGS (Next Generation Sequencing) biological data based on BBtools suite. It is specially suited for Illumina datasets (normal and paired-end), although it could be easyly adapted to any other situation."

@@ -81,7 +81,7 @@ class PluginContaminants < Plugin
 
       #Fill the array with the species presents in the external database
 
-         db_list = Array.new
+         db_list = {}
 
          path_refs = File.join(db,"old_fastas.txt")
 
@@ -90,9 +90,9 @@ class PluginContaminants < Plugin
            line.chomp!
            ref = File.basename(line,".fasta")
            species0 = ref.split("_")
-           species= species0.join(" ")
+           species= species0[0..1].join(" ")
 
-           db_list.push(species)
+           db_list[species] = line
 
          end
 
@@ -105,7 +105,8 @@ class PluginContaminants < Plugin
 
       #Fill the array with the species presents in the external database
 
-         db_list = Array.new
+         db_list = {}
+        
          path_refs = File.join(db_path,'old_fastas_'+db+'.txt')
 
          File.open(path_refs).each_line do |line|
@@ -113,9 +114,9 @@ class PluginContaminants < Plugin
            line.chomp!
            ref = File.basename(line,".fasta")
            species0 = ref.split("_")
-           species= species0.join(" ")
+           species= species0[0..1].join(" ")
 
-           db_list.push(species)
+           db_list[species] = line
 
          end
 
@@ -149,11 +150,10 @@ class PluginContaminants < Plugin
          sample_genus = sample_species_details[0]
 
         # First test contaminants in database for compatibility with the sample's species, then add the proper contaminants
-        
-         db_list.each do |contaminant|
 
-           contaminant_full = contaminant.split(" ").join("_")
-           contaminant_path = File.join(db_path,contaminant_full+".fasta")
+         db_list.each do |contaminant,path|
+
+           contaminant_path = path
 
            if mode_details[1] == 'genus'
 
@@ -167,6 +167,7 @@ class PluginContaminants < Plugin
              db_ref.push(contaminant_path) if contaminant != sample_species
 
            end
+
          end
        
         db_refs = db_ref.join(",")

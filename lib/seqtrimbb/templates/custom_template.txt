@@ -11,6 +11,12 @@
 # Help: <li>PluginCustomPlugin2Bb: explain it.... </li>
 # Help: </ul>
 
-plugin_list = PluginAdapters
+plugin_list = PluginContaminants
+
+contaminants_decontamination_mode= exclude genus
+
+sample_species = Candida albicans
+
+
 
 

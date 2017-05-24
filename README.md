@@ -142,7 +142,7 @@ There are aditional databases that can be listed with:
 
 Included databases will be usefull for a lot of people, but if you prefer, you can modify them, or add more elements to be search against your sequences. 
 
-You only need to drop new fasta files to each respective directory, or even create new directories with new fasta files inside. Each directory with fasta files will be used as a database:
+You only need to drop new fasta files to each respective directory, or even create new directories with new fasta files inside. For a proper use, name the fasta files with species name (eg. Homo_sapiens.fasta or Homo_sapiens_chr1.fasta) if it is possible. Each directory with fasta files will be used as a database:
 
 DB/vectors to add more vectors
 DB/contaminants to add more contaminants
