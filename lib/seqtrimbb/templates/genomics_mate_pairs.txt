@@ -13,5 +13,5 @@
 # Help: <li>PluginLowComplexity: filtering out reads with low complexity. </li>
 # Help: </ul>
 
-plugin_list = PluginAdapters,PluginContaminants,PluginLowQuality,PluginLowComplexity
+plugin_list = PluginMatePairs,PluginAdapters,PluginContaminants,PluginLowQuality,PluginLowComplexity
 

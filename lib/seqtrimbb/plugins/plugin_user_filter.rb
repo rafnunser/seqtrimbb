@@ -122,14 +122,22 @@ class PluginUserFilter < Plugin
 
      # Adding details to filter out species
 
-     splitted_species = user_filter_species.split(",")
+     if user_filter_species != 'false'
 
-     splitted_species.each do |species|
+      splitted_species = user_filter_species.split(",")
+
+      splitted_species.each do |species|
 
        species_full0 = species.split(" ")
        species_full = species_full0.join("_")
 
        cmd_add_add.push("out_#{species_full}=#{species_full}_out.fastq.gz") if db_list.include?(species)
+
+      end
+
+     else
+
+      cmd_add_add.push("basename=%_out.fastq.gz")
 
      end
 
@@ -184,7 +192,7 @@ class PluginUserFilter < Plugin
     params.check_param(errors,'user_filter_minratio','String',default_value,comment)
   
     comment='list of species (fasta files names in database comma separated) to filter out' 
-    default_value = 
+    default_value = 'false'
     params.check_param(errors,'user_filter_species','String',default_value,comment)
 
     comment='Aditional BBsplit parameters, add them together between quotation marks and separated by one space'

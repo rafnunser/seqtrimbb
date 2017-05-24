@@ -145,6 +145,106 @@ class SeqtrimbbTest < Minitest::Test
 
   end
 
+  def test_plugin_polyat
+
+    @params['max_ram'] = '1G'
+    @params['cores'] = '1'
+    @params['sample_type'] = 'paired'
+    @params['save_singles'] = 'false'
+
+    outstats = File.join(File.expand_path(OUTPUT_PATH),"polyat_trimmings_stats.txt")
+
+    @params['polyat_trimming_position'] = 'both'
+    @params['polyat_kmer_size'] = 31
+    @params['polyat_min_external_kmer_size'] = 9
+    @params['polyat_max_mismatches'] = 1
+
+    @params['polyat_additional_params'] = 'false'
+
+    plugin_list = 'PluginPolyAT'
+
+# Single-ended sample
+
+    @params['sample_type'] = 'single-ended'
+
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+    @params['sample_type'] = 'paired'
+
+# Triming mode: Left
+
+    @params['polyat_trimming_position'] = 'left'
+
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+# Triming mode: Right
+
+    @params['polyat_trimming_position'] = 'right'
+
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)   
+
+# Triming mode: Both
+
+    @params['polyat_trimming_position'] = 'both'
+
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+# Saving singles
+
+    @params['save_singles'] = 'true' 
+
+    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_polyat_trimming.fastq.gz")
+
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 outs=#{outsingles} rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+    @params['save_singles'] = 'false' 
+
+# Adding some additional params
+
+    @params['polyat_additional_params'] = "add_param=test"
+
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t add_param=test in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+
+    manager = PluginManager.new(plugin_list,params)
+
+    test = manager.execute_plugings()
+
+    assert_equal(result,test)
+
+    @params['polyat_additional_params'] = 'false'
+
+  end
+
   def test_plugin_contaminants
 
    require 'plugin_contaminants.rb'
