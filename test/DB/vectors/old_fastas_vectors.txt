@@ -1,0 +1,1 @@
+/home/rafa/opt/seqtrimbb/test/DB/vectors/vectors.fasta

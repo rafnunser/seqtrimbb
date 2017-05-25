@@ -99,8 +99,6 @@ class Seqtrim
       FileUtils.rm(outlongmate)
       FileUtils.rm(outunknown)
 
-      puts $SAMPLEFILES
-
     end
 
     plugin_manager = PluginManager.new(plugin_list,params) # creates an instance from PluginManager. This must storage the plugins and load it
@@ -111,6 +109,10 @@ class Seqtrim
 
     if !Dir.exists?(DEFAULT_FINAL_OUTPUT_PATH)
       Dir.mkdir(DEFAULT_FINAL_OUTPUT_PATH)
+    end
+
+    if !Dir.exists?(OUTPLUGINSTATS)
+      Dir.mkdir(OUTPLUGINSTATS)
     end
 
     # Extract global stats
@@ -151,7 +153,7 @@ class Seqtrim
 
     end
 
-    cmd=cmds.join("|")
+    cmd=cmds.join(" | ")
     $LOG.info("CMD_TO_EXECUTE:\n#{cmd}")
     
     # EXECUTE CMD:

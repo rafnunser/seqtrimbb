@@ -6,7 +6,7 @@ require "plugin"
 # Inherit: Plugin
 ########################################################
 
-class PluginPolyAT < Plugin
+class PluginPolyAt < Plugin
   
  def get_cmd
 
@@ -27,7 +27,7 @@ class PluginPolyAT < Plugin
 
   # Name and path for the statistics to be generated in the trimming process
 
-    outstats = File.join(File.expand_path(OUTPUT_PATH),"polyat_trimmings_stats.txt")
+    outstats = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimmings_stats.txt")
 
   # Creates an array to store the necessary fragments to assemble the call
 
@@ -40,7 +40,7 @@ class PluginPolyAT < Plugin
   # Adding necessary fragment to save unpaired singles
 
     outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_polyat_trimming.fastq.gz")
-    cmd_add.push("outs=#{outsingles}") if save_singles
+    cmd_add.push("outs=#{outsingles}") if save_singles == 'true'
 
   # Choosing which tips are going to be trimmed
 
@@ -68,7 +68,7 @@ class PluginPolyAT < Plugin
     
   # Adding closing args to the call and joining it
 
-    if polyat_aditional_params != 'false'
+    if polyat_aditional_params != nil
 
       cmd_add.push(polyat_aditional_params)
 
@@ -121,7 +121,7 @@ class PluginPolyAT < Plugin
     params.check_param(errors,'polyat_max_mismatches','Integer',default_value,comment)
 
     comment='Aditional BBduk2 parameters, add them together between quotation marks and separated by one space'
-    default_value = 'false'
+    default_value = nil
     params.check_param(errors,'polyat_aditional_params','String',default_value,comment)
 
     return errors

@@ -34,7 +34,7 @@ class PluginContaminants < Plugin
 
      # Name and path for the statistics to be generated in the decontamination process
 
-      outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db}_contaminants_stats.txt")
+      outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_contaminants_stats.txt")
 
      # Creates an array to store the fragments
 
@@ -56,6 +56,12 @@ class PluginContaminants < Plugin
    if File.file?(db)
       
       #Single file database. TODO: grep '>' to separate sequences in the same file
+
+      # Name and path for the statistics to be generated in the decontamination process
+
+        db_name = File.basename(db,".fasta")
+
+        outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_contaminants_stats.txt")
        
         db_refs = db
 
@@ -73,6 +79,12 @@ class PluginContaminants < Plugin
 
           db_refs = db
 
+      # Name and path for the statistics to be generated in the decontamination process
+
+         db_name = db.split("/").last
+
+         outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_contaminants_stats.txt")
+ 
       #Generate external database's index
 
          require 'check_external_database.rb'
@@ -97,6 +109,10 @@ class PluginContaminants < Plugin
          end
 
       else
+
+      # Name and path for the statistics to be generated in the decontamination process
+
+         outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_contaminants_stats.txt")
         
       # Internal directory database
 
@@ -128,9 +144,9 @@ class PluginContaminants < Plugin
 
    mode_details = decontamination_mode.downcase.split(" ")
 
-    # Normal decontamination mode
+    # Regular decontamination mode
 
-   if mode_details[0] == 'normal'
+   if mode_details[0] == 'regular'
 
          cmd_add_add.push("ref=#{db_refs} path=#{db_path}")
 
@@ -180,7 +196,7 @@ class PluginContaminants < Plugin
     # Adding closing args to the call
 
 
-   if contaminants_aditional_params != 'false'
+   if contaminants_aditional_params != nil
 
       cmd_add_add.push(contaminants_aditional_params)
 
@@ -227,8 +243,8 @@ class PluginContaminants < Plugin
     default_value = '0.56'
     params.check_param(errors,'contaminants_minratio','String',default_value,comment)
 
-    comment='Decontamination mode: normal to just delete contaminated reads, or excluding to avoid deleting reads using contaminant species similar (genus or species) to the samples species, use excluding genus for a conservative approach or excluding species for maximal sensibility.'
-    default_value = 'normal'
+    comment='Decontamination mode: regular to just delete contaminated reads, or excluding to avoid deleting reads using contaminant species similar (genus or species) to the samples species, use excluding genus for a conservative approach or excluding species for maximal sensibility.'
+    default_value = 'regular'
     params.check_param(errors,'contaminants_decontamination_mode','String',default_value,comment)
 
     comment='Species of the sample to process'
@@ -236,7 +252,7 @@ class PluginContaminants < Plugin
     params.check_param(errors,'sample_species','String',default_value,comment)
     
     comment='Aditional BBsplit parameters, add them together between quotation marks and separated by one space'
-    default_value = 'false'
+    default_value = nil
     params.check_param(errors,'contaminants_aditional_params','String',default_value,comment)
 
     return errors

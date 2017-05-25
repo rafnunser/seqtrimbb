@@ -1,0 +1,4 @@
+#Chromosome sizes
+#Generated on	Wed May 24 20:21:44 CEST 2017
+#Version	5
+#chrom	scaffolds	contigs	length	defined	undefined	startPad	stopPad

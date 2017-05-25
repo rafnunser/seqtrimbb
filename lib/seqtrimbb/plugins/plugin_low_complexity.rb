@@ -22,6 +22,8 @@ class PluginLowComplexity < Plugin
     entropy_threshold = @params.get_param('complexity_threshold')
     lowcomplexity_aditional_params = @params.get_param('low_complexity_aditional_params')
     minlength = @params.get_param('minlength')
+    outstats = File.join(File.expand_path(OUTPLUGINSTATS),"low_complexity_stats.txt")
+
 
     if minlength.to_i < 50
 
@@ -42,7 +44,7 @@ class PluginLowComplexity < Plugin
    
   # Adding necessary fragment to save unpaired singles
 
-    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_low_complexity_trimming.fastq.gz")
+    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_low_complexity_filtering.fastq.gz")
     cmd_add.push("outs=#{outsingles}") if save_singles
 
   # Adding necessary info to process paired samples
@@ -61,7 +63,7 @@ class PluginLowComplexity < Plugin
 
     end
 
-    closing_args = "in=stdin.fastq out=stdout.fastq" 
+    closing_args = "in=stdin.fastq out=stdout.fastq 2> #{outstats}" 
 
     cmd_add.push(closing_args)
 

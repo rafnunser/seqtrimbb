@@ -6,7 +6,6 @@
 
 class Params
 
-
   #Creates the structure and start the reading of parameter's file
   def initialize(path, options)
 

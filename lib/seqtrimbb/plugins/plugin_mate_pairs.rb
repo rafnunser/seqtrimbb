@@ -25,8 +25,8 @@ class PluginMatePairs < Plugin
     adapters_min_external_kmer_size = params.get_param('adapters_min_external_kmer_size')
     adapters_max_mismatches = params.get_param('adapters_max_mismatches')
 
-    outstats_adapters = File.join(File.expand_path(OUTPUT_PATH),"LMP_adapters_trimmings_stats.txt")
-    outstats_linkers = File.join(File.expand_path(OUTPUT_PATH),"LMP_linker_masking_stats.txt")
+    outstats_adapters = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimmings_stats.txt")
+    outstats_linkers = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_linker_masking_stats.txt")
 
     outlongmate = File.join(File.expand_path(OUTPUT_PATH),"longmate.fastq.gz")
     outunknown = File.join(File.expand_path(OUTPUT_PATH),"unknown.fastq.gz")

@@ -30,7 +30,7 @@ class PluginVectors < Plugin
 
   # Name and path for the statistics to be generated in the trimming process
 
-    outstats1 = File.join(File.expand_path(OUTPUT_PATH),"vectors_trimming_stats.txt")
+    outstats1 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats.txt")
 
   # Creates an array to store the necessary fragments to assemble the first call
 
@@ -87,7 +87,7 @@ class PluginVectors < Plugin
 
   # Name and path for the statistics to be generated in the filtering process
 
-    outstats = File.join(File.expand_path(OUTPUT_PATH),"filtering_vectors_stats.txt")
+    outstats = File.join(File.expand_path(OUTPLUGINSTATS),"filtering_vectors_stats.txt")
 
   # Creates an array to store the fragments
 

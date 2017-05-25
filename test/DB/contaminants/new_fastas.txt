@@ -1,0 +1,3 @@
+/home/rafa/opt/seqtrimbb/test/DB/contaminants/Contaminant_two.fasta
+/home/rafa/opt/seqtrimbb/test/DB/contaminants/Contaminant_one.fasta
+/home/rafa/opt/seqtrimbb/test/DB/contaminants/Another_contaminant.fasta

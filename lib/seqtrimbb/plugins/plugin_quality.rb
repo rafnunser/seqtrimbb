@@ -22,6 +22,7 @@ class PluginQuality < Plugin
     quality_threshold = @params.get_param('quality_threshold')
     quality_trimming_position = @params.get_param('quality_trimming_position')
     quality_aditional_params = @params.get_param('quality_aditional_params')
+    outstats = File.join(File.expand_path(OUTPLUGINSTATS),"quality_trimming_stats.txt")
 
   # Creates an array to store the necessary fragments to assemble the call
 
@@ -68,7 +69,7 @@ class PluginQuality < Plugin
 
     end
 
-    closing_args = "in=stdin.fastq out=stdout.fastq" 
+    closing_args = "in=stdin.fastq out=stdout.fastq 2> #{outstats}" 
 
     cmd_add.push(closing_args)
 
