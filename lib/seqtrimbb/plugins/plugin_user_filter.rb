@@ -33,7 +33,7 @@ class PluginUserFilter < Plugin
 
      # Name and path for the statistics to be generated in the filtering process
 
-     outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db}_user_filter_stats.txt")
+     outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_user_filter_stats.txt")
 
      # Creates an array to store the fragments
 
@@ -122,7 +122,7 @@ class PluginUserFilter < Plugin
 
      # Adding details to filter out species
 
-     if user_filter_species != 'false'
+     if user_filter_species != nil
 
       splitted_species = user_filter_species.split(",")
 
@@ -143,7 +143,7 @@ class PluginUserFilter < Plugin
 
      # Adding closing args to the call
 
-      if user_filter_aditional_params != 'false'
+      if user_filter_aditional_params != nil
 
         cmd_add_add.push(user_filter_aditional_params)
 
@@ -192,11 +192,11 @@ class PluginUserFilter < Plugin
     params.check_param(errors,'user_filter_minratio','String',default_value,comment)
   
     comment='list of species (fasta files names in database comma separated) to filter out' 
-    default_value = 'false'
+    default_value = nil
     params.check_param(errors,'user_filter_species','String',default_value,comment)
 
     comment='Aditional BBsplit parameters, add them together between quotation marks and separated by one space'
-    default_value = 'false'
+    default_value = nil
     params.check_param(errors,'user_filter_aditional_params','String',default_value,comment)
 
     return errors

@@ -6,16 +6,18 @@ class PluginQualityTest < Minitest::Test
 
     outstats = File.join(OUTPUT_PATH,"quality_trimming_stats.txt")
 
+    options = {}
+
     options['max_ram'] = '1G'
-    options['cores'] = '1'
+    options['workers'] = '1'
     options['sample_type'] = 'paired'
-    options['save_singles'] = 'false'
+    options['save_unpaired'] = 'false'
 
     threshold = 20
 
     options['quality_threshold'] = threshold
     options['quality_trimming_position'] = 'both'
-    options['quality_aditional_params'] = 'false'
+    options['quality_aditional_params'] = nil
 
     plugin_list = 'PluginQuality'
 
@@ -33,7 +35,7 @@ class PluginQualityTest < Minitest::Test
 
     manager = PluginManager.new(plugin_list,params)
 
-    test = manager.execute_plugings()
+    test = manager.execute_plugins()
 
     assert_equal(result,test[0])
 
@@ -45,49 +47,57 @@ class PluginQualityTest < Minitest::Test
 
     options['quality_trimming_position'] = 'left'
 
-    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=l int=t in=stdin.fastq out=stdout.fastq"
+    params = Params.new(faketemplate,options)
+
+    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=l int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
-    test = manager.execute_plugings()
+    test = manager.execute_plugins()
 
-    assert_equal(result,test)
+    assert_equal(result,test[0])
 
  # Trimming mode: right
 
     options['quality_trimming_position'] = 'right'
 
-    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=r int=t in=stdin.fastq out=stdout.fastq"
+    params = Params.new(faketemplate,options)
+
+    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=r int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
-    test = manager.execute_plugings()
+    test = manager.execute_plugins()
 
-    assert_equal(result,test)
+    assert_equal(result,test[0])
 
  # Trimming mode: both
 
     options['quality_trimming_position'] = 'both'
 
-    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=rl int=t in=stdin.fastq out=stdout.fastq"
+    params = Params.new(faketemplate,options)
+
+    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=rl int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
-    test = manager.execute_plugings()
+    test = manager.execute_plugins()
 
-    assert_equal(result,test)
+    assert_equal(result,test[0])
 
  # Aditional params
 
     options['quality_aditional_params'] = 'add_param=test'
 
-    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=rl int=t add_param=test in=stdin.fastq out=stdout.fastq"
+    params = Params.new(faketemplate,options)
+
+    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=rl int=t add_param=test in=stdin.fastq out=stdout.fastq 2> #{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
-    test = manager.execute_plugings()
+    test = manager.execute_plugins()
 
-    assert_equal(result,test)
+    assert_equal(result,test[0])
 
   end
 

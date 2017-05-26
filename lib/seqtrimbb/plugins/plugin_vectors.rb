@@ -43,7 +43,7 @@ class PluginVectors < Plugin
   # Adding necessary fragment to save unpaired singles
 
     outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_vectors_trimming.fastq.gz")
-    cmd_add_add.push("outs=#{outsingles}") if save_singles
+    cmd_add_add.push("outs=#{outsingles}") if save_singles == 'true'
 
   # Choosing which tips are going to be trimmed
 
@@ -60,6 +60,12 @@ class PluginVectors < Plugin
       cmd_add_add.push("lref=#{vectors_db}")
 
     end
+
+   if vectors_trimming_aditional_params != nil
+
+    cmd_add_add.push(vectors_trimming_aditional_params)
+
+   end
 
   # Adding necessary info to process paired samples
 
@@ -82,8 +88,8 @@ class PluginVectors < Plugin
   # Contaminant's Filtering params
 
     minratio = @params.get_param('vectors_minratio')
-    vectors_filtering_aditional_params = @params.get_param('vectors_aditional_params')
-    vectors_path = File.join($DB_PATH,'vectors')
+    vectors_filtering_aditional_params = @params.get_param('vectors_filtering_aditional_params')
+    vectors_path = File.dirname(vectors_db)
 
   # Name and path for the statistics to be generated in the filtering process
 
@@ -99,7 +105,7 @@ class PluginVectors < Plugin
 
   # Adding necessary info to process sample as paired
 
-   cmd_add_add.push("int=t") if sample_type = ("paired" || "interleaved")
+   cmd_add_add.push("int=t") if sample_type == 'paired' || sample_type == 'interleaved'
 
   # Adding reference and path to the index 
 
@@ -107,15 +113,15 @@ class PluginVectors < Plugin
 
   # Adding closing args to the call
 
-   if vectors_trimming_aditional_params != 'false'
+   if vectors_filtering_aditional_params != nil
 
-    cmd_add.push(vectors_aditional_params)
+    cmd_add_add.push(vectors_filtering_aditional_params)
 
    end
 
   # Name and path for the statistics to be generated in the filtering process
 
-  outstats2 = File.join(File.expand_path(OUTPUT_PATH),"vectors_filtering_stats.txt")
+  outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_filtering_stats.txt")
 
    closing_args = "in=stdin.fastq out=stdout.fastq refstats=#{outstats2}"
    cmd_add_add.push(closing_args)
@@ -175,8 +181,12 @@ class PluginVectors < Plugin
     params.check_param(errors,'vectors_minratio','String',default_value,comment)  
     
     comment='Aditional BBsplit parameters for vectors trimming, add them together between quotation marks and separated by one space'
-    default_value = 'false'
+    default_value = nil
     params.check_param(errors,'vectors_trimming_aditional_params','String',default_value,comment)
+
+    comment='Aditional BBsplit parameters for vectors filtering, add them together between quotation marks and separated by one space'
+    default_value = nil
+    params.check_param(errors,'vectors_filtering_aditional_params','String',default_value,comment)
 
     comment='Trim adapters of paired reads using mergind reads methods for vectors trimming'
     default_value = 'true'

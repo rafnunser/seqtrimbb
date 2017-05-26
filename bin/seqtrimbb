@@ -72,13 +72,16 @@ put_header
 
 ############ PATHS #######################
 
-$SEQTRIM_PATH = ROOT_PATH
-
 OUTPUT_PATH = 'output_files_tmp'
 OUTPLUGINSTATS = 'output_files_tmp/plugin_stats'
 DEFAULT_FINAL_OUTPUT_PATH = 'output_files'
 
-$DB_PATH = File.expand_path(File.join(ROOT_PATH, "DB"))
+# if there is a BLASTDB environment var, then use it
+if ENV['DB']# && Dir.exists?(ENV['BLASTDB'])
+  $DB_PATH = ENV['DB']
+else # otherwise use ROOTPATH + DB
+  $DB_PATH = File.expand_path(File.join(SEQTRIM_PATH, "DB"))
+end
 
 # TODO - COMENTAR todas las clases y metodos para que salga la descripcion cuando hagas rdoc en el terminal
 
@@ -262,11 +265,11 @@ if options[:max_ram] == nil
   splitted_output1=splitted_output[1].split(" ")
   free_ram = (splitted_output1[3].to_i * 0.85 - 0.5).round
 
-  if free_ram.to_i < 1
+  if free_ram.to_i > 1
 
     max_ram = [free_ram,"G"].join("")
 
-    options[:max_ram] = max_RAM
+    options[:max_ram] = max_ram
 
   else
 
@@ -289,6 +292,7 @@ $LOG.datetime_format = "%Y-%m-%d %H:%M:%S"
 
 $LOG.info("SeqTrimBB version #{Seqtrimbb::SEQTRIM_VERSION}")
 $LOG.info("Command: #{$0}")
+$LOG.info(ROOT_PATH)
 
 $LOG.info("Using options: \n"+ JSON::pretty_generate(options))
 
@@ -421,7 +425,7 @@ if options[:qual]
       exit(-1)
     end
   end
-  $SAMPLEQUALS = options[:qual].split(",")
+  $SAMPLEQUALS = options[:qual]
 
 end
 

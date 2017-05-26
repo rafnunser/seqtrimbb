@@ -10,6 +10,8 @@ class CheckDatabase
 
   update_index
 
+  $LOG.info("Databases indexes at #{@db_path} are updated")
+
  end
 
  def update_index

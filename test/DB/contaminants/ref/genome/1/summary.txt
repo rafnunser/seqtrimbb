@@ -1,14 +1,14 @@
 #Summary
-#Generated on	Thu May 25 09:42:15 CEST 2017
+#Generated on	Thu May 25 10:33:46 CEST 2017
 #Version	5
-chroms	0
-bases	0
-defined	0
-undefined	0
-contigs	0
-scaffolds	0
+chroms	1
+bases	12203036
+defined	12186132
+undefined	16904
+contigs	4
+scaffolds	4
 interpad	300
 source	/home/rafa/opt/seqtrimbb/test/DB/contaminants/ref/genome/1/merged_ref_8132216187991606082.fa.gz
-bytes	20
-last modified	1495698134000
+bytes	4111276
+last modified	1495701226000
 scafprefixes	true

@@ -1,7 +1,10 @@
 require "seqtrimbb/version"
 
-
-ROOT_PATH=File.join(File.dirname(__FILE__),'seqtrimbb')
+PATH_LIB=File.dirname(__FILE__)
+interm=PATH_LIB.split("/")
+interm.pop
+SEQTRIM_PATH = File.join(interm)
+ROOT_PATH=File.join(PATH_LIB,'seqtrimbb')
 
 $: << File.expand_path(File.join(ROOT_PATH, 'classes'))
 

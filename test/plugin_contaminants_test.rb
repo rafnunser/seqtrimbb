@@ -5,7 +5,23 @@ class PluginContaminantsTest < Minitest::Test
   def test_plugin_contaminants
 
     db = 'contaminants'
+
+    temp_folder = File.join(RT_PATH,"temp")
+
+    if Dir.exists?(temp_folder)
+
+      FileUtils.remove_dir(temp_folder)
+
+    end
+
+    Dir.mkdir(temp_folder)
+
+    FileUtils.cp_r $DB_PATH, temp_folder
+
+    $DB_PATH = File.join(temp_folder,"DB")
+
     contaminants_db = File.join($DB_PATH,db)
+
     outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db}_contaminants_stats.txt")
 
     options = {}
@@ -178,6 +194,12 @@ class PluginContaminantsTest < Minitest::Test
     test = manager.execute_plugins()
 
     assert_equal(result,test[0])    
+
+    # Deleting $DB_PATH
+
+    FileUtils.remove_dir(temp_folder)
+
+    $DB_PATH = File.join(RT_PATH, "DB")
 
   end
   

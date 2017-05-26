@@ -15,7 +15,7 @@ class PluginLowComplexity < Plugin
     max_ram = @params.get_param('max_ram')
     cores = @params.get_param('workers')
     sample_type = @params.get_param('sample_type')
-    save_singles = @params.get_param('save_singles')
+    save_singles = @params.get_param('save_unpaired')
 
   # Adapter's trimming params
 
@@ -45,7 +45,7 @@ class PluginLowComplexity < Plugin
   # Adding necessary fragment to save unpaired singles
 
     outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_low_complexity_filtering.fastq.gz")
-    cmd_add.push("outs=#{outsingles}") if save_singles
+    cmd_add.push("outs=#{outsingles}") if save_singles == 'true'
 
   # Adding necessary info to process paired samples
 
@@ -57,7 +57,7 @@ class PluginLowComplexity < Plugin
 
   # Adding closing args to the call and joining it
 
-    if lowcomplexity_aditional_params != 'false'
+    if lowcomplexity_aditional_params != nil
 
       cmd_add.push(lowcomplexity_aditional_params)
 
@@ -91,7 +91,7 @@ class PluginLowComplexity < Plugin
 
     comment='Save reads which became unpaired after every step? true or false (default)'
     default_value = 'false'
-    params.check_param(errors,'save_singles','String',default_value,comment)
+    params.check_param(errors,'save_unpaired','String',default_value,comment)
 
     comment='Complexity threshold to be applied. Complexity is calculated using the counts of unique short kmers that occur in a window, such that the more unique kmers occur within the window - and the more even the distribution of counts - the closer the value approaches 1. Complexity_threshold = 0.01 for example will only filter homopolymers' 
     default_value = '0.01'
@@ -102,7 +102,7 @@ class PluginLowComplexity < Plugin
     params.check_param(errors,'minlength','String',default_value,comment)
 
     comment='Aditional BBduk2 parameters, add them together between quotation marks and separated by one space'
-    default_value = 'false'
+    default_value = nil
     params.check_param(errors,'lowcomplexity_aditional_params','String',default_value,comment)
 
     return errors

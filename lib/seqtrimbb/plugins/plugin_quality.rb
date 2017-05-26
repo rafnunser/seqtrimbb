@@ -35,7 +35,7 @@ class PluginQuality < Plugin
   # Adding necessary fragment to save unpaired singles
 
     outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_quality_trimming.fastq.gz")
-    cmd_add.push("outs=#{outsingles}") if save_singles
+    cmd_add.push("outs=#{outsingles}") if save_singles == 'true'
  
  # Choosing which tips are going to be trimmed
 
@@ -63,7 +63,7 @@ class PluginQuality < Plugin
     
     # Adding closing args to the call and joining it
 
-    if quality_aditional_params != 'false'
+    if quality_aditional_params != nil
 
       cmd_add.push(quality_aditional_params)
 
@@ -108,7 +108,7 @@ class PluginQuality < Plugin
     params.check_param(errors,'quality_trimming_position','String',default_value,comment)
 
     comment='Aditional BBduk2 parameters, add them together between quotation marks and separated by one space'
-    default_value = 'false'
+    default_value = nil
     params.check_param(errors,'quality_aditional_params','String',default_value,comment)
 
     return errors
