@@ -1,1 +1,0 @@
-/home/rafa/opt/seqtrimbb/test/DB/adapters/adapters.fasta

@@ -115,11 +115,11 @@ def show_additional_help
   puts "E.g.: processing a fasta file with qual"
   puts "#{File.basename($0)} -t genomics_basic.txt -Q sequences.fasta -q sequences_quality.qual"
 
-  templates = Dir.glob(File.join($SEQTRIM_PATH,'templates','*.txt')).map{|t| File.basename(t)}
+  templates = Dir.glob(File.join(ROOT_PATH,'templates','*.txt')).map{|t| File.basename(t)}
 
   puts "\n\n  ========================================================================================================"
   puts "  Available templates to use with -t option (you can also use your own template):"
-  puts "  Templates at: #{File.join($SEQTRIM_PATH,'templates')}"
+  puts "  Templates at: #{File.join(ROOT_PATH,'templates')}"
   puts "  ========================================================================================================\n\n"
 
   templates.map{|e| puts "      "+e}
