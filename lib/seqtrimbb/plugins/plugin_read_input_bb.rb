@@ -59,7 +59,7 @@ class PluginReadInputBb < Plugin
         qual1 = $SAMPLEQUALS[0]
         qual2 = $SAMPLEQUALS[1]
        
-        cmd_add.push("qual=#{qual1} qual1={qual2}")
+        cmd_add.push("qual=#{qual1} qual1=#{qual2}")
 
       else
         

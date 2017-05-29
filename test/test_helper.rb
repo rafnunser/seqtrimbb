@@ -6,6 +6,8 @@ $DB_PATH = File.join(RT_PATH, "DB")
 
 OUTPUT_PATH = "/test/testoutput"
 
+DEFAULT_FINAL_OUTPUT_PATH = OUTPUT_PATH
+
 OUTPLUGINSTATS = OUTPUT_PATH
 
 require 'seqtrimbb'

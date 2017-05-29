@@ -3,9 +3,9 @@
 
 #     SeqTrimBB: Next generation sequencing preprocessor
 #     Copyright (C) <2017>
-#     Authors: Almudena Bocinos Rioboo, Diego Dario Guerrero Fernandez, Rafael
-#              Nuñez Serrano, Rocio Bautista Moreno, Juan Falgueras Cano 
-#              & M. Gonzalo Claros
+#     Authors: Diego Dario Guerrero Fernandez, Rafael
+#              Nuñez Serrano
+
 #              email: soporte@scbi.uma.es - http://www.scbi.uma.es
 #
 #     This program is free software: you can redistribute it and/or modify
@@ -54,11 +54,6 @@ def put_header
 
   header.authors<< "Rafael Núñez"
   header.authors<< "Darío Guerrero"
-  header.authors<< "Almudena Bocinos"
-  header.authors<< "Rocío Bautista"
-  header.authors<< "Noé Fernández"
-  header.authors<< "Juan Falgueras"
-  header.authors<< "M. Gonzalo Claros"
 
   # header.articles<< "Article one: with one description line"
   # header.articles<< "Article two: with one description line"
@@ -79,7 +74,7 @@ DEFAULT_FINAL_OUTPUT_PATH = 'output_files'
 # if there is a BLASTDB environment var, then use it
 if ENV['DB']# && Dir.exists?(ENV['BLASTDB'])
   $DB_PATH = ENV['DB']
-else # otherwise use ROOTPATH + DB
+else # otherwise use SEQTRIM_PATH + DB
   $DB_PATH = File.expand_path(File.join(SEQTRIM_PATH, "DB"))
 end
 
@@ -318,13 +313,11 @@ if options[:check_db]
   
   CheckDatabase.new($DB_PATH,options[:workers],options[:max_ram])
 
-  exit
-
 end
 
 # checks for essential arguments
 
-required_options = options[:template] && options[:file]
+required_options = options[:file] && options[:template]
 
 if (ARGV.count != 0) || (!required_options) 
   puts "You must provide all required options"
@@ -341,11 +334,11 @@ end
 # check for template's existence
 
 if (!File.exists?(options[:template]))
-  if File.exists?(File.join($SEQTRIM_PATH,'templates',options[:template]))
-    options[:template] = File.join($SEQTRIM_PATH,'templates',options[:template])
+  if File.exists?(File.join(ROOT_PATH,'templates',options[:template]))
+    options[:template] = File.join(ROOT_PATH,'templates',options[:template])
   else
     $LOG.error "Params file: #{options[:template]} doesn't exists. \n\nYou can use your own template or specify one from this list:\n============================="
-    puts Dir.glob(File.join($SEQTRIM_PATH,'templates','*.txt')).map{|t| File.basename(t)}
+    puts Dir.glob(File.join(ROOT_PATH,'templates','*.txt')).map{|t| File.basename(t)}
     exit(-1)
   end
 end

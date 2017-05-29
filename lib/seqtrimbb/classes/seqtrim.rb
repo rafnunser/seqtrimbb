@@ -82,7 +82,7 @@ class Seqtrim
 
     if plugin_list.include?('PluginMatePairs')
 
-      $LOG.info("Mate Pairs treatment")
+      $LOG.info("Initiating: Mate Pairs treatment")
 
       require 'plugin_mate_pairs.rb'
 
@@ -98,6 +98,8 @@ class Seqtrim
       outunknown = File.join(File.expand_path(OUTPUT_PATH),"unknown.fastq.gz")
       FileUtils.rm(outlongmate)
       FileUtils.rm(outunknown)
+
+      $LOG.info("Finalizing: Mate Pairs treatment")
 
     end
 

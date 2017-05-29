@@ -11,11 +11,10 @@
 # Help: <li>PluginCustomPlugin2Bb: explain it.... </li>
 # Help: </ul>
 
-plugin_list = PluginContaminants
+plugin_list = PluginMatePairs
 
-contaminants_decontamination_mode= exclude genus
+linker_literal_seq = AAAAAAAGGGGGGTGCA
 
-sample_species = Candida albicans
 
 
 

@@ -58,10 +58,6 @@ class PluginSaveResultsBb < Plugin
   def self.check_params(params)
     errors=[]  
     
-    comment='Save results in a compressed file'
-    default_value = 'true'
-    params.check_param(errors,'save_results_bb_save_in_gzip','String',default_value,comment)
-    
     comment='Max RAM'
     default_value = 
     params.check_param(errors,'max_ram','String',default_value,comment)
