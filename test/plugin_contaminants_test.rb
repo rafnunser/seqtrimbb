@@ -40,6 +40,21 @@ class PluginContaminantsTest < Minitest::Test
 
     CheckDatabase.new($DB_PATH,options['workers'],options['max_ram'])
 
+    path_refs = File.join(contaminants_db,'old_fastas_'+db+'.txt')
+
+    db_list = {}
+
+    File.open(path_refs).each_line do |line|
+
+     line.chomp!
+     ref = File.basename(line,".fasta")
+     species0 = ref.split("_")
+     species= species0[0..1].join(" ")
+
+     db_list[species] = line
+
+    end
+
     params = Params.new(faketemplate,options)
 
     plugin_list = 'PluginContaminants'
@@ -142,10 +157,17 @@ class PluginContaminantsTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    paths_to_contaminant1 = File.join($DB_PATH,'contaminants/Another_contaminant.fasta')
-    paths_to_contaminant2 = File.join($DB_PATH,'contaminants/Contaminant_two.fasta')
+    db_ref = Array.new
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{paths_to_contaminant2},#{paths_to_contaminant1} path=#{OUTPUT_PATH} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+    db_list.each do |contaminant,path|
+
+      db_ref.push(path) if contaminant != options['sample_species']
+
+    end
+
+    db_ref = db_ref.join(",")
+
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{db_ref} path=#{OUTPUT_PATH} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
