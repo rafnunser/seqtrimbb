@@ -6,6 +6,7 @@ class PluginAdaptersTest < Minitest::Test
 
     adapters_db = File.join($DB_PATH,'adapters/adapters.fasta')
     outstats = File.join(File.expand_path(OUTPUT_PATH),"adapters_trimmings_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"adapters_trimmings_stats_cmd.txt")
 
     options = {}
 
@@ -34,7 +35,7 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -52,7 +53,7 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
    
     manager = PluginManager.new(plugin_list,params)
 
@@ -66,7 +67,7 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -80,7 +81,7 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -96,7 +97,7 @@ class PluginAdaptersTest < Minitest::Test
 
     outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_adapters_trimming.fastq.gz")
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 outs=#{outsingles} rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 outs=#{outsingles} rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -114,7 +115,7 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -132,7 +133,7 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe add_param=test in=stdin.fastq out=stdout.fastq stats=#{outstats}"
+    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe add_param=test in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 

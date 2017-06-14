@@ -73,6 +73,20 @@ class Seqtrim
       exit(-1)
     end
 
+    # Directories
+
+    if !Dir.exists?(OUTPUT_PATH)
+      Dir.mkdir(OUTPUT_PATH)
+    end
+
+    if !Dir.exists?(DEFAULT_FINAL_OUTPUT_PATH)
+      Dir.mkdir(DEFAULT_FINAL_OUTPUT_PATH)
+    end
+
+    if !Dir.exists?(OUTPLUGINSTATS)
+      Dir.mkdir(OUTPLUGINSTATS)
+    end
+
     # load plugins
 
     plugin_list = params.get_param('plugin_list') # puts in plugin_list the plugins's array
@@ -86,13 +100,15 @@ class Seqtrim
 
       require 'plugin_mate_pairs.rb'
 
-      PluginMatePairs.new(params)
+      pmate_pair = PluginMatePairs.new(params)
 
-      list = plugin_list.split(",")
+      pmate_pair.treat_lmp(params)
 
-      list.delete('PluginMatePairs')
+      tmplist = plugin_list.split(",")
 
-      plugin_list = list.join(",")
+      tmplist.delete('PluginMatePairs')
+
+      plugin_list = tmplist.join(",")
 
       outlongmate = File.join(File.expand_path(OUTPUT_PATH),"longmate.fastq.gz")
       outunknown = File.join(File.expand_path(OUTPUT_PATH),"unknown.fastq.gz")
@@ -104,18 +120,6 @@ class Seqtrim
     end
 
     plugin_manager = PluginManager.new(plugin_list,params) # creates an instance from PluginManager. This must storage the plugins and load it
-
-    if !Dir.exists?(OUTPUT_PATH)
-      Dir.mkdir(OUTPUT_PATH)
-    end
-
-    if !Dir.exists?(DEFAULT_FINAL_OUTPUT_PATH)
-      Dir.mkdir(DEFAULT_FINAL_OUTPUT_PATH)
-    end
-
-    if !Dir.exists?(OUTPLUGINSTATS)
-      Dir.mkdir(OUTPLUGINSTATS)
-    end
 
     # Extract global stats
     if params.get_param('generate_initial_stats').to_s=='true'
@@ -147,8 +151,7 @@ class Seqtrim
     # ADDING A CALL TO MAP OR ASSEMBLE THE SAMPLE (USING AN EXTERNAL TOOL)
 
     if ext_cmd
-
-      cmds.pop
+      
       cmds.push(ext_cmd)
 
       $LOG.info("CMD_TO_MAP/ASSEMBLE:\n#{ext_cmd}")
@@ -159,8 +162,32 @@ class Seqtrim
     $LOG.info("CMD_TO_EXECUTE:\n#{cmd}")
     
     # EXECUTE CMD:
+
+    $LOG.info("Initializing cleaning process...")
     
     system(cmd)
+
+    # Storing all plugins stats
+
+   if tmplist != nil
+
+     plist = params.get_param('plugin_list')
+
+     plugin_manager = PluginManager.new(plist,params)
+     
+   end 
+
+   stats = plugin_manager.get_plugins_stats()
+
+    # Hash to json and saving json file
+
+   jstats = stats.to_json
+
+   File.open("#{DEFAULT_FINAL_OUTPUT_PATH}/stats.json","w") do |f|
+    f.write(JSON.pretty_generate(stats))
+   end
+
+   $LOG.info("...Finalizing cleaning process")
 
     # Extract global stats
     if params.get_param('generate_final_stats').to_s=='true'
@@ -176,8 +203,6 @@ class Seqtrim
 
     # save used params to file
     params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
-
-    $LOG.info 'Closing server'
 
   end
 

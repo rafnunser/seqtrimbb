@@ -27,7 +27,6 @@ class PluginManager
 
       @plugin_names.each do |plugin_name|
           
-        # Creates an instance of the respective plugin stored in "plugin_name",and asociate it to the sequence 'seq'
         plugin_class = Object.const_get(plugin_name)
         p = plugin_class.new(@params)
         cmds << p.get_cmd
@@ -36,9 +35,35 @@ class PluginManager
       
     else
       raise "Plugin list not found"
-    end #end  if lista-param
+    end 
 
     return cmds
+  end
+
+  # Receives the plugin's list , store plugin's stats in a hash
+  def get_plugins_stats()
+
+    stats={}
+
+    if !@plugin_names.empty?
+
+      @plugin_names.each do |plugin_name|
+          
+        plugin_class = Object.const_get(plugin_name)
+        p = plugin_class.new(@params)
+        plugin_stats = p.get_stats
+
+      #Merge!
+
+        stats.merge!(plugin_stats)
+        
+      end 
+      
+    else
+      raise "Plugin list not found"
+    end   
+
+    return stats
   end
   
   # Checks if the parameters are right for all plugins's execution. Finally return true if all is right or false if isn't 

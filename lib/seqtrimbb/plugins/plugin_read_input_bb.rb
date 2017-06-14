@@ -17,6 +17,8 @@ class PluginReadInputBb < Plugin
     sample_type = @params.get_param('sample_type')
     file_format = @params.get_param('file_format')
 
+    outstats = File.join(File.expand_path(OUTPLUGINSTATS),"input_stats.txt")
+
   # Creates an array to store the fragments to build the call
 
     cmd_add = Array.new
@@ -78,11 +80,22 @@ class PluginReadInputBb < Plugin
 
   # Adding closing args and joining the call
      
-    cmd_add.push("out=stdout.fastq")
+    cmd_add.push("out=stdout.fastq 2> #{outstats}")
 
     cmd = cmd_add.join(" ")
 
     return cmd
+
+ end
+
+ def get_stats
+
+    # DOES NOTHING
+
+    plugin_stats = {}
+    plugin_stats["sequences"] = {}
+
+    return plugin_stats
 
  end
  

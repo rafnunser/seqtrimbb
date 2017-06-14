@@ -28,6 +28,7 @@ class PluginPolyAt < Plugin
   # Name and path for the statistics to be generated in the trimming process
 
     outstats = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimmings_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimmings_stats_cmd.txt")
 
   # Creates an array to store the necessary fragments to assemble the call
 
@@ -74,13 +75,42 @@ class PluginPolyAt < Plugin
 
     end
 
-    closing_args = "in=stdin.fastq out=stdout.fastq stats=#{outstats}" 
+    closing_args = "in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}" 
 
     cmd_add.push(closing_args)
 
     cmd = cmd_add.join(" ")
 
     return cmd
+
+ end
+
+ def get_stats
+
+    plugin_stats = {}
+    plugin_stats["plugin_poly_at"] = {}
+    plugin_stats["plugin_poly_at"]["sequences_with_poly_at"] = {}
+    stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimmings_stats.txt")
+
+    File.open(stat_file).each do |line|
+
+      line.chomp!
+
+     if !line.empty?
+
+       if (line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo
+    
+         line[0]=''
+
+         splitted = line.split(/\t/)
+
+         plugin_stats["plugin_poly_at"]["sequences_with_poly_at"]["count"] = splitted[1].to_i if splitted[0] == 'Matched'
+         
+       end
+     end
+    end
+
+    return plugin_stats
 
  end
  

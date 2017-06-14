@@ -23,6 +23,7 @@ class PluginContaminantsTest < Minitest::Test
     contaminants_db = File.join($DB_PATH,db)
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db}_contaminants_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_contaminants_stats_cmd.txt")
 
     options = {}
 
@@ -65,7 +66,7 @@ class PluginContaminantsTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 ref=#{contaminants_db} path=#{contaminants_db} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 ref=#{contaminants_db} path=#{contaminants_db} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -83,7 +84,7 @@ class PluginContaminantsTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{contaminants_db} add_param=test in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{contaminants_db} add_param=test in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -110,8 +111,9 @@ class PluginContaminantsTest < Minitest::Test
     db_name = File.basename(db,".fasta")
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db_name}_contaminants_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"#{db_name}_contaminants_stats_cmd.txt")
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{path_to_db_file} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{path_to_db_file} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -132,8 +134,9 @@ class PluginContaminantsTest < Minitest::Test
     db_name = db.split("/").last
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db_name}_contaminants_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"#{db_name}_contaminants_stats_cmd.txt")
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{contaminants_db} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{contaminants_db} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -148,6 +151,7 @@ class PluginContaminantsTest < Minitest::Test
     db = 'contaminants'
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db}_contaminants_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_contaminants_stats_cmd.txt")
 
     options['contaminants_dbs'] = db
 
@@ -167,7 +171,7 @@ class PluginContaminantsTest < Minitest::Test
 
     db_ref = db_ref.join(",")
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{db_ref} path=#{OUTPUT_PATH} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{db_ref} path=#{OUTPUT_PATH} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -185,7 +189,7 @@ class PluginContaminantsTest < Minitest::Test
 
     paths_to_contaminants = File.join($DB_PATH,'contaminants/Another_contaminant.fasta')
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{paths_to_contaminants} path=#{OUTPUT_PATH} in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{paths_to_contaminants} path=#{OUTPUT_PATH} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -204,12 +208,14 @@ class PluginContaminantsTest < Minitest::Test
     options['contaminants_decontamination_mode'] = 'regular'
 
     outstats1 = File.join(File.expand_path(OUTPUT_PATH),"contaminants_contaminants_stats.txt")
+    outstats3 = File.join(File.expand_path(OUTPLUGINSTATS),"contaminants_contaminants_stats_cmd.txt")
 
     outstats2 = File.join(File.expand_path(OUTPUT_PATH),"vectors_contaminants_stats.txt")
+    outstats4 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_contaminants_stats_cmd.txt")
 
     params = Params.new(faketemplate,options)
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db1} path=#{contaminants_db1} in=stdin.fastq out=stdout.fastq refstats=#{outstats1} | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db2} path=#{contaminants_db2} in=stdin.fastq out=stdout.fastq refstats=#{outstats2}"
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db1} path=#{contaminants_db1} in=stdin.fastq out=stdout.fastq refstats=#{outstats1} 2> #{outstats3} | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db2} path=#{contaminants_db2} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
 
     manager = PluginManager.new(plugin_list,params)
 

@@ -17,7 +17,10 @@ class PluginMatePairsTest < Minitest::Test
 
     adapters_db = File.join($DB_PATH,'adapters/adapters.fasta')
     outstats_adapters = File.join(File.expand_path(OUTPUT_PATH),"LMP_adapters_trimmings_stats.txt")
-    outstats_linkers = File.join(File.expand_path(OUTPUT_PATH),"LMP_linker_masking_stats.txt")
+    outstats1 = File.join(File.expand_path(OUTPUT_PATH),"LMP_adapters_trimmings_stats_cmd.txt")
+    outstats_split = File.join(File.expand_path(OUTPUT_PATH),"LMP_splitting_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"LMP_splitting_stats_cmd.txt")
+    outstats3 = File.join(File.expand_path(OUTPUT_PATH),"LMP_extra_cmds.txt")
 
     options['adapters_db'] = adapters_db
     options['adapters_kmer_size'] = 15
@@ -49,8 +52,8 @@ class PluginMatePairsTest < Minitest::Test
 
    result = Array.new
 
-   result.push("bbduk2.sh -Xmx1G t=1 rref=#{adapters_db} lref=#{adapters_db} k=15 mink=8 hdist=1 stats=#{outstats_adapters} #{input_frag} out=stdout.fastq tpe tbo | bbduk2.sh -Xmx1G t=1 in=stdin.fastq out=stdout.fastq kmask=J k=19 hdist=1 mink=11 hdist2=0 literal=#{linker} stats=#{outstats_linkers} | splitnextera.sh -Xmx1G t=1 int=t in=stdin.fastq out=#{outlongmate} outu=#{outunknown}")
-   result.push("cat #{outlongmate} #{outunknown} | bbduk2.sh -Xmx1G t=1 int=t in=stdin.fastq.gz #{output_frag} lliteral=#{unkmask} rliteral=#{unkmask} k=19 hdist=1 mink=11 hdist2=0 minlength=50")
+   result.push("bbduk2.sh -Xmx1G t=1 rref=#{adapters_db} lref=#{adapters_db} k=15 mink=8 hdist=1 stats=#{outstats_adapters} #{input_frag} out=stdout.fastq tpe tbo 2> #{outstats1} | bbduk2.sh -Xmx1G t=1 in=stdin.fastq out=stdout.fastq kmask=J k=19 hdist=1 mink=11 hdist2=0 literal=#{linker} 2> #{outstats3} | splitnextera.sh -Xmx1G t=1 int=t in=stdin.fastq out=#{outlongmate} outu=#{outunknown} stats=#{outstats_split} 2> #{outstats2}")
+   result.push("cat #{outlongmate} #{outunknown} | bbduk2.sh -Xmx1G t=1 int=t in=stdin.fastq.gz #{output_frag} lliteral=#{unkmask} rliteral=#{unkmask} k=19 hdist=1 mink=11 hdist2=0 minlength=50 2> #{outstats3}")
    
    test = PluginMatePairs.get_cmd(params)
 
@@ -68,7 +71,7 @@ class PluginMatePairsTest < Minitest::Test
 
    $SAMPLEFILES[0] = file1
 
-   input_frag = "in=#{file1}"
+   input_frag = "in=#{file1} int=t"
 
    unkmask = '"JJJJJJJJJJJJ"'
 
@@ -76,8 +79,8 @@ class PluginMatePairsTest < Minitest::Test
 
    result = Array.new
 
-   result.push("bbduk2.sh -Xmx1G t=1 rref=#{adapters_db} lref=#{adapters_db} k=15 mink=8 hdist=1 stats=#{outstats_adapters} #{input_frag} int=t out=stdout.fastq tpe tbo | bbduk2.sh -Xmx1G t=1 in=stdin.fastq out=stdout.fastq kmask=J k=19 hdist=1 mink=11 hdist2=0 literal=#{linker} stats=#{outstats_linkers} | splitnextera.sh -Xmx1G t=1 int=t in=stdin.fastq out=#{outlongmate} outu=#{outunknown}")
-   result.push("cat #{outlongmate} #{outunknown} | bbduk2.sh -Xmx1G t=1 int=t in=stdin.fastq.gz #{output_frag} lliteral=#{unkmask} rliteral=#{unkmask} k=19 hdist=1 mink=11 hdist2=0 minlength=50")
+   result.push("bbduk2.sh -Xmx1G t=1 rref=#{adapters_db} lref=#{adapters_db} k=15 mink=8 hdist=1 stats=#{outstats_adapters} #{input_frag} out=stdout.fastq tpe tbo 2> #{outstats1} | bbduk2.sh -Xmx1G t=1 in=stdin.fastq out=stdout.fastq kmask=J k=19 hdist=1 mink=11 hdist2=0 literal=#{linker} 2> #{outstats3} | splitnextera.sh -Xmx1G t=1 int=t in=stdin.fastq out=#{outlongmate} outu=#{outunknown} stats=#{outstats_split} 2> #{outstats2}")
+   result.push("cat #{outlongmate} #{outunknown} | bbduk2.sh -Xmx1G t=1 int=t in=stdin.fastq.gz #{output_frag} lliteral=#{unkmask} rliteral=#{unkmask} k=19 hdist=1 mink=11 hdist2=0 minlength=50 2> #{outstats3}")
    
    test = PluginMatePairs.get_cmd(params)
 

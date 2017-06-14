@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class PluginQualityTest < Minitest::Test
+class PluginVectorsTest < Minitest::Test
 
   def test_plugin_vectors
 
@@ -33,16 +33,19 @@ class PluginQualityTest < Minitest::Test
     options['vectors_db'] = vectors_db
     options['vectors_trimming_position'] = 'both'
     options['vectors_kmer_size'] = 31
-    options['vectors_min_external_kmer_size'] = 8
+    options['vectors_min_external_kmer_size'] = 11
     options['vectors_max_mismatches'] = 1
     options['vectors_trimming_aditional_params'] = nil
     options['vectors_filtering_aditional_params'] = nil
 
-    outstats1 = File.join(File.expand_path(OUTPUT_PATH),"vectors_trimming_stats.txt")
-    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_vectors_trimming.fastq.gz")
-    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"vectors_filtering_stats.txt")
+    outstats1 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats.txt")
+    outstats3 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats_cmd.txt")
+    outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_filtering_stats.txt")
+    outstats4 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_filtering_stats_cmd.txt")
 
-    options['vectors_minratio'] = 0.56
+    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_vectors_trimming.fastq.gz")
+
+    options['vectors_minratio'] = 0.8
 
     faketemplate = File.join($DB_PATH,"faketemplate.txt")
 
@@ -58,7 +61,7 @@ class PluginQualityTest < Minitest::Test
    
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=8 hdist=1 rref=#{vectors_db} lref=#{vectors_db} in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 | bbsplit.sh -Xmx1G t=1 minratio=0.56 ref=#{vectors_db} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2}"
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=11 hdist=1 rref=#{vectors_db} lref=#{vectors_db} in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | bbsplit.sh -Xmx1G t=1 minratio=0.8 ref=#{vectors_db} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -76,7 +79,7 @@ class PluginQualityTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=8 hdist=1 outs=#{outsingles} rref=#{vectors_db} lref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{vectors_db} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2}"
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=11 hdist=1 outs=#{outsingles} rref=#{vectors_db} lref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | bbsplit.sh -Xmx1G t=1 minratio=0.8 int=t ref=#{vectors_db} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -94,7 +97,7 @@ class PluginQualityTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=8 hdist=1 lref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{vectors_db} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2}"
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=11 hdist=1 lref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | bbsplit.sh -Xmx1G t=1 minratio=0.8 int=t ref=#{vectors_db} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -108,7 +111,7 @@ class PluginQualityTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=8 hdist=1 rref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{vectors_db} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2}"
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=11 hdist=1 rref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | bbsplit.sh -Xmx1G t=1 minratio=0.8 int=t ref=#{vectors_db} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -122,7 +125,7 @@ class PluginQualityTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=8 hdist=1 rref=#{vectors_db} lref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{vectors_db} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2}"
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=11 hdist=1 rref=#{vectors_db} lref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | bbsplit.sh -Xmx1G t=1 minratio=0.8 int=t ref=#{vectors_db} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -138,7 +141,7 @@ class PluginQualityTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=8 hdist=1 rref=#{vectors_db} lref=#{vectors_db} add_param=test int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{vectors_db} path=#{vectors_path} add_param=test in=stdin.fastq out=stdout.fastq refstats=#{outstats2}"
+    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=11 hdist=1 rref=#{vectors_db} lref=#{vectors_db} add_param=test int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | bbsplit.sh -Xmx1G t=1 minratio=0.8 int=t ref=#{vectors_db} path=#{vectors_path} add_param=test in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
 
     manager = PluginManager.new(plugin_list,params)
 

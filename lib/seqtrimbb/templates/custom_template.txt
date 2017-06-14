@@ -13,7 +13,6 @@
 
 plugin_list = PluginMatePairs
 
-linker_literal_seq = AAAAAAAGGGGGGTGCA
 
 
 

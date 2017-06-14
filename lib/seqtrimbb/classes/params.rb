@@ -256,8 +256,8 @@ class Params
   def check_param(errors,param,param_class,default_value=nil, comment=nil)
 
      if !exists?(param)
-       if default_value.nil? #|| (default_value.is_a?(String) && default_value.empty?)
-         errors.push "The param #{param} is required and no default value is available"
+       if default_value.nil? #|| (default_value.is_a?(String) && default_value.empty?     
+          $LOG.info "#{param} value is nil"
        else
          set_param(param,default_value,comment)
        end

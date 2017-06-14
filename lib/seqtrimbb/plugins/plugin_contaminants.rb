@@ -32,10 +32,6 @@ class PluginContaminants < Plugin
 
   contaminants_dbs.split(/ |,/).each do |db|
 
-     # Name and path for the statistics to be generated in the decontamination process
-
-      outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_contaminants_stats.txt")
-
      # Creates an array to store the fragments
 
       cmd_add_add = Array.new
@@ -62,7 +58,8 @@ class PluginContaminants < Plugin
         db_name = File.basename(db,".fasta")
 
         outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_contaminants_stats.txt")
-       
+        outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_contaminants_stats_cmd.txt")
+
         db_refs = db
 
         db_path = File.dirname(db)
@@ -84,7 +81,8 @@ class PluginContaminants < Plugin
          db_name = db.split("/").last
 
          outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_contaminants_stats.txt")
- 
+         outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_contaminants_stats_cmd.txt")
+
       #Generate external database's index
 
          require 'check_external_database.rb'
@@ -113,7 +111,8 @@ class PluginContaminants < Plugin
       # Name and path for the statistics to be generated in the decontamination process
 
          outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_contaminants_stats.txt")
-        
+         outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_contaminants_stats_cmd.txt")
+
       # Internal directory database
 
          db_path = File.join($DB_PATH,db)
@@ -202,7 +201,7 @@ class PluginContaminants < Plugin
 
    end
 
-   closing_args = "in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+   closing_args = "in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
    cmd_add_add.push(closing_args)
 
     # Assembling the call and adding it to the plugins result
@@ -215,6 +214,64 @@ class PluginContaminants < Plugin
 
     cmd = cmd_add.join(" | ")
     return cmd
+
+ end
+
+ def get_stats
+
+  contaminants_dbs = @params.get_param('contaminants_dbs')
+
+    plugin_stats = {}
+    plugin_stats["plugin_contaminants"] = {}
+    plugin_stats["plugin_contaminants"]["contaminated_sequences_count"] = 0
+    plugin_stats["plugin_contaminants"]["contaminants_ids"] = {}
+
+  contaminants_dbs.split(/ |,/).each do |db|
+
+   if File.file?(db)
+
+        db_name = File.basename(db,".fasta")
+
+        stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_contaminants_stats.txt")
+
+   else
+      
+      if File.exists?(db)
+
+         db_name = db.split("/").last
+
+         stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_contaminants_stats.txt")
+
+      else
+
+         stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_contaminants_stats.txt")   
+
+      end
+        
+   end
+
+    File.open(stat_file).each do |line|
+
+      line.chomp!
+
+     if !line.empty?
+
+       if !(line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo
+    
+         splitted = line.split(/\t/)
+
+         nreads = splitted[5].to_i + splitted[6].to_i
+
+         plugin_stats["plugin_contaminants"]["contaminants_ids"][splitted[0]] = nreads
+         plugin_stats["plugin_contaminants"]["contaminated_sequences_count"] += nreads
+
+       end
+     end
+    end
+
+    return plugin_stats
+
+  end
 
  end
  

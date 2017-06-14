@@ -27,6 +27,8 @@ class PluginUserFilterTest < Minitest::Test
     options['sample_type'] = 'paired'
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"contaminants_user_filter_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"contaminants_user_filter_stats_cmd.txt")
+
     user_filter_db = File.join($DB_PATH,db)
 
     options['user_filter_dbs'] = db
@@ -44,7 +46,7 @@ class PluginUserFilterTest < Minitest::Test
 
  # Two species
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{user_filter_db} path=#{user_filter_db} out_Contaminant_one=Contaminant_one_out.fastq.gz out_Contaminant_two=Contaminant_two_out.fastq.gz in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{user_filter_db} path=#{user_filter_db} out_Contaminant_one=Contaminant_one_out.fastq.gz out_Contaminant_two=Contaminant_two_out.fastq.gz in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -58,7 +60,7 @@ class PluginUserFilterTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{user_filter_db} path=#{user_filter_db} basename=%_out.fastq.gz in=stdin.fastq out=stdout.fastq refstats=#{outstats}"
+    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{user_filter_db} path=#{user_filter_db} basename=%_out.fastq.gz in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 

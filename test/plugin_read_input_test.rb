@@ -12,6 +12,8 @@ class PluginInputTest < Minitest::Test
     options['sample_type'] = 'paired'
     options['file_format'] = 'fastq'
 
+    outstats = File.join(File.expand_path(OUTPUT_PATH),"input_stats.txt")
+
     plugin_list = 'PluginReadInputBb'
 
     faketemplate = File.join($DB_PATH,"faketemplate.txt")
@@ -30,7 +32,7 @@ class PluginInputTest < Minitest::Test
 
     $SAMPLEFILES[0] = file
 
-    result = "reformat.sh -Xmx1G t=1 in=#{file} out=stdout.fastq"
+    result = "reformat.sh -Xmx1G t=1 in=#{file} out=stdout.fastq 2> #{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -50,7 +52,7 @@ class PluginInputTest < Minitest::Test
 
    $SAMPLEFILES[0] = file
 
-   result = "reformat.sh -Xmx1G t=1 in=#{file} int=t out=stdout.fastq"
+   result = "reformat.sh -Xmx1G t=1 in=#{file} int=t out=stdout.fastq 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 
@@ -72,7 +74,7 @@ class PluginInputTest < Minitest::Test
    $SAMPLEFILES[0] = file1
    $SAMPLEFILES[1] = file2
 
-   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} out=stdout.fastq"
+   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} out=stdout.fastq 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 
@@ -95,7 +97,7 @@ class PluginInputTest < Minitest::Test
    $SAMPLEFILES[0] = file1
    $SAMPLEFILES[1] = file2
 
-   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} q=40 out=stdout.fastq"
+   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} q=40 out=stdout.fastq 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 
@@ -125,7 +127,7 @@ class PluginInputTest < Minitest::Test
    $SAMPLEQUALS[0] = qual1
    $SAMPLEQUALS[1] = qual2
 
-   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} qual=#{qual1} qual1=#{qual2} out=stdout.fastq"
+   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} qual=#{qual1} qual1=#{qual2} out=stdout.fastq 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 

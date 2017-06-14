@@ -9,7 +9,7 @@ require "plugin"
 
 class PluginMatePairs < Plugin
 
-  def initialize(params)
+  def treat_lmp(params)
 
     PluginMatePairs.check_params(params)
     
@@ -49,7 +49,10 @@ class PluginMatePairs < Plugin
     adapters_max_mismatches = params.get_param('adapters_max_mismatches')
 
     outstats_adapters = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimmings_stats.txt")
-    outstats_linkers = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_linker_masking_stats.txt")
+    outstats1 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimmings_stats_cmd.txt")
+    outstats_split = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_splitting_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_splitting_stats_cmd.txt")
+    outstats3 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_extra_cmds.txt")
 
     outlongmate = File.join(File.expand_path(OUTPUT_PATH),"longmate.fastq.gz")
     outunknown = File.join(File.expand_path(OUTPUT_PATH),"unknown.fastq.gz")
@@ -74,7 +77,7 @@ class PluginMatePairs < Plugin
   
     #Call to split libraries. This step will keep all the reads which maybe LMPs truly
 
-    cmd1 = "bbduk2.sh -Xmx#{max_ram} t=#{cores} rref=#{adapters_db} lref=#{adapters_db} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches} stats=#{outstats_adapters} #{input_frag} out=stdout.fastq tpe tbo | bbduk2.sh -Xmx#{max_ram} t=#{cores} in=stdin.fastq out=stdout.fastq kmask=J k=19 hdist=1 mink=11 hdist2=0 literal=#{linkers} stats=#{outstats_linkers} | splitnextera.sh -Xmx#{max_ram} t=#{cores} int=t in=stdin.fastq out=#{outlongmate} outu=#{outunknown}"
+    cmd1 = "bbduk2.sh -Xmx#{max_ram} t=#{cores} rref=#{adapters_db} lref=#{adapters_db} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches} stats=#{outstats_adapters} #{input_frag} out=stdout.fastq tpe tbo 2> #{outstats1} | bbduk2.sh -Xmx#{max_ram} t=#{cores} in=stdin.fastq out=stdout.fastq kmask=J k=19 hdist=1 mink=11 hdist2=0 literal=#{linkers} 2> #{outstats3} | splitnextera.sh -Xmx#{max_ram} t=#{cores} int=t in=stdin.fastq out=#{outlongmate} outu=#{outunknown} stats=#{outstats_split} 2> #{outstats2}"
 
    #Pushing cmd instead of making a system call
 
@@ -88,7 +91,7 @@ class PluginMatePairs < Plugin
 
      $SAMPLEFILES[0] = "untreated_LMPreads_1.fastq.gz"
      $SAMPLEFILES[1] = "untreated_LMPreads_2.fastq.gz"
-    
+     
     elsif sample_type == 'interleaved'
       
      output_frag = "out=untreated_LMPreads.fastq.gz"
@@ -101,7 +104,7 @@ class PluginMatePairs < Plugin
 
     unkmask = '"JJJJJJJJJJJJ"'
 
-    cmd2 = "cat #{outlongmate} #{outunknown} | bbduk2.sh -Xmx#{max_ram} t=#{cores} int=t in=stdin.fastq.gz #{output_frag} lliteral=#{unkmask} rliteral=#{unkmask} k=19 hdist=1 mink=11 hdist2=0 minlength=50"
+    cmd2 = "cat #{outlongmate} #{outunknown} | bbduk2.sh -Xmx#{max_ram} t=#{cores} int=t in=stdin.fastq.gz #{output_frag} lliteral=#{unkmask} rliteral=#{unkmask} k=19 hdist=1 mink=11 hdist2=0 minlength=50 2> #{outstats3}"
  
    #Pushing cmd instead of making a system call
 
@@ -111,6 +114,82 @@ class PluginMatePairs < Plugin
 
   end
 
+ def get_stats
+
+    plugin_stats = {}
+    plugin_stats["plugin_adapters"] = {}
+    plugin_stats["plugin_adapters"]["sequences_with_adapter"] = {}
+    plugin_stats["plugin_adapters"]["sequences_with_adapter"]["count"] = 0
+    plugin_stats["plugin_adapters"]["adapter_id"] = {}
+    plugin_stats["plugin_mate_pairs"] = {}
+    plugin_stats["plugin_mate_pairs"]["long_mate_pairs"] = {}
+    plugin_stats["plugin_mate_pairs"]["long_mate_pairs"]["count"] = 0
+
+    stat_file1 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimmings_stats.txt")
+    stat_file2 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_splitting_stats.txt")
+    
+    File.open(stat_file1).each do |line|
+
+      line.chomp!
+
+     if !line.empty?
+
+       if (line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo
+    
+         line[0]=''
+
+         splitted = line.split(/\t/)
+
+         plugin_stats["plugin_adapters"]["sequences_with_adapter"]["count"] = splitted[1].to_i if splitted[0] == 'Matched'
+
+       else 
+
+         splitted = line.split(/\t/)
+         
+         plugin_stats["plugin_adapters"]["adapter_id"][splitted[0]] = splitted[1]
+
+       end
+     end
+    end
+
+    File.open(stat_file2).each do |line|
+
+      line.chomp!
+
+     if !line.empty?
+
+       if (line =~ /^Long/) #Es el encabezado de la tabla o el archivo
+
+         splitted = line.split(/\t/)
+
+         nreads = splitted[1].split(" ").pop 
+
+         plugin_stats["plugin_mate_pairs"]["long_mate_pairs"]["count"] += nreads.to_i
+         plugin_stats["plugin_mate_pairs"]["long_mate_pairs"]["known"] = nreads.to_i
+
+       elsif (line =~ /^Unknown/)
+
+         splitted = line.split(/\t/)
+         
+         nreads = splitted[1].split(" ").pop 
+
+         plugin_stats["plugin_mate_pairs"]["long_mate_pairs"]["count"] += nreads.to_i
+         plugin_stats["plugin_mate_pairs"]["long_mate_pairs"]["unknown"] = nreads.to_i
+
+       elsif (line =~ /^Adapters/)
+
+         splitted = line.split(/\t/)
+         
+         plugin_stats["plugin_mate_pairs"]["linkers_detected"]= splitted[1]
+
+       end
+     end
+    end
+
+    return plugin_stats
+
+ end
+ 
   def self.check_params(params)
 
     errors=[]  

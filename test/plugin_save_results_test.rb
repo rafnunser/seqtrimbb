@@ -13,6 +13,8 @@ class PluginOutputTest < Minitest::Test
 
     minlength = "minlength=50"
 
+    outstats = File.join(File.expand_path(OUTPUT_PATH),"output_stats.txt")
+
     plugin_list = 'PluginSaveResultsBb'
 
     faketemplate = File.join($DB_PATH,"faketemplate.txt")
@@ -33,7 +35,7 @@ class PluginOutputTest < Minitest::Test
 
    $OUTPUTFILES[0] = file
 
-   result = "reformat.sh -Xmx1G t=1 #{minlength} in=stdin.fastq out=#{output}/#{file}"
+   result = "reformat.sh -Xmx1G t=1 #{minlength} in=stdin.fastq out=#{output}/#{file} 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 
@@ -53,7 +55,7 @@ class PluginOutputTest < Minitest::Test
 
    $OUTPUTFILES[0] = file
 
-   result = "reformat.sh -Xmx1G t=1 #{minlength} in=stdin.fastq int=t out=#{output}/#{file}"
+   result = "reformat.sh -Xmx1G t=1 #{minlength} in=stdin.fastq int=t out=#{output}/#{file} 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 
@@ -75,7 +77,7 @@ class PluginOutputTest < Minitest::Test
    $OUTPUTFILES[0] = file1
    $OUTPUTFILES[1] = file2
 
-   result = "reformat.sh -Xmx1G t=1 #{minlength} in=stdin.fastq int=t out=#{output}/#{file1} out2=#{output}/#{file2}"
+   result = "reformat.sh -Xmx1G t=1 #{minlength} in=stdin.fastq int=t out=#{output}/#{file1} out2=#{output}/#{file2} 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 

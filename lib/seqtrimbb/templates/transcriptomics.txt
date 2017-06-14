@@ -9,14 +9,14 @@
 # Help: <li>PluginAdapters: trimming sequencing adapters.</li>
 # Help: <li>PluginFindPolyAt: trimming PolyA and PolyT. </li>
 # Help: <li>PluginContaminants: filtering out reads with contaminant fragments found in the contaminant database. </li>
-# Help: <li>PluginLowQuality: trimming low quality regions from sequences. </li>
+# Help: <li>PluginQuality: trimming low quality regions from sequences. </li>
 # Help: <li>PluginLowComplexity: filtering out reads with low complexity. </li>
 # Help: </ul>
 
-plugin_list = PluginAdapters,PluginPolyAT,PluginContaminants,PluginLowQuality,PluginLowComplexity
+plugin_list = PluginAdapters,PluginPolyAT,PluginContaminants,PluginQuality,PluginLowComplexity
 
-contaminants_db="contaminants.fasta,cont_ribosome.fasta"
+contaminants_db = contaminants,cont_ribosome
 
 # Minimum insert size for every trimmed sequence
 
-minlength=30
+minlength=60

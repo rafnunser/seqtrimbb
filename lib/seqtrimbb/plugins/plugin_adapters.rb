@@ -30,6 +30,7 @@ class PluginAdapters < Plugin
   # Name and path for the statistics to be generated in the trimming process
 
     outstats = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimmings_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimmings_stats_cmd.txt")
 
   # Creates an array to store the necessary fragments to assemble the call
 
@@ -77,13 +78,50 @@ class PluginAdapters < Plugin
 
     end
 
-    closing_args = "in=stdin.fastq out=stdout.fastq stats=#{outstats}" 
+    closing_args = "in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}" 
 
     cmd_add.push(closing_args)
 
     cmd = cmd_add.join(" ")
 
     return cmd
+
+ end
+
+ def get_stats
+
+    plugin_stats = {}
+    plugin_stats["plugin_adapters"] = {}
+    plugin_stats["plugin_adapters"]["sequences_with_adapter"] = {}
+    plugin_stats["plugin_adapters"]["adapter_id"] = {}
+
+    stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimmings_stats.txt")
+
+    File.open(stat_file).each do |line|
+
+      line.chomp!
+
+     if !line.empty?
+
+       if (line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo
+    
+         line[0]=''
+
+         splitted = line.split(/\t/)
+
+         plugin_stats["plugin_adapters"]["sequences_with_adapter"]["count"] = splitted[1].to_i if splitted[0] == 'Matched'
+
+       else 
+
+         splitted = line.split(/\t/)
+         
+         plugin_stats["plugin_adapters"]["adapter_id"][splitted[0]] = splitted[1].to_i
+
+       end
+     end
+    end
+
+    return plugin_stats
 
  end
  

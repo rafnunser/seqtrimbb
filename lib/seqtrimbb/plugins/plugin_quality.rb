@@ -78,6 +78,34 @@ class PluginQuality < Plugin
     return cmd
 
  end
+
+ def get_stats
+
+    plugin_stats = {}
+    plugin_stats["plugin_quality"] = {}
+
+    stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"quality_trimming_stats.txt")
+
+    File.open(stat_file).each do |line|
+
+      line.chomp!
+
+     if !line.empty? && (line =~ /^QTrimmed:/) #Es el encabezado de la tabla o el archivo
+
+         splitted = line.split(/\t/)
+
+         nreads = splitted[1].split(" ")
+         nbases = splitted[2].split(" ")
+
+         plugin_stats["plugin_quality"]["quality_trimmed_reads"] = nreads[0].to_i
+         plugin_stats["plugin_quality"]["quality_trimmed_bases"] = nbases[0].to_i
+
+     end
+    end
+
+    return plugin_stats
+
+ end
  
   #Returns an array with the errors due to parameters are missing 
   def self.check_params(params)

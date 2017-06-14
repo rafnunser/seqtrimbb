@@ -366,16 +366,16 @@ if options[:file]
     $SAMPLEFILES << file_to_test
 
     # automatic format detection
-    format = %x[testformat.sh #{file_to_test}].chop.split("\t")
-
-    options[:qual_format] = format[0]
-    options[:file_format] = format[1]
-    options[:sample_type] = format[3]
+    format_info = %x[testformat.sh #{file_to_test}].chop.split("\t")
 
     if (nfiles != 1)
-     format[3] = "paired"
+     format_info[3] = "paired"
     end
 
+    options[:qual_format] = format_info[0]
+    options[:file_format] = format_info[1]
+    options[:sample_type] = format_info[3]
+    
   end	
 
   #preloading params 
@@ -436,7 +436,8 @@ else
     skip_text=' and remove the -R option from the command line.'
   end
 
-  $LOG.info "If you want a detailed report in PDF format, be sure you have installed the optional seqtrimbb_report gem (gem install seqtrimbb_report)#{skip_text}"
+  #$LOG.info "If you want a detailed report in PDF format, be sure you have installed the optional seqtrimbb_report gem (gem install seqtrimbb_report)#{skip_text}"
+  $LOG.info "Closing"
 end
 
 if (Seqtrim.exit_status>=0) 

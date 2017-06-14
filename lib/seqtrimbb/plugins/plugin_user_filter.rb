@@ -31,10 +31,6 @@ class PluginUserFilter < Plugin
 
    user_filter_dbs.split(/ |,/).each do |db|
 
-     # Name and path for the statistics to be generated in the filtering process
-
-     outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_user_filter_stats.txt")
-
      # Creates an array to store the fragments
 
      cmd_add_add = Array.new
@@ -62,6 +58,11 @@ class PluginUserFilter < Plugin
 
        db_list = File.basename(db,".*")
 
+     # Name and path for the statistics to be generated in the filtering process
+
+       outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_list}_user_filter_stats.txt")
+       outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_list}_user_filter_stats_cmd.txt")
+
      else
       
        if File.exists?(db)
@@ -70,6 +71,12 @@ class PluginUserFilter < Plugin
 
          db_path = db
          db_refs = db
+         db_name = db.split("/").last       
+
+     # Name and path for the statistics to be generated in the filtering process
+
+         outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_user_filter_stats.txt")
+         outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_user_filter_stats_cmd.txt")
 
       #Generate external database's index
 
@@ -98,6 +105,11 @@ class PluginUserFilter < Plugin
 
          db_path = File.join($DB_PATH,db)
          db_refs = File.join($DB_PATH,db)
+
+     # Name and path for the statistics to be generated in the filtering process
+
+         outstats = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_user_filter_stats.txt")
+         outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_user_filter_stats_cmd.txt")
 
       #Fill the array with the species presents in the external database
 
@@ -149,7 +161,7 @@ class PluginUserFilter < Plugin
 
       end
 
-     closing_args = "in=stdin.fastq out=stdout.fastq refstats=#{outstats}"    
+     closing_args = "in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"    
      cmd_add_add.push(closing_args)
 
      # Assembling the call and adding it to the plugins result
@@ -167,6 +179,64 @@ class PluginUserFilter < Plugin
 
  end
  
+ def get_stats
+
+  user_filter_dbs = @params.get_param('user_filter_dbs')
+
+    plugin_stats = {}
+    plugin_stats["plugin_user_filter"] = {}
+    plugin_stats["plugin_user_filter"]["filtered_sequences_count"] = 0
+    plugin_stats["plugin_user_filter"]["filtering_ids"] = {}
+
+  user_filter_dbs.split(/ |,/).each do |db|
+
+   if File.file?(db)
+
+        db_name = File.basename(db,".*")
+
+        stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_user_filter_stats.txt")
+
+   else
+      
+      if File.exists?(db)
+
+         db_name = db.split("/").last
+
+         stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_user_filter_stats.txt")
+
+      else
+
+         stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_user_filter_stats.txt")   
+
+      end
+        
+   end
+
+    File.open(stat_file).each do |line|
+
+     line.chomp!
+
+     if !line.empty?
+
+       if !(line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo
+    
+         splitted = line.split(/\t/)
+
+         nreads = splitted[5].to_i + splitted[6].to_i
+
+         plugin_stats["plugin_user_filter"]["filtering_ids"][splitted[0]] = nreads
+         plugin_stats["plugin_user_filter"]["filtered_sequences_count"] += nreads
+
+       end
+     end
+    end
+
+    return plugin_stats
+
+ end
+
+ end
+
   #Returns an array with the errors due to parameters are missing 
   def self.check_params(params)
     errors=[]  

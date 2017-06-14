@@ -72,6 +72,32 @@ class PluginLowComplexity < Plugin
     return cmd
 
  end
+
+ def get_stats
+
+    plugin_stats = {}
+    plugin_stats["plugin_low_complexity"] = {}
+
+    stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"low_complexity_stats.txt")
+
+    File.open(stat_file).each do |line|
+
+      line.chomp!
+
+     if !line.empty? && (line =~ /^Low/) #Es el encabezado de la tabla o el archivo
+
+         splitted = line.split(/\t/)
+
+         nreads = splitted[1].split(" ")
+
+         plugin_stats["plugin_low_complexity"]["low_complexity_discarded_reads"] = nreads[0].to_i
+
+     end
+    end
+
+    return plugin_stats
+
+ end
  
   #Returns an array with the errors due to parameters are missing 
   def self.check_params(params)
@@ -94,7 +120,7 @@ class PluginLowComplexity < Plugin
     params.check_param(errors,'save_unpaired','String',default_value,comment)
 
     comment='Complexity threshold to be applied. Complexity is calculated using the counts of unique short kmers that occur in a window, such that the more unique kmers occur within the window - and the more even the distribution of counts - the closer the value approaches 1. Complexity_threshold = 0.01 for example will only filter homopolymers' 
-    default_value = '0.01'
+    default_value = '0.001'
     params.check_param(errors,'complexity_threshold','String',default_value,comment)
 
     comment='Minimal reads length to be keep' 
