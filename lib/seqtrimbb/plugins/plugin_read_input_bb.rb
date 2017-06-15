@@ -90,6 +90,24 @@ class PluginReadInputBb < Plugin
 
  def get_stats
 
+    # First look for internal errors in cmd execution
+
+     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"input_stats.txt")
+
+     File.open(cmd_file).each do |line|
+
+      line.chomp!
+
+      if !line.empty?
+
+        if (line =~ /Exception in thread/)
+
+           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
+           exit -1 
+        end
+      end
+     end
+
     # DOES NOTHING
 
     plugin_stats = {}

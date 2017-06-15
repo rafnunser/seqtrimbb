@@ -388,7 +388,7 @@ if options[:file]
        file_two = File.join(output,'paired_2.fastq')
 
        $OUTPUTFILES = ['paired_1.fastq','paired_2.fastq']
-       $OUTPUTFILES = ['paired_2.fastq.gz','paired_2.fastq.gz'] if options[:write_in_gzip]
+       $OUTPUTFILES = ['paired_1.fastq.gz','paired_2.fastq.gz'] if options[:write_in_gzip]
 
     elsif options[:sample_type] == 'interleaved'
 

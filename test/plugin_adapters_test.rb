@@ -5,8 +5,8 @@ class PluginAdaptersTest < Minitest::Test
   def test_plugin_adapters
 
     adapters_db = File.join($DB_PATH,'adapters/adapters.fasta')
-    outstats = File.join(File.expand_path(OUTPUT_PATH),"adapters_trimmings_stats.txt")
-    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"adapters_trimmings_stats_cmd.txt")
+    outstats = File.join(File.expand_path(OUTPUT_PATH),"adapters_trimming_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"adapters_trimming_stats_cmd.txt")
 
     options = {}
 

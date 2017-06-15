@@ -4,8 +4,8 @@ class PluginPolyAtTest < Minitest::Test
 
   def test_plugin_polyat
 
-    outstats = File.join(File.expand_path(OUTPUT_PATH),"polyat_trimmings_stats.txt")
-    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"polyat_trimmings_stats_cmd.txt")
+    outstats = File.join(File.expand_path(OUTPUT_PATH),"polyat_trimming_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"polyat_trimming_stats_cmd.txt")
 
     options = {}
 

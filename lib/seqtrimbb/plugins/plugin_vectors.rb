@@ -145,6 +145,26 @@ class PluginVectors < Plugin
     stat_file1 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats.txt")
     stat_file2 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_filtering_stats.txt")
 
+    # First look for internal errors in cmd execution
+
+     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats_cmd.txt")
+
+     File.open(cmd_file).each do |line|
+
+      line.chomp!
+
+      if !line.empty?
+
+        if (line =~ /Exception in thread/)
+
+           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
+           exit -1 
+        end
+      end
+     end
+
+    # Extracting stats 
+
     File.open(stat_file1).each do |line|
 
       line.chomp!
@@ -168,6 +188,26 @@ class PluginVectors < Plugin
        end
      end
     end
+
+    # First look for internal errors in cmd execution
+
+     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_filtering_stats_cmd.txt")
+
+     File.open(cmd_file).each do |line|
+
+      line.chomp!
+
+      if !line.empty?
+
+        if (line =~ /Exception in thread/)
+
+           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
+           exit -1 
+        end
+      end
+     end
+
+    # Extracting stats 
 
     File.open(stat_file2).each do |line|
 

@@ -195,6 +195,7 @@ class PluginUserFilter < Plugin
         db_name = File.basename(db,".*")
 
         stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_user_filter_stats.txt")
+        cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_user_filter_stats_cmd.txt")
 
    else
       
@@ -203,14 +204,34 @@ class PluginUserFilter < Plugin
          db_name = db.split("/").last
 
          stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_user_filter_stats.txt")
-
+         cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db_name}_user_filter_stats_cmd.txt")
+ 
       else
 
          stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_user_filter_stats.txt")   
+         cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_user_filter_stats_cmd.txt")
 
       end
         
    end
+
+    # First look for internal errors in cmd execution
+
+     File.open(cmd_file).each do |line|
+
+      line.chomp!
+
+      if !line.empty?
+
+        if (line =~ /Exception in thread/)
+
+           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
+           exit -1 
+        end
+      end
+     end
+
+    # Extracting stats 
 
     File.open(stat_file).each do |line|
 

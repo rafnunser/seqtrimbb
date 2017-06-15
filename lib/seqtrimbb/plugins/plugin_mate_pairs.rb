@@ -48,8 +48,8 @@ class PluginMatePairs < Plugin
     adapters_min_external_kmer_size = params.get_param('adapters_min_external_kmer_size')
     adapters_max_mismatches = params.get_param('adapters_max_mismatches')
 
-    outstats_adapters = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimmings_stats.txt")
-    outstats1 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimmings_stats_cmd.txt")
+    outstats_adapters = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimming_stats.txt")
+    outstats1 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimming_stats_cmd.txt")
     outstats_split = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_splitting_stats.txt")
     outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_splitting_stats_cmd.txt")
     outstats3 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_extra_cmds.txt")
@@ -125,8 +125,28 @@ class PluginMatePairs < Plugin
     plugin_stats["plugin_mate_pairs"]["long_mate_pairs"] = {}
     plugin_stats["plugin_mate_pairs"]["long_mate_pairs"]["count"] = 0
 
-    stat_file1 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimmings_stats.txt")
+    stat_file1 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimming_stats.txt")
     stat_file2 = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_splitting_stats.txt")
+
+    # First look for internal errors in cmd execution
+
+     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimming_stats_cmd.txt")
+
+     File.open(cmd_file).each do |line|
+
+      line.chomp!
+
+      if !line.empty?
+
+        if (line =~ /Exception in thread/)
+
+           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
+           exit -1 
+        end
+      end
+     end
+
+    # Extracting stats 
     
     File.open(stat_file1).each do |line|
 
@@ -151,6 +171,26 @@ class PluginMatePairs < Plugin
        end
      end
     end
+
+    # First look for internal errors in cmd execution
+
+     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_extra_cmds.txt")
+
+     File.open(cmd_file).each do |line|
+
+      line.chomp!
+
+      if !line.empty
+
+        if (line =~ /Exception in thread/)
+
+           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
+           exit -1 
+        end
+      end
+     end
+
+    # Extracting stats
 
     File.open(stat_file2).each do |line|
 

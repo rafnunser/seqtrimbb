@@ -27,8 +27,8 @@ class PluginPolyAt < Plugin
 
   # Name and path for the statistics to be generated in the trimming process
 
-    outstats = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimmings_stats.txt")
-    outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimmings_stats_cmd.txt")
+    outstats = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimming_stats.txt")
+    outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimming_stats_cmd.txt")
 
   # Creates an array to store the necessary fragments to assemble the call
 
@@ -90,7 +90,27 @@ class PluginPolyAt < Plugin
     plugin_stats = {}
     plugin_stats["plugin_poly_at"] = {}
     plugin_stats["plugin_poly_at"]["sequences_with_poly_at"] = {}
-    stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimmings_stats.txt")
+    stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimming_stats.txt")
+
+    # First look for internal errors in cmd execution
+
+     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"polyat_trimming_stats_cmd.txt")
+
+     File.open(cmd_file).each do |line|
+
+      line.chomp!
+
+      if !line.empty?
+
+        if (line =~ /Exception in thread/)
+
+           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
+           exit -1 
+        end
+      end
+     end
+
+    # Extracting stats 
 
     File.open(stat_file).each do |line|
 

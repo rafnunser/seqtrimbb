@@ -80,6 +80,26 @@ class PluginLowComplexity < Plugin
 
     stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"low_complexity_stats.txt")
 
+    # First look for internal errors in cmd execution
+
+     cmd_file = stat_file
+
+     File.open(cmd_file).each do |line|
+
+      line.chomp!
+
+      if !line.empty?
+
+        if (line =~ /Exception in thread/)
+
+           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
+           exit -1 
+        end
+      end
+     end
+
+    # Extracting stats 
+
     File.open(stat_file).each do |line|
 
       line.chomp!

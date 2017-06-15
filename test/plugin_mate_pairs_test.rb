@@ -16,8 +16,8 @@ class PluginMatePairsTest < Minitest::Test
     options['linker_literal_seq'] = 'AGCTTCGAAGCTTCGA' 
 
     adapters_db = File.join($DB_PATH,'adapters/adapters.fasta')
-    outstats_adapters = File.join(File.expand_path(OUTPUT_PATH),"LMP_adapters_trimmings_stats.txt")
-    outstats1 = File.join(File.expand_path(OUTPUT_PATH),"LMP_adapters_trimmings_stats_cmd.txt")
+    outstats_adapters = File.join(File.expand_path(OUTPUT_PATH),"LMP_adapters_trimming_stats.txt")
+    outstats1 = File.join(File.expand_path(OUTPUT_PATH),"LMP_adapters_trimming_stats_cmd.txt")
     outstats_split = File.join(File.expand_path(OUTPUT_PATH),"LMP_splitting_stats.txt")
     outstats2 = File.join(File.expand_path(OUTPUT_PATH),"LMP_splitting_stats_cmd.txt")
     outstats3 = File.join(File.expand_path(OUTPUT_PATH),"LMP_extra_cmds.txt")

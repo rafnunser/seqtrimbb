@@ -82,6 +82,26 @@ class PluginSaveResultsBb < Plugin
     stat_file2 = File.join(File.expand_path(OUTPLUGINSTATS),"output_stats.txt")
     stat_file1 = File.join(File.expand_path(OUTPLUGINSTATS),"input_stats.txt")
 
+    # First look for internal errors in cmd execution
+
+     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"output_stats.txt")
+
+     File.open(cmd_file).each do |line|
+
+      line.chomp!
+
+      if !line.empty?
+
+        if (line =~ /Exception in thread/)
+
+           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
+           exit -1 
+        end
+      end
+     end
+
+    # Extracting stats 
+
     File.open(stat_file1).each do |line|
 
       line.chomp!
