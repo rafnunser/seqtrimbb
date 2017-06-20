@@ -22,10 +22,33 @@ class PluginUserFilter < Plugin
     minratio = @params.get_param('user_filter_minratio')
     user_filter_aditional_params = @params.get_param('user_filter_aditional_params')
     user_filter_species = @params.get_param('user_filter_species')
+    minlength = @params.get_param('minlength')
 
+    write_in_gzip = @params.get_param('write_in_gzip')
+
+    output = File.join(File.expand_path(DEFAULT_FINAL_OUTPUT_PATH),"filtered_files")
+
+    if user_filter_dbs == nil || user_filter_dbs == ""
+
+     $LOG.info "ERROR: user_filter_dbs paramater is empty. Specify a database or avoid this step."
+     exit -1
+
+    end
   # Creates an array to store individual calls for every database in user_filter_dbs
 
     cmd_add = Array.new
+
+
+  # Discards reads with length < minlength
+
+    pre_cmd = Array.new
+
+    preoutstats = File.join(File.expand_path(OUTPLUGINSTATS),"user_filter_stats_minlength_discard.txt")
+
+    pre_cmd.push("reformat.sh in=stdin.fastq minlength=#{minlength}")
+    pre_cmd.push("int=t") if sample_type == "paired" || sample_type == "interleaved"
+    pre_cmd.push("out=stdout.fastq 2> #{preoutstats}")
+    cmd_add.push(pre_cmd.join(" "))
 
   # Iteration to assemble individual calls
 
@@ -134,6 +157,12 @@ class PluginUserFilter < Plugin
 
      # Adding details to filter out species
 
+     if write_in_gzip   
+        sufix = 'fastq.gz'
+     else
+         sufix = 'fastq'
+     end
+
      if user_filter_species != nil
 
       splitted_species = user_filter_species.split(",")
@@ -143,13 +172,15 @@ class PluginUserFilter < Plugin
        species_full0 = species.split(" ")
        species_full = species_full0.join("_")
 
-       cmd_add_add.push("out_#{species_full}=#{species_full}_out.fastq.gz") if db_list.include?(species)
+       cmd_add_add.push("out_#{species_full}=#{output}/#{species_full}_out.#{sufix}") if db_list.include?(species) && (sample_type == "interleaved" || sample_type == "single-ended")
+       cmd_add_add.push("out_#{species_full}=#{output}/#{species_full}_out_#.#{sufix}") if db_list.include?(species) && sample_type == "paired"
 
       end
 
      else
 
-      cmd_add_add.push("basename=%_out.fastq.gz")
+      cmd_add_add.push("basename=#{output}/%_out.#{sufix}") if sample_type == "interleaved" || sample_type == "single-ended"
+      cmd_add_add.push("basename=#{output}/%_out_#.#{sufix}") if sample_type == "paired"
 
      end
 
@@ -266,16 +297,24 @@ class PluginUserFilter < Plugin
     default_value = 
     params.check_param(errors,'max_ram','String',default_value,comment)
 
+    comment='Write in gzip?'
+    default_value = true
+    params.check_param(errors,'write_in_gzip','String',default_value,comment)
+
     comment='Number of Threads'
     default_value = 1
     params.check_param(errors,'workers','String',default_value,comment)
+
+    comment='Minimal reads length to be keep' 
+    default_value = '50'
+    params.check_param(errors,'minlength','String',default_value,comment)
 
     comment='Type of sample: paired, single-ended or interleaved.'
     default_value = 
     params.check_param(errors,'sample_type','String',default_value,comment)
 
     comment='Databases to use in Filtering: internal name or full path to fasta file or full path to a folder containing an external database in fasta format' 
-    default_value = 'contaminants'
+    default_value = nil
     params.check_param(errors,'user_filter_dbs','String',default_value,comment)
 
     comment='Minimal ratio of sequence of interest kmers in a read to be filtered' 

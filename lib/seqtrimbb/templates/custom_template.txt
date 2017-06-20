@@ -11,7 +11,9 @@
 # Help: <li>PluginCustomPlugin2Bb: explain it.... </li>
 # Help: </ul>
 
-plugin_list = PluginMatePairs
+plugin_list = PluginAdapters,PluginContaminants
+
+
 
 
 

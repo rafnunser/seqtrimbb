@@ -25,16 +25,21 @@ class PluginUserFilterTest < Minitest::Test
     options['max_ram'] = '1G'
     options['workers'] = '1'
     options['sample_type'] = 'paired'
+    options['write_in_gzip'] = true
+
+    preoutstats = File.join(File.expand_path(OUTPUT_PATH),"user_filter_stats_minlength_discard.txt")
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"contaminants_user_filter_stats.txt")
     outstats2 = File.join(File.expand_path(OUTPUT_PATH),"contaminants_user_filter_stats_cmd.txt")
+    output = File.join(File.expand_path(OUTPUT_PATH),"filtered_files")
 
     user_filter_db = File.join($DB_PATH,db)
 
     options['user_filter_dbs'] = db
     options['user_filter_minratio'] = 0.56
     options['user_filter_aditional_params'] = nil
-    options['user_filter_species'] = 'Contaminant one,Contaminant two'
+    options['user_filter_species'] = nil
+    options['minlength'] = 50
 
     plugin_list = 'PluginUserFilter'
 
@@ -44,9 +49,9 @@ class PluginUserFilterTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
- # Two species
+ # Without species
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{user_filter_db} path=#{user_filter_db} out_Contaminant_one=Contaminant_one_out.fastq.gz out_Contaminant_two=Contaminant_two_out.fastq.gz in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
+    result = "reformat.sh in=stdin.fastq minlength=50 int=t out=stdout.fastq 2> #{preoutstats} | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{user_filter_db} path=#{user_filter_db} basename=#{output}/%_out_#.fastq.gz in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -54,13 +59,14 @@ class PluginUserFilterTest < Minitest::Test
 
     assert_equal(result,test[0])
 
- # Without species
+ # Two species
 
-    options['user_filter_species'] = nil
+    options['sample_type'] = 'interleaved'
+    options['user_filter_species'] = 'Contaminant one,Contaminant two'
 
     params = Params.new(faketemplate,options)
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{user_filter_db} path=#{user_filter_db} basename=%_out.fastq.gz in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
+    result = "reformat.sh in=stdin.fastq minlength=50 int=t out=stdout.fastq 2> #{preoutstats} | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{user_filter_db} path=#{user_filter_db} out_Contaminant_one=#{output}/Contaminant_one_out.fastq.gz out_Contaminant_two=#{output}/Contaminant_two_out.fastq.gz in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 

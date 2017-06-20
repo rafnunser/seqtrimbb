@@ -45,8 +45,6 @@ class CheckDatabase
 
           $LOG.info("Updating #{db_name} database index")
 
-          puts @cores
-
           cmd = "bbsplit.sh -Xmx#{@max_ram} t=#{@cores} path=#{db_folder} ref=#{db_folder}"
 
           system(cmd)      

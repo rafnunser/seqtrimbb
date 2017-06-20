@@ -201,7 +201,7 @@ optparse = OptionParser.new do |opts|
   end
 
   options[:overwrite_params] = nil
-  opts.on( '-P', '--overwrite_params PARAM1,PARAM2',Array, 'Params and their values to overwrite default and templates parameters' ) do |oparams|
+  opts.on( '-P', '--overwrite_params "PARAM1;PARAM2"','Params and their values to overwrite default and templates parameters' ) do |oparams|
     options[:overwrite_params] = oparams
   end
 
@@ -216,7 +216,7 @@ optparse = OptionParser.new do |opts|
   end
 
   options[:write_in_gzip] = true
-  opts.on( '-z', '--gzip', 'Generate output files in gzip format.' ) do
+  opts.on( '-z', '--gzip', 'Avoid generating output files in gzip format.' ) do
     options[:write_in_gzip] = false
   end
 
@@ -293,7 +293,7 @@ $LOG.info("Using options: \n"+ JSON::pretty_generate(options))
 
 # Install/Check databases on DB_PATH
 
-if options[:install_db]
+if options[:install_db] && File.writable?($DB_PATH)
 
   #install databases
 
@@ -305,13 +305,20 @@ if options[:install_db]
 
   exit
 
+else
+
+  $LOG.info("Databases path: #{$DB_PATH} is not writable. Skipping Installing Databases step")
 end
 
-if options[:check_db]
+if options[:check_db] && File.writable?($DB_PATH)
 
   # checks for old bbsplit indexes and update them
   
   CheckDatabase.new($DB_PATH,options[:workers],options[:max_ram])
+
+else
+
+  $LOG.info("Databases path: #{$DB_PATH} is not writable. Skipping Checking Databases step")
 
 end
 

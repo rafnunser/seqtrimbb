@@ -115,7 +115,7 @@ class PluginAdapters < Plugin
     plugin_stats["plugin_adapters"]["sequences_with_adapter"] = {}
     plugin_stats["plugin_adapters"]["adapter_id"] = {}
 
-    stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimmings_stats.txt")
+    stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimming_stats.txt")
 
     File.open(stat_file).each do |line|
 

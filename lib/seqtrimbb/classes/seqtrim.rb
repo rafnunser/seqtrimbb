@@ -73,6 +73,11 @@ class Seqtrim
       exit(-1)
     end
 
+    # load plugins
+
+    plugin_list = params.get_param('plugin_list') # puts in plugin_list the plugins's array
+    $LOG.info "Loading plugins [#{plugin_list}]"
+
     # Directories
 
     if !Dir.exists?(OUTPUT_PATH)
@@ -87,10 +92,15 @@ class Seqtrim
       Dir.mkdir(OUTPLUGINSTATS)
     end
 
-    # load plugins
+    if plugin_list.include?('PluginUserFilter')
 
-    plugin_list = params.get_param('plugin_list') # puts in plugin_list the plugins's array
-    $LOG.info "Loading plugins [#{plugin_list}]"
+       output_filtered = File.join(DEFAULT_FINAL_OUTPUT_PATH,"filtered_files")
+
+       if !Dir.exists?(output_filtered)
+         Dir.mkdir(output_filtered)
+       end
+
+    end
 
     # Mate Pairs treatment
 

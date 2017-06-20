@@ -27,7 +27,7 @@ class Params
 
       if opt_name.to_s == 'overwrite_params' && opt_value != nil
 
-        opt_value.each do |param_to_overwrite|
+        opt_value.split(";").each do |param_to_overwrite|
 
           param_splitted = param_to_overwrite.split("=")
 
