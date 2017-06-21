@@ -69,11 +69,10 @@ put_header
 
 OUTPUT_PATH = 'output_files_tmp'
 OUTPLUGINSTATS = 'output_files_tmp/plugin_stats'
-DEFAULT_FINAL_OUTPUT_PATH = 'output_files'
 
 # if there is a BLASTDB environment var, then use it
-if ENV['DB']# && Dir.exists?(ENV['BLASTDB'])
-  $DB_PATH = ENV['DB']
+if ENV['BBDB']# && Dir.exists?(ENV['DB'])
+  $DB_PATH = ENV['BBDB']
 else # otherwise use SEQTRIM_PATH + DB
   $DB_PATH = File.expand_path(File.join(SEQTRIM_PATH, "DB"))
 end
@@ -220,7 +219,12 @@ optparse = OptionParser.new do |opts|
     options[:write_in_gzip] = false
   end
 
-  options[:final_output_path] = DEFAULT_FINAL_OUTPUT_PATH
+  options[:force_execution] = false
+  opts.on( '-F', '--force', 'Force SeqtrimBB execution deleting previous output files' ) do
+    options[:force_execution] = true
+  end
+
+  options[:final_output_path] = 'output_files'
   opts.on( '-O', '--ouput output_files', 'Output folder. It should not exists. output_files by default') do |folder|
     options[:final_output_path] = folder
   end
@@ -238,6 +242,10 @@ end
 # parse options and remove from ARGV
 
 optparse.parse!
+
+# Set Final output path
+
+DEFAULT_FINAL_OUTPUT_PATH = options[:final_output_path]
 
 if options[:list_db]
   # List database entries in a database
@@ -334,8 +342,20 @@ if (ARGV.count != 0) || (!required_options)
 end
 
 if File.exists?(options[:final_output_path])
-  $LOG.error "Output folder #{options[:final_output_path]} already exists.\n Remove it if you want to launch SeqtrimBB again."
-  exit(-1)
+
+  if options[:force_execution]
+
+   $LOG.error "Output folder #{options[:final_output_path]} already exists and --force parameter is active.\n Removing output_files and output_files_tmp from the current directory."
+  
+   FileUtils.rm_rf(OUTPUT_PATH) if File.exists?(OUTPUT_PATH)
+   FileUtils.rm_rf(DEFAULT_FINAL_OUTPUT_PATH)
+  
+  else
+
+   $LOG.error "Output folder #{options[:final_output_path]} already exists.\n Remove it if you want to launch SeqtrimBB again."
+   exit(-1)
+
+  end
 end
 
 # check for template's existence
@@ -394,21 +414,21 @@ if options[:file]
        file_one = File.join(output,'paired_1.fastq')
        file_two = File.join(output,'paired_2.fastq')
 
-       $OUTPUTFILES = ['paired_1.fastq','paired_2.fastq']
+       $OUTPUTFILES = ['paired_1.fastq','paired_2.fastq'] if !options[:write_in_gzip]
        $OUTPUTFILES = ['paired_1.fastq.gz','paired_2.fastq.gz'] if options[:write_in_gzip]
 
     elsif options[:sample_type] == 'interleaved'
 
        file_one = File.join(output,'interleaved.fastq')
 
-       $OUTPUTFILES = ['interleaved.fastq']
+       $OUTPUTFILES = ['interleaved.fastq'] if !options[:write_in_gzip]
        $OUTPUTFILES = ['interleaved.fastq.gz'] if options[:write_in_gzip]
 
     else
     
        file_one = File.join(output,'sequences_.fastq')
 
-       $OUTPUTFILES = ['sequences_.fastq']
+       $OUTPUTFILES = ['sequences_.fastq'] if !options[:write_in_gzip]
        $OUTPUTFILES = ['sequences_.fastq.gz'] if options[:write_in_gzip]
 
     end
@@ -448,7 +468,7 @@ else
 end
 
 if (Seqtrim.exit_status>=0) 
-  FileUtils.mv OUTPUT_PATH, options[:final_output_path]
+  FileUtils.mv OUTPUT_PATH, DEFAULT_FINAL_OUTPUT_PATH
 end
 
 exit(Seqtrim.exit_status)
