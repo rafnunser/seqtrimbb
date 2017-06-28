@@ -84,17 +84,13 @@ class Seqtrim
       Dir.mkdir(OUTPUT_PATH)
     end
 
-    if !Dir.exists?(DEFAULT_FINAL_OUTPUT_PATH)
-      Dir.mkdir(DEFAULT_FINAL_OUTPUT_PATH)
-    end
-
     if !Dir.exists?(OUTPLUGINSTATS)
       Dir.mkdir(OUTPLUGINSTATS)
     end
 
     if plugin_list.include?('PluginUserFilter')
 
-       output_filtered = File.join(DEFAULT_FINAL_OUTPUT_PATH,"filtered_files")
+       output_filtered = File.join(OUTPUT_PATH,"filtered_files")
 
        if !Dir.exists?(output_filtered)
          Dir.mkdir(output_filtered)
@@ -193,7 +189,7 @@ class Seqtrim
 
    jstats = stats.to_json
 
-   File.open("#{DEFAULT_FINAL_OUTPUT_PATH}/stats.json","w") do |f|
+   File.open("#{OUTPUT_PATH}/stats.json","w") do |f|
     f.write(JSON.pretty_generate(stats))
    end
 

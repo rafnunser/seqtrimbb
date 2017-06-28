@@ -26,7 +26,7 @@ class PluginUserFilter < Plugin
 
     write_in_gzip = @params.get_param('write_in_gzip')
 
-    output = File.join(File.expand_path(DEFAULT_FINAL_OUTPUT_PATH),"filtered_files")
+    output = File.join(File.expand_path(OUTPUT_PATH),"filtered_files")
 
     if user_filter_dbs == nil || user_filter_dbs == ""
 

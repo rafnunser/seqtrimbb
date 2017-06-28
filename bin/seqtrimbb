@@ -358,6 +358,24 @@ if File.exists?(options[:final_output_path])
   end
 end
 
+if File.exists?(DEFAULT_FINAL_OUTPUT_PATH) || File.exists?(OUTPUT_PATH)
+
+  if options[:force_execution]
+
+   $LOG.error "Temporal output folder #{OUTPUT_PATH} already exists and --force parameter is active.\n Removing output_files_tmp from the current directory." if File.exists?(OUTPUT_PATH)
+   $LOG.error "Output folder #{options[:final_output_path]} already exists and --force parameter is active.\n Removing #{options[:final_output_path]}" if File.exists?(DEFAULT_FINAL_OUTPUT_PATH)
+  
+   FileUtils.rm_rf(OUTPUT_PATH) if File.exists?(OUTPUT_PATH)
+   FileUtils.rm_rf(DEFAULT_FINAL_OUTPUT_PATH) if File.exists?(DEFAULT_FINAL_OUTPUT_PATH)
+  
+  else
+
+   $LOG.error "Output folder #{options[:final_output_path]}, or temporal output folder #{OUTPUT_PATH} already exists.\n Remove it if you want to launch SeqtrimBB again or add --force_execution parameter to the command line."
+   exit(-1)
+
+  end
+end
+
 # check for template's existence
 
 if (!File.exists?(options[:template]))
@@ -407,7 +425,7 @@ if options[:file]
 
   #preloading params 
 
-  output = File.expand_path(DEFAULT_FINAL_OUTPUT_PATH)
+  output = File.expand_path(OUTPUT_PATH)
 
   if options[:sample_type] == 'paired'
 

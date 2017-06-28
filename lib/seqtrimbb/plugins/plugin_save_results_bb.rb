@@ -18,7 +18,7 @@ class PluginSaveResultsBb < Plugin
 
     outstats = File.join(File.expand_path(OUTPLUGINSTATS),"output_stats.txt")
 
-    output = File.expand_path(DEFAULT_FINAL_OUTPUT_PATH)
+    output = File.expand_path(OUTPUT_PATH)
 
     cmd_add = Array.new
 
