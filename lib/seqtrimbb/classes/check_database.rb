@@ -9,6 +9,10 @@ class CheckDatabase
   @max_ram = ram
   @dir = dir
 
+  # Make indices and status folders
+  Dir.mkdir(File.join(dir,'indices')) if !Dir.exists?(File.join(dir,'indices'))
+  Dir.mkdir(File.join(dir,'status_info')) if !Dir.exists?(File.join(dir,'status_info'))
+
   # Checking and updating indices
   update_index
 

@@ -4,11 +4,13 @@ RT_PATH=File.join(File.dirname(__FILE__))
 
 $DB_PATH = File.join(RT_PATH, "DB")
 
+Dir.mkdir(File.join($DB_PATH,'indices')) if !Dir.exists?(File.join($DB_PATH,'indices'))
+Dir.mkdir(File.join($DB_PATH,'status_info')) if !Dir.exists?(File.join($DB_PATH,'status_info'))
+
 if ENV['BBTOOLS_PATH']
    $BBPATH = ENV['BBTOOLS_PATH']
 else
    $BBPATH = File.expand_path(File.dirname(%x[which bbmap.sh]))
-
 end
 
 OUTPUT_PATH = File.join(RT_PATH,'temp')
