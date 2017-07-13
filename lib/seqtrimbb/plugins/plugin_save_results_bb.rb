@@ -14,58 +14,27 @@ class PluginSaveResultsBb < Plugin
     cores = @params.get_param('workers')
     sample_type = @params.get_param('sample_type')
     minlength = @params.get_param('minlength')
-    ext_cmd=@params.get_param('ext_cmd')
+    outfiles = @params.get_param('outputfiles')
+    nativelibdir = File.join($BBPATH,'jni')
+    classp = File.join($BBPATH,'current')
 
     outstats = File.join(File.expand_path(OUTPLUGINSTATS),"output_stats.txt")
 
-    output = File.expand_path(OUTPUT_PATH)
-
     cmd_add = Array.new
 
-    cmd_add.push("reformat.sh -Xmx#{max_ram} t=#{cores} minlength=#{minlength} in=stdin.fastq")
+    cmd_add.push("java -ea -Xmx#{max_ram} -cp #{classp} jgi.ReformatReads t=#{cores} minlength=#{minlength} in=stdin.fastq")
 
-    if ext_cmd != nil
+    cmd_add.push("int=t") if sample_type == 'paired' || sample_type == "interleaved"
 
-     if sample_type == 'paired' || sample_type == "interleaved"
-
-       cmd_add.push("int=t")
-
+    if !@params.get_param('ext_cmd').nil?
        cmd_add.push("out=stdout.fastq 2> #{outstats}")
-
-     else
-
-       cmd_add.push("out=stdout.fastq 2> #{outstats}")
-
-     end
-
     else
-    
      if sample_type == 'paired'
-
-       cmd_add.push("int=t")
-
-       file1 = $OUTPUTFILES[0]
-       file2 = $OUTPUTFILES[1]
-
-       cmd_add.push("out=#{output}/#{file1}")
-       cmd_add.push("out2=#{output}/#{file2} 2> #{outstats}")
-
-     elsif sample_type == 'interleaved'
-
-       cmd_add.push("int=t")
-
-       file1 = $OUTPUTFILES[0]
-
-       cmd_add.push("out=#{output}/#{file1} 2> #{outstats}")
-
-     else
-
-       file1 = $OUTPUTFILES[0]
-
-       cmd_add.push("out=#{output}/#{file1} 2> #{outstats}") 
-
+       cmd_add.push("out=#{outfiles[0]}")
+       cmd_add.push("out2=#{outfiles[1]} 2> #{outstats}")
+     elsif sample_type == 'interleaved' || sample_type == 'single-ended'
+       cmd_add.push("out=#{outfiles[0]} 2> #{outstats}")  
      end
-
     end
 
     cmd = cmd_add.join(" ")   
@@ -87,13 +56,9 @@ class PluginSaveResultsBb < Plugin
      cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"output_stats.txt")
 
      File.open(cmd_file).each do |line|
-
       line.chomp!
-
       if !line.empty?
-
-        if (line =~ /Exception in thread/)
-
+        if (line =~ /Exception in thread/) || (line =~ /Error/)
            STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
            exit -1 
         end
@@ -103,43 +68,25 @@ class PluginSaveResultsBb < Plugin
     # Extracting stats 
 
     File.open(stat_file1).each do |line|
-
-      line.chomp!
-
+     line.chomp!
      if !line.empty? && (line =~ /^Input:/) #Es el encabezado de la tabla o el archivo
-
          splitted = line.split(/\t/)
-
          nreads = splitted[1].split(" ") 
-
          plugin_stats["sequences"]["input_count"] = nreads[0].to_i
-
      end
-
     end
 
     File.open(stat_file2).each do |line|
-
       line.chomp!
-
      if !line.empty? && (line =~ /^Output:/) #Es el encabezado de la tabla o el archivo
-
          splitted = line.split(/\t/)
-
          nreads = splitted[1].split(" ")
-
          plugin_stats["sequences"]["output_count"] = nreads[0].to_i
-
      elsif !line.empty? && (line =~ /^Short/)
-
          splitted = line.split(/\t/)
-
          nreads = splitted[1].split(" ")
-
          plugin_stats["sequences"]["final_short_reads_discards"] = nreads[0].to_i
      end
-
-
     end
 
     plugin_stats["sequences"]["rejected"] = plugin_stats["sequences"]["input_count"].to_i - plugin_stats["sequences"]["output_count"].to_i
@@ -152,6 +99,10 @@ class PluginSaveResultsBb < Plugin
   def self.check_params(params)
     errors=[]  
     
+    comment='Output files'
+    default_value = 
+    params.check_param(errors,'outputfiles','Array',default_value,comment)
+
     comment='Max RAM'
     default_value = 
     params.check_param(errors,'max_ram','String',default_value,comment)

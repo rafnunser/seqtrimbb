@@ -3,25 +3,41 @@ require 'test_helper'
 class PluginAdaptersTest < Minitest::Test
 
   def test_plugin_adapters
-
-    adapters_db = File.join($DB_PATH,'adapters/adapters.fasta')
+    
+    adapters_db = File.join($DB_PATH,'fastas/adapters/adapters.fasta')
     outstats = File.join(File.expand_path(OUTPUT_PATH),"adapters_trimming_stats.txt")
     outstats2 = File.join(File.expand_path(OUTPUT_PATH),"adapters_trimming_stats_cmd.txt")
+    nativelibdir = File.join($BBPATH,'jni')
+    classp = File.join($BBPATH,'current')
+
+    max_ram = '1G'
+    cores = '1'
+    sample_type = 'paired'
+    save_unpaired = 'false'
+    adapters_db = File.join($DB_PATH,'fastas/adapters/adapters.fasta')
+    adapters_trimming_position = 'both'
+    adapters_kmer_size = 15
+    adapters_min_external_kmer_size = 8
+    adapters_max_mismatches = 1
+
+    adapters_aditional_params = nil
+    adapters_merging_pairs_trimming = 'true'
 
     options = {}
 
-    options['max_ram'] = '1G'
-    options['workers'] = '1'
-    options['sample_type'] = 'paired'
-    options['save_unpaired'] = 'false'
-    options['adapters_db'] = adapters_db
-    options['adapters_trimming_position'] = 'both'
-    options['adapters_kmer_size'] = 15
-    options['adapters_min_external_kmer_size'] = 8
-    options['adapters_max_mismatches'] = 1
+    options['max_ram'] = max_ram
+    options['workers'] = cores
+    options['sample_type'] = sample_type
+    options['write_in_gzip'] = 'true'
+    options['save_unpaired'] = save_unpaired
+    options['adapters_db'] = 'adapters'
+    options['adapters_trimming_position'] = adapters_trimming_position
+    options['adapters_kmer_size'] = adapters_kmer_size
+    options['adapters_min_external_kmer_size'] = adapters_min_external_kmer_size
+    options['adapters_max_mismatches'] = adapters_max_mismatches
 
-    options['adapters_additional_params'] = nil
-    options['adapters_merging_pairs_trimming'] = 'true'
+    options['adapters_aditional_params'] = adapters_aditional_params
+    options['adapters_merging_pairs_trimming'] = adapters_merging_pairs_trimming
 
     faketemplate = File.join($DB_PATH,"faketemplate.txt")
 
@@ -35,10 +51,11 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches} rref=#{adapters_db} lref=#{adapters_db} in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
-
+    manager.check_plugins_params(params)
+    
     test = manager.execute_plugins()
 
     assert_equal(result,test[0])
@@ -53,9 +70,10 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches} lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
    
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -67,9 +85,10 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches} rref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -81,9 +100,10 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches} rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -97,9 +117,10 @@ class PluginAdaptersTest < Minitest::Test
 
     outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_adapters_trimming.fastq.gz")
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 outs=#{outsingles} rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches} outs=#{outsingles} rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -115,9 +136,10 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches} rref=#{adapters_db} lref=#{adapters_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -133,9 +155,26 @@ class PluginAdaptersTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=15 mink=8 hdist=1 rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe add_param=test in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches} rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe add_param=test in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
+
+    test = manager.execute_plugins()
+
+    assert_equal(result,test[0])
+
+# Multiple-file database
+
+    adapters_db = Dir[File.join($DB_PATH,'fastas/contaminants/','*.fasta*')].join(",")
+    options['adapters_db'] = 'contaminants'
+
+    params = Params.new(faketemplate,options)
+
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches} rref=#{adapters_db} lref=#{adapters_db} int=t tbo tpe add_param=test in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+
+    manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 

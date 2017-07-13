@@ -17,6 +17,7 @@ class Seqtrim
 
 
   def check_global_params(params)
+
     errors=[]
 
     # check plugin list
@@ -55,95 +56,49 @@ class Seqtrim
 
     # ,options[:fasta],options[:qual],,,,
     params_path=options[:template]
-
     workers=options[:workers]
-
     max_ram=options[:max_ram]
-
-    sample_type=options[:sample_type]
-
-    ext_cmd=options[:ext_cmd]
 
     $LOG.info "Loading params"
     # Reads the parameter's file
     params = Params.new(params_path,options)
 
     $LOG.info "Checking global params"
+    # Checks global params
     if !check_global_params(params)
       exit(-1)
     end
 
     # load plugins
-
     plugin_list = params.get_param('plugin_list') # puts in plugin_list the plugins's array
     $LOG.info "Loading plugins [#{plugin_list}]"
 
-    # Directories
-
-    if !Dir.exists?(OUTPUT_PATH)
-      Dir.mkdir(OUTPUT_PATH)
+    # Make Directories
+    mkpaths = [OUTPUT_PATH,OUTPLUGINSTATS,File.join(OUTPUT_PATH,'temp_indices')]
+    mkpaths.push(File.join(OUTPUT_PATH,"filtered_files"))  if plugin_list.include?('PluginUserFilter') #Output filtered
+    mkpaths.each do |folder|
+      if !Dir.exists?(folder)
+        Dir.mkdir(folder)
+      end
     end
 
-    if !Dir.exists?(OUTPLUGINSTATS)
-      Dir.mkdir(OUTPLUGINSTATS)
-    end
-
-    if plugin_list.include?('PluginUserFilter')
-
-       output_filtered = File.join(OUTPUT_PATH,"filtered_files")
-
-       if !Dir.exists?(output_filtered)
-         Dir.mkdir(output_filtered)
-       end
-
-    end
-
-    # Mate Pairs treatment
-
-    if plugin_list.include?('PluginMatePairs')
-
-      $LOG.info("Initiating: Mate Pairs treatment")
-
-      require 'plugin_mate_pairs.rb'
-
-      pmate_pair = PluginMatePairs.new(params)
-
-      pmate_pair.treat_lmp(params)
-
-      tmplist = plugin_list.split(",")
-
-      tmplist.delete('PluginMatePairs')
-
-      plugin_list = tmplist.join(",")
-
-      outlongmate = File.join(File.expand_path(OUTPUT_PATH),"longmate.fastq.gz")
-      outunknown = File.join(File.expand_path(OUTPUT_PATH),"unknown.fastq.gz")
-      FileUtils.rm(outlongmate)
-      FileUtils.rm(outunknown)
-
-      $LOG.info("Finalizing: Mate Pairs treatment")
-
-    end
-
-    plugin_manager = PluginManager.new(plugin_list,params) # creates an instance from PluginManager. This must storage the plugins and load it
-
-    # Extract global stats
+    # Extract initial global stats
     if params.get_param('generate_initial_stats').to_s=='true'
       $LOG.info "Calculating initial stats: i.e. FastQC"
-      
-      prefiles = $SAMPLEFILES.join(" ")
-      cmd="fastqc -o #{OUTPUT_PATH} #{prefiles}"
-
+    # fastqc cmd 
+      cmd="fastqc -q -o #{OUTPUT_PATH} -t #{workers} #{params.get_param('inputfiles').join(" ")}"
       system(cmd)
     else
       $LOG.info "Skipping calculating initial stats phase."
     end
+ 
+    # Initialiazing plugin manager
+    plugin_manager = PluginManager.new(plugin_list,params) # creates an instance from PluginManager. This must storage the plugins and load it
 
-    # load plugin params
-    $LOG.info "Check plugin params"
+    # load and check plugins params
+    $LOG.info "Check plugins params"
     if !plugin_manager.check_plugins_params(params) then
       $LOG.error "Plugin check failed"
-
       # save used params to file
       params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
       exit(-1)
@@ -154,54 +109,36 @@ class Seqtrim
 
     $LOG.info("Plugin_results=#{cmds.join("\n")}")
 
-    # ADDING A CALL TO MAP OR ASSEMBLE THE SAMPLE (USING AN EXTERNAL TOOL)
-
-    if ext_cmd
-      
-      cmds.push(ext_cmd)
-
-      $LOG.info("CMD_TO_MAP/ASSEMBLE:\n#{ext_cmd}")
-
+    # Push external cmd 
+    if !options[:ext_cmd].nil?
+      cmds.push(options[:ext_cmd])
+      $LOG.info("CMD_TO_MAP/ASSEMBLE:\n#{options[:ext_cmd]}")
     end
 
+    # CMD joinining
     cmd=cmds.join(" | ")
-    $LOG.info("CMD_TO_EXECUTE:\n#{cmd}")
-    
-    # EXECUTE CMD:
 
+    $LOG.info("CMD_TO_EXECUTE:\n#{cmd}")
+
+    # EXECUTE CMD:
     $LOG.info("Initializing cleaning process...")
-    
+
     system(cmd)
 
-    # Storing all plugins stats
+    # Storing all plugins stats and error checking
+    stats = plugin_manager.get_plugins_stats()
+    # Saving stats
+    File.open("#{OUTPUT_PATH}/stats.json","w") do |f|
+     f.write(JSON.pretty_generate(stats))
+    end
+    
+    $LOG.info("...Finalizing cleaning process")
 
-   if tmplist != nil
-
-     plist = params.get_param('plugin_list')
-
-     plugin_manager = PluginManager.new(plist,params)
-     
-   end 
-
-   stats = plugin_manager.get_plugins_stats()
-
-    # Hash to json and saving json file
-
-   jstats = stats.to_json
-
-   File.open("#{OUTPUT_PATH}/stats.json","w") do |f|
-    f.write(JSON.pretty_generate(stats))
-   end
-
-   $LOG.info("...Finalizing cleaning process")
-
-    # Extract global stats
+    # Extract final global stats
     if params.get_param('generate_final_stats').to_s=='true'
       $LOG.info "Calculating final stats: i.e. FastQC"
-
-      postfiles = $OUTPUTFILES.join(" ")
-      cmd='fastqc -o #{OUTPUT_PATH} #{postfiles}'
-
+    # fastqc cmd 
+      cmd="fastqc -q -o #{OUTPUT_PATH} -t #{workers} #{params.get_param('outputfiles').join(" ")}"
       system(cmd)
     else
       $LOG.info "Skipping calculating final stats phase."
@@ -211,5 +148,4 @@ class Seqtrim
     params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
 
   end
-
 end # Seqtrim class

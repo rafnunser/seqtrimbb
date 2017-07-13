@@ -9,7 +9,7 @@ class PluginManager
   
   #Storages the necessary plugins specified in 'plugin_list' and start the loading of plugins
   def initialize(plugin_list,params)
-    @plugin_names = plugin_list.strip.split(',').map{|p| p.strip}.reject{|p| ['',nil].include?(p)}
+    @plugin_names = plugin_list.strip.split(',').map{|p| p.strip}.reject{|p| ['',' ',nil].include?(p)}
     @params = params
     
     # puts plugin_list
@@ -26,10 +26,24 @@ class PluginManager
     if !@plugin_names.empty?
 
       @plugin_names.each do |plugin_name|
+
+        if plugin_name == 'PluginMatePairs'
+
+          $LOG.info("Initiating: Mate Pairs treatment")
+
+          plugin_class = Object.const_get(plugin_name)
+          p = plugin_class.new(@params)
+          p.treat_lmp
           
-        plugin_class = Object.const_get(plugin_name)
-        p = plugin_class.new(@params)
-        cmds << p.get_cmd
+          $LOG.info("Finalizing: Mate Pairs treatment")
+
+        else
+          
+          plugin_class = Object.const_get(plugin_name)
+          p = plugin_class.new(@params)
+          cmds << p.get_cmd
+
+        end
 
       end #end  each
       
@@ -68,6 +82,7 @@ class PluginManager
   
   # Checks if the parameters are right for all plugins's execution. Finally return true if all is right or false if isn't 
   def check_plugins_params(params)
+
     res = true
     
     if !@plugin_names.empty?
@@ -101,6 +116,7 @@ class PluginManager
     end #end  if plugin-list
     
     return res
+    
   end
   
   

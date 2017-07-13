@@ -5,34 +5,40 @@ class PluginContaminantsTest < Minitest::Test
   def test_plugin_contaminants
 
     db = 'contaminants'
-
     temp_folder = File.join(RT_PATH,"temp")
 
     if Dir.exists?(temp_folder)
-
       FileUtils.remove_dir(temp_folder)
-
     end
 
     Dir.mkdir(temp_folder)
+    Dir.mkdir(File.join(temp_folder,'temp_indices'))
 
     FileUtils.cp_r $DB_PATH, temp_folder
 
     $DB_PATH = File.join(temp_folder,"DB")
 
-    contaminants_db = File.join($DB_PATH,db)
+    db_index = File.join($DB_PATH,'indices',db)
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db}_contaminants_stats.txt")
     outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_contaminants_stats_cmd.txt")
 
+    nativelibdir = File.join($BBPATH,'jni')
+    classp = File.join($BBPATH,'current')
+    max_ram = '1g'
+    cores = '1'
+    sample_type = 'paired'
+    save_unpaired = 'false'
+    minratio = 0.56
+
     options = {}
 
-    options['max_ram'] = '1G'
-    options['workers'] = '1'
-    options['sample_type'] = 'paired'
-    options['save_unpaired'] = 'false'
-    options['contaminants_dbs'] = db
-    options['contaminants_minratio'] = 0.56
+    options['max_ram'] = max_ram
+    options['workers'] = cores
+    options['sample_type'] = sample_type
+    options['save_unpaired'] = save_unpaired
+    options['contaminants_db'] = db
+    options['contaminants_minratio'] = minratio
     options['contaminants_aditional_params'] = nil
     options['contaminants_decontamination_mode'] = 'regular'
     options['sample_species'] = 1
@@ -41,20 +47,15 @@ class PluginContaminantsTest < Minitest::Test
 
     CheckDatabase.new($DB_PATH,options['workers'],options['max_ram'])
 
-    path_refs = File.join(contaminants_db,'old_fastas_'+db+'.txt')
+    path_refs = File.join($DB_PATH,'status_info','fastas_'+db+'.txt')
 
     db_list = {}
 
     File.open(path_refs).each_line do |line|
-
-     line.chomp!
-     ref = File.basename(line,".fasta")
-     species0 = ref.split("_")
-     species= species0[0..1].join(" ")
-
-     db_list[species] = line
-
-    end
+       line.chomp!
+       species = File.basename(line).split(".")[0].split("_")[0..1].join(" ")
+       db_list[species] = line
+    end 
 
     params = Params.new(faketemplate,options)
 
@@ -66,9 +67,10 @@ class PluginContaminantsTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 ref=#{contaminants_db} path=#{contaminants_db} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} path=#{db_index} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -84,9 +86,10 @@ class PluginContaminantsTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{contaminants_db} add_param=test in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t path=#{db_index} add_param=test in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -98,24 +101,27 @@ class PluginContaminantsTest < Minitest::Test
 
 # External single file database
     
-    db = 'Contaminant_one.fasta'
+    db = File.join($DB_PATH,'fastas/contaminants','Contaminant_one.fasta')
 
-    contaminants_db = File.join($DB_PATH,'contaminants',db)
+    #Extract info
+    db_update = CheckDatabaseExternal.new(db,cores,max_ram)
+    db_info = db_update.info
+    # Single-file database
+    db_refs = db
+    db_index = db_info["db_index"]
+    db_name = db_info["db_name"]
 
-    path_to_db_file = File.dirname(contaminants_db)
-
-    options['contaminants_dbs'] = contaminants_db
+    options['contaminants_db'] = db
 
     params = Params.new(faketemplate,options)
-
-    db_name = File.basename(db,".fasta")
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db_name}_contaminants_stats.txt")
     outstats2 = File.join(File.expand_path(OUTPUT_PATH),"#{db_name}_contaminants_stats_cmd.txt")
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{path_to_db_file} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t path=#{db_index} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -123,22 +129,26 @@ class PluginContaminantsTest < Minitest::Test
 
 # External database
     
-    db = 'contaminants'
+    db = File.join($DB_PATH,'fastas','contaminants')
 
-    contaminants_db = File.join($DB_PATH,db)
+    #Extract info
+    db_update = CheckDatabaseExternal.new(db,cores,max_ram)
+    db_info = db_update.info
+    #External directory database
+    db_index = db_info["db_index"]
+    db_name = db_info["db_name"]
 
-    options['contaminants_dbs'] = contaminants_db
+    options['contaminants_db'] = db
 
     params = Params.new(faketemplate,options)
-
-    db_name = db.split("/").last
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db_name}_contaminants_stats.txt")
     outstats2 = File.join(File.expand_path(OUTPUT_PATH),"#{db_name}_contaminants_stats_cmd.txt")
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db} path=#{contaminants_db} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t path=#{db_index} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -150,10 +160,11 @@ class PluginContaminantsTest < Minitest::Test
 
     db = 'contaminants'
 
+    options['contaminants_db'] = db
+
     outstats = File.join(File.expand_path(OUTPUT_PATH),"#{db}_contaminants_stats.txt")
     outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"#{db}_contaminants_stats_cmd.txt")
-
-    options['contaminants_dbs'] = db
+    index_path = File.join(OUTPUT_PATH,'temp_indices',db_name)
 
     options['contaminants_decontamination_mode'] = 'exclude species'
 
@@ -171,9 +182,10 @@ class PluginContaminantsTest < Minitest::Test
 
     db_ref = db_ref.join(",")
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{db_ref} path=#{OUTPUT_PATH} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t ref=#{db_ref} path=#{index_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -187,11 +199,12 @@ class PluginContaminantsTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    paths_to_contaminants = File.join($DB_PATH,'contaminants/Another_contaminant.fasta')
+    paths_to_contaminants = File.join($DB_PATH,'fastas/contaminants/Another_contaminant.fasta')
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{paths_to_contaminants} path=#{OUTPUT_PATH} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t ref=#{paths_to_contaminants} path=#{index_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
@@ -199,11 +212,11 @@ class PluginContaminantsTest < Minitest::Test
 
 # Two databases
     
-    contaminants_db1 = File.join($DB_PATH,'contaminants')
+    contaminants_db1 = File.join($DB_PATH,'indices/contaminants')
 
-    contaminants_db2 = File.join($DB_PATH,'vectors')
+    contaminants_db2 = File.join($DB_PATH,'indices/vectors')
 
-    options['contaminants_dbs'] = 'contaminants,vectors'
+    options['contaminants_db'] = 'contaminants,vectors'
 
     options['contaminants_decontamination_mode'] = 'regular'
 
@@ -215,19 +228,20 @@ class PluginContaminantsTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db1} path=#{contaminants_db1} in=stdin.fastq out=stdout.fastq refstats=#{outstats1} 2> #{outstats3} | bbsplit.sh -Xmx1G t=1 minratio=0.56 int=t ref=#{contaminants_db2} path=#{contaminants_db2} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t path=#{contaminants_db1} in=stdin.fastq out=stdout.fastq refstats=#{outstats1} 2> #{outstats3} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t path=#{contaminants_db2} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
 
     manager = PluginManager.new(plugin_list,params)
+    manager.check_plugins_params(params)
 
     test = manager.execute_plugins()
 
     assert_equal(result,test[0])    
 
-    # Deleting $DB_PATH
+# Deleting $DB_PATH
 
-    FileUtils.remove_dir(temp_folder)
+  FileUtils.remove_dir(temp_folder)
 
-    $DB_PATH = File.join(RT_PATH, "DB")
+  $DB_PATH = File.join(RT_PATH, "DB")
 
   end
   

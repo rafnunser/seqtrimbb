@@ -4,13 +4,21 @@ class PluginInputTest < Minitest::Test
 
   def test_plugin_input
 
+    nativelibdir = File.join($BBPATH,'jni')
+    classp = File.join($BBPATH,'current')
+    max_ram = '1g'
+    cores = '1'
+    sample_type = 'paired'
+    file1 = File.join(RT_PATH,"DB","testfiles","testfile_1.fastq.gz")
+    file2 = File.join(RT_PATH,"DB","testfiles","testfile_2.fastq.gz")
+    file_single = File.join(RT_PATH,"DB","testfiles","testfile_single.fastq.gz")
+    file_interleaved = File.join(RT_PATH,"DB","testfiles","testfile_interleaved.fastq.gz")
 
     options = {}
 
-    options['max_ram'] = '1G'
-    options['workers'] = '1'
-    options['sample_type'] = 'paired'
-    options['file_format'] = 'fastq'
+    options['file'] = [file1,file2]
+    options['max_ram'] = max_ram
+    options['workers'] = cores
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"input_stats.txt")
 
@@ -20,39 +28,13 @@ class PluginInputTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
- # Single-ended sample
-
-    options['sample_type'] = 'single-ended'
-
-    params = Params.new(faketemplate,options)
-
-    file = "testfile.fastq"
-
-    $SAMPLEFILES = []
-
-    $SAMPLEFILES[0] = file
-
-    result = "reformat.sh -Xmx1G t=1 in=#{file} out=stdout.fastq 2> #{outstats}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
  # Interleaved sample
 
-   options['sample_type'] = 'interleaved'
+   options['file'] = [file_interleaved]
 
    params = Params.new(faketemplate,options)
 
-   file = "testfile.fastq"
-
-   $SAMPLEFILES = []
-
-   $SAMPLEFILES[0] = file
-
-   result = "reformat.sh -Xmx1G t=1 in=#{file} int=t out=stdout.fastq 2> #{outstats}"
+   result = "java -ea -Xmx#{max_ram} -cp #{classp} jgi.ReformatReads t=#{cores} in=#{file_interleaved} int=t out=stdout.fastq 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 
@@ -62,19 +44,11 @@ class PluginInputTest < Minitest::Test
 
  # Paired sample
 
-   options['sample_type'] = 'paired'
+   options['file'] = [file1,file2]
 
    params = Params.new(faketemplate,options)
 
-   file1 = "testfile_1.fastq"
-   file2 = "testfile_2.fastq"
-
-   $SAMPLEFILES = []
-
-   $SAMPLEFILES[0] = file1
-   $SAMPLEFILES[1] = file2
-
-   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} out=stdout.fastq 2> #{outstats}"
+   result = "java -ea -Xmx#{max_ram} -cp #{classp} jgi.ReformatReads t=#{cores} in=#{file1} in2=#{file2} out=stdout.fastq 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 
@@ -84,20 +58,13 @@ class PluginInputTest < Minitest::Test
 
  # Fasta sample without qual
 
-   options['sample_type'] = 'paired'
-   options['file_format'] = 'fasta'
+   file1 = File.join(RT_PATH,"DB","testfiles","testfile_1.fasta.gz")
+   file2 = File.join(RT_PATH,"DB","testfiles","testfile_2.fasta.gz")
+   options['file'] = [file1,file2]
 
    params = Params.new(faketemplate,options)
 
-   file1 = "testfile_1.fasta"
-   file2 = "testfile_2.fasta"
-
-   $SAMPLEFILES = []
-
-   $SAMPLEFILES[0] = file1
-   $SAMPLEFILES[1] = file2
-
-   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} q=40 out=stdout.fastq 2> #{outstats}"
+   result = "java -ea -Xmx#{max_ram} -cp #{classp} jgi.ReformatReads t=#{cores} in=#{file1} in2=#{file2} q=40 out=stdout.fastq 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 
@@ -107,27 +74,27 @@ class PluginInputTest < Minitest::Test
 
  # Fasta sample with qual
 
-   options['sample_type'] = 'paired'
-   options['file_format'] = 'fasta'
+   qual1 = File.join(RT_PATH,"DB","testfiles","qualfile_1.qual.gz")
+   qual2 = File.join(RT_PATH,"DB","testfiles","qualfile_2.qual.gz")
+   options['qual'] = [qual1,qual2]
 
    params = Params.new(faketemplate,options)
 
-   file1 = "testfile_1.fasta"
-   file2 = "testfile_2.fasta"
-   qual1 = "testqual_1.qual"
-   qual2 = "testqual_2.qual"
+   result = "java -ea -Xmx#{max_ram} -cp #{classp} jgi.ReformatReads t=#{cores} in=#{file1} in2=#{file2} qfin=#{qual1} qfin2=#{qual2} out=stdout.fastq 2> #{outstats}"
 
-   $SAMPLEFILES = []
+   manager = PluginManager.new(plugin_list,params)
 
-   $SAMPLEFILES[0] = file1
-   $SAMPLEFILES[1] = file2
+   test = manager.execute_plugins()
 
-   $SAMPLEQUALS = []
+   assert_equal(result,test[0])
 
-   $SAMPLEQUALS[0] = qual1
-   $SAMPLEQUALS[1] = qual2
+ # Single-ended sample
 
-   result = "reformat.sh -Xmx1G t=1 in=#{file1} in2=#{file2} qual=#{qual1} qual1=#{qual2} out=stdout.fastq 2> #{outstats}"
+   options['file'] = [file_single]
+
+   params = Params.new(faketemplate,options)
+
+   result = "java -ea -Xmx#{max_ram} -cp #{classp} jgi.ReformatReads t=#{cores} in=#{file_single} out=stdout.fastq 2> #{outstats}"
 
    manager = PluginManager.new(plugin_list,params)
 

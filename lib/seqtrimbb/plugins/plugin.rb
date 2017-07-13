@@ -7,7 +7,7 @@
 
 class Plugin
 
-  #Loads the plugin's execution whit the sequence "seq"
+  #Loads the plugin's execution
   def initialize(params)
     @params = params
 
@@ -21,7 +21,7 @@ class Plugin
   end
 
 
-  #Begins the plugin's execution whit the sequence "seq"
+  #Begins the plugin's execution
   def get_cmd
     return 'CMD to execute external tool'
   end

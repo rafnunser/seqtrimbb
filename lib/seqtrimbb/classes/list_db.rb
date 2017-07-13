@@ -7,48 +7,41 @@ class ListDb
 
 def initialize(path,db)
   
- pre=['old_fastas_',db,'.txt']
- prejoin=pre.join("")
- filename=File.join(path,db,prejoin)
-
- if !File.exists?(filename)
-
-  puts "File #{filename} doesn't exists"
-  puts ''
-  puts "Available databases:"
-  puts '-'*2
-  
-  ignore_folders=['.','..','status_info','formatted']			
-  dbs=Dir.open(path)
-  
-  dbs.entries.each do |db_name|
-   if !ignore_folders.include?(db_name)
-    puts "      "+db_name
-   end
-  end	  
-
+# if db = 'all' puts available databases
+ if db.downcase == 'all'
+   puts "Available databases at #{path}"
+   puts '-'*2
+   list_databases(path)
  else
+# if db != all puts fasta files in db. if db exists, if it doesn't puts all available databases
+  pre='fastas_'+db+'.txt'
+  filename=File.join(path,'status_info','fastas_'+db+'.txt')
 
-  f = File.open(filename)
-  		
-  f.each do |line|
-    
-    splitted_line = line.split("/")
-    fasta_name = splitted_line.last
+  if !File.exists?(filename)
+   puts "File #{filename} doesn't exists. Try checking databases first."
+   puts ''
+   puts "Available databases:"
+   puts '-'*2
+   list_databases(path)
+  else
+   puts "Fasta files in #{db} database:"
+   puts '-'*2
+   f = File.open(filename)	
+   f.each do |line|
+    fasta_name = File.basename(line)
     puts "      "+fasta_name
-
+   end
+   f.close
   end
-  f.close
-
  end
 
 end
 
-def self.list_databases(path)
+def list_databases(path)
 
-  if File.exists?(path)
-   ignore_folders=['.','..','status_info','formatted']			
-   dbs=Dir.open(path)
+  if File.exists?(File.join(path,'fastas'))
+   ignore_folders=['.','..']			
+   dbs=Dir.open(File.join(path,'fastas'))
    dbs.entries.each do |db_name|
     if !ignore_folders.include?(db_name)
      puts "      "+db_name

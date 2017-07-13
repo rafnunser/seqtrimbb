@@ -6,20 +6,34 @@ class PluginPolyAtTest < Minitest::Test
 
     outstats = File.join(File.expand_path(OUTPUT_PATH),"polyat_trimming_stats.txt")
     outstats2 = File.join(File.expand_path(OUTPUT_PATH),"polyat_trimming_stats_cmd.txt")
+    nativelibdir = File.join($BBPATH,'jni')
+    classp = File.join($BBPATH,'current')
+
+    max_ram = '1G'
+    cores = '1'
+    sample_type = 'paired'
+    save_unpaired = 'false'
+    polyat_trimming_position = 'both'
+    polyat_kmer_size = 31
+    polyat_min_external_kmer_size = 9
+    polyat_max_mismatches = 1
+    polyat_additional_params = nil
+    polyat_merging_pairs_trimming = 'true'
 
     options = {}
 
-    options['max_ram'] = '1G'
-    options['workers'] = '1'
-    options['sample_type'] = 'paired'
-    options['save_unpaired'] = 'false'
-    options['polyat_trimming_position'] = 'both'
-    options['polyat_kmer_size'] = 31
-    options['polyat_min_external_kmer_size'] = 9
-    options['polyat_max_mismatches'] = 1
+    options['max_ram'] = max_ram
+    options['workers'] = cores
+    options['sample_type'] = sample_type
+    options['write_in_gzip'] = 'true'
+    options['save_unpaired'] = save_unpaired
+    options['polyat_trimming_position'] = polyat_trimming_position
+    options['polyat_kmer_size'] = polyat_kmer_size
+    options['polyat_min_external_kmer_size'] = polyat_min_external_kmer_size
+    options['polyat_max_mismatches'] = polyat_max_mismatches
 
-    options['polyat_additional_params'] = nil
-    options['polyat_merging_pairs_trimming'] = 'true'
+    options['polyat_additional_params'] = polyat_additional_params
+    options['polyat_merging_pairs_trimming'] = polyat_merging_pairs_trimming
 
     faketemplate = File.join($DB_PATH,"faketemplate.txt")
 
@@ -33,7 +47,7 @@ class PluginPolyAtTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -51,7 +65,7 @@ class PluginPolyAtTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -65,7 +79,7 @@ class PluginPolyAtTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -79,7 +93,7 @@ class PluginPolyAtTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -95,7 +109,7 @@ class PluginPolyAtTest < Minitest::Test
 
     outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_polyat_trimming.fastq.gz")
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 outs=#{outsingles} rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 outs=#{outsingles} rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -113,7 +127,7 @@ class PluginPolyAtTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t add_param=test in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t add_param=test in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
 
     manager = PluginManager.new(plugin_list,params)
 

@@ -67,42 +67,47 @@ put_header
 
 ############ PATHS #######################
 
-OUTPUT_PATH = 'output_files_tmp'
-OUTPLUGINSTATS = 'output_files_tmp/plugin_stats'
+OUTPUT_PATH = File.expand_path('output_files_tmp')
+OUTPLUGINSTATS = File.expand_path('output_files_tmp/plugin_stats')
 
-# if there is a BLASTDB environment var, then use it
-if ENV['BBDB']# && Dir.exists?(ENV['DB'])
+# if there is a BBDB environment var, then use it
+if ENV['BBDB']
   $DB_PATH = ENV['BBDB']
 else # otherwise use SEQTRIM_PATH + DB
   $DB_PATH = File.expand_path(File.join(SEQTRIM_PATH, "DB"))
 end
 
-# TODO - COMENTAR todas las clases y metodos para que salga la descripcion cuando hagas rdoc en el terminal
+# PATH TO BBTOOLS
+# if there is a BBTOOLS_PATH environment var, then use it
+if ENV['BBTOOLS_PATH']
+   $BBPATH = ENV['BBTOOLS_PATH']
+else # otherwise use the result of which bbmap.sh
+   $BBPATH = File.expand_path(File.dirname(%x[which bbmap.sh]))
+end
 
 #Checks install requeriments
-
 require 'install_requirements'
-
 ins = InstallRequirements.new
-
 if (!ins.check_install_requirements)
   exit(-1)
 end
 
-require "logger"
+require 'logger'
 require 'optparse'
-require "seqtrim"
-require "params.rb"
-require "plugin.rb"
-require "plugin_manager.rb"
-require 'list_db'
-require 'install_database'
-require 'check_database' 
+require 'seqtrim.rb'
+require 'params.rb'
+require 'plugin.rb'
+require 'plugin_manager.rb'
+require 'list_db.rb'
+require 'install_database.rb'
+require 'check_database.rb'
+require 'check_external_database.rb'
+require 'getsetram.rb' 
 
 def show_additional_help
 
   puts "\n"*3
-  puts "E.g.: processing a fastq sequences file"
+  puts "E.g.: processing a fastq file"
   puts "#{File.basename($0)} -t genomics_basic.txt -Q sequences.fastq"
   puts "\n"*2
 
@@ -119,16 +124,14 @@ def show_additional_help
   templates.map{|e| puts "      "+e}
 
   puts "\n\n  ========================================================================================================"
-  puts "  Available databases to use in custom template files (you can also use your own database):"
-  puts "  Databases at: #{$DB_PATH}"
+  puts "  Available databases to use in custom template files (you can also use your own database)"
   puts "  ========================================================================================================\n\n"
 
-  ListDb.list_databases($DB_PATH)
+  ListDb.new($DB_PATH,'all')
 
   exit
 
 end
-
 
 # Reads the parameters from console. For this is used ARGV, that is an array.
 
@@ -141,7 +144,6 @@ optparse = OptionParser.new do |opts|
   opts.banner = "Usage: #{$0} -t template_file \{-Q seq_file\} [options]"
 
   options[:workers] = 1
-
   opts.on( '-w', '--workers COUNT', 'Number of threads' ) do |workers|
       begin
         options[:workers] = Integer(workers)
@@ -152,19 +154,19 @@ optparse = OptionParser.new do |opts|
   end
 
   options[:max_ram] = nil
-  opts.on( '-m', '--max_RAM MEMORY', 'Max RAM to use, for example, 1G means 1 gig' ) do |max_ram|
-    options[:max_ram] = max_ram.upcase
+  opts.on( '-m', '--max_RAM MEMORY', 'Max RAM to use, for example, 1g means 1 gig' ) do |max_ram|
+    options[:max_ram] = max_ram.downcase
   end
 
   options[:check_db] = true
-  opts.on( '-c', '--check_databases', 'Check databases' ) do
+  opts.on( '-c', '--check_databases', 'Skip Checking databases step' ) do
     options[:check_db] = false
   end
 
-  options[:install_db] = nil
-  opts.on( '-i', '--install_databases TYPE', 'Install base databases') do |db_type|
-    options[:install_db] = db_type
-  end
+  #options[:install_db] = nil
+  #opts.on( '-i', '--install_databases TYPE', 'Install base databases') do |db_type|
+  #  options[:install_db] = db_type
+  #end
 
   options[:logfile] = STDOUT
   opts.on( '-l', '--logfile FILE', 'Write log to FILE' ) do |file|
@@ -182,8 +184,7 @@ optparse = OptionParser.new do |opts|
   end
 
   options[:list_db] = nil
-  options[:list_db_name] = 'ALL'
-
+  options[:list_db_name] = 'all'
   opts.on( '-L', '--list_db [DB_NAME]', 'List entries IDs in DB_NAME. Use "-L all" to view all available databases' ) do |value|
     options[:list_db] = true
     options[:list_db_name] = value if value
@@ -229,10 +230,8 @@ optparse = OptionParser.new do |opts|
     options[:final_output_path] = folder
   end
 
-# This displays the help screen, all programs are
-# assumed to have this option.
-
-  opts.on_tail( '-h', '--help', 'Display this screen' ) do
+# This displays the help screen, all programs are assumed to have this option.
+  opts.on_tail('-h', '--help', 'Display this screen') do
     puts opts
     show_additional_help
     exit -1
@@ -240,11 +239,9 @@ optparse = OptionParser.new do |opts|
 end
 
 # parse options and remove from ARGV
-
 optparse.parse!
 
 # Set Final output path
-
 DEFAULT_FINAL_OUTPUT_PATH = options[:final_output_path]
 
 if options[:list_db]
@@ -259,27 +256,10 @@ if options[:gen_params]
   exit -1
 end
 
+if options[:max_ram].nil?
 # Setting RAM usage
-
-if options[:max_ram] == nil
- 
-  raw_output=%x(free -g)
-  splitted_output=raw_output.split("\n")
-  splitted_output1=splitted_output[1].split(" ")
-  free_ram = (splitted_output1[3].to_i * 0.85 - 0.5).round
-
-  if free_ram.to_i > 1
-
-    max_ram = [free_ram,"G"].join("")
-
-    options[:max_ram] = max_ram
-
-  else
-
-    options[:max_ram] = '4G'
-
-  end
-
+  free_memory = GetSetRAM.new
+  options[:max_ram] = free_memory.value
 end
 
 #set logger
@@ -295,39 +275,24 @@ $LOG.datetime_format = "%Y-%m-%d %H:%M:%S"
 
 $LOG.info("SeqTrimBB version #{Seqtrimbb::SEQTRIM_VERSION}")
 $LOG.info("Command: #{$0}")
-$LOG.info(ROOT_PATH)
+$LOG.info("SeqtrimBB path: #{ROOT_PATH}")
+$LOG.info("BBTools path: #{$BBPATH}")
 
 $LOG.info("Using options: \n"+ JSON::pretty_generate(options))
 
 # Install/Check databases on DB_PATH
 
-if options[:install_db] && File.writable?($DB_PATH)
-
+#if options[:install_db]
   #install databases
+ # InstallDatabase.new(options[:install_db],$DB_PATH)
+  # check databases indices
+  #CheckDatabase.new($DB_PATH,options[:workers],options[:max_ram])
+  #exit
+#end
 
-  InstallDatabase.new(options[:install_db],$DB_PATH)
-
-  # make bbsplit index
-  
+if options[:check_db]
+  # checks databases indices
   CheckDatabase.new($DB_PATH,options[:workers],options[:max_ram])
-
-  exit
-
-else
-
-  $LOG.info("Databases path: #{$DB_PATH} is not writable. Skipping Installing Databases step")
-end
-
-if options[:check_db] && File.writable?($DB_PATH)
-
-  # checks for old bbsplit indexes and update them
-  
-  CheckDatabase.new($DB_PATH,options[:workers],options[:max_ram])
-
-else
-
-  $LOG.info("Databases path: #{$DB_PATH} is not writable. Skipping Checking Databases step")
-
 end
 
 # checks for essential arguments
@@ -341,44 +306,24 @@ if (ARGV.count != 0) || (!required_options)
   exit(-1)
 end
 
-if File.exists?(options[:final_output_path])
-
+# checks for a previous execution
+if Dir.exists?(DEFAULT_FINAL_OUTPUT_PATH) || Dir.exists?(OUTPUT_PATH)
   if options[:force_execution]
-
-   $LOG.error "Output folder #{options[:final_output_path]} already exists and --force parameter is active.\n Removing output_files and output_files_tmp from the current directory."
-  
-   FileUtils.rm_rf(OUTPUT_PATH) if File.exists?(OUTPUT_PATH)
-   FileUtils.rm_rf(DEFAULT_FINAL_OUTPUT_PATH)
-  
-  else
-
-   $LOG.error "Output folder #{options[:final_output_path]} already exists.\n Remove it if you want to launch SeqtrimBB again."
-   exit(-1)
-
-  end
-end
-
-if File.exists?(DEFAULT_FINAL_OUTPUT_PATH) || File.exists?(OUTPUT_PATH)
-
-  if options[:force_execution]
-
-   $LOG.error "Temporal output folder #{OUTPUT_PATH} already exists and --force parameter is active.\n Removing output_files_tmp from the current directory." if File.exists?(OUTPUT_PATH)
-   $LOG.error "Output folder #{options[:final_output_path]} already exists and --force parameter is active.\n Removing #{options[:final_output_path]}" if File.exists?(DEFAULT_FINAL_OUTPUT_PATH)
-  
+   #Warning
+   $LOG.error "Temporal output folder #{OUTPUT_PATH} already exists and --force parameter is active.\n Removing output_files_tmp from the current directory." if Dir.exists?(OUTPUT_PATH)
+   $LOG.error "Output folder #{options[:final_output_path]} already exists and --force parameter is active.\n Removing #{options[:final_output_path]}" if Dir.exists?(DEFAULT_FINAL_OUTPUT_PATH)
+   #Remove old folders
    FileUtils.rm_rf(OUTPUT_PATH) if File.exists?(OUTPUT_PATH)
    FileUtils.rm_rf(DEFAULT_FINAL_OUTPUT_PATH) if File.exists?(DEFAULT_FINAL_OUTPUT_PATH)
-  
   else
-
-   $LOG.error "Output folder #{options[:final_output_path]}, or temporal output folder #{OUTPUT_PATH} already exists.\n Remove it if you want to launch SeqtrimBB again or add --force_execution parameter to the command line."
+   #Error
+   $LOG.error "Output folder #{options[:final_output_path]}, or temporal output folder #{OUTPUT_PATH} already exists.\n Remove them if you want to launch SeqtrimBB again or add --force_execution parameter to the command line."
    exit(-1)
-
   end
 end
 
-# check for template's existence
-
-if (!File.exists?(options[:template]))
+# check for templates existence
+if !File.exists?(options[:template])
   if File.exists?(File.join(ROOT_PATH,'templates',options[:template]))
     options[:template] = File.join(ROOT_PATH,'templates',options[:template])
   else
@@ -387,75 +332,21 @@ if (!File.exists?(options[:template]))
     exit(-1)
   end
 end
-
 $LOG.info "Using params file: #{options[:template]}"
 
-# check file's existence and automatic format detection
- 
+# check for files existence
 if options[:file]
-
-  nfiles = options[:file].count 
-
-  $SAMPLEFILES = []
-
+  # Test file
   options[:file].each do |seq_file|
-
-    # file
-    if (!seq_file.nil? && seq_file!='-' && !File.exists?(File.expand_path(seq_file)))
-      $LOG.error "Input file: #{seq_file} doesn't exists"
-      exit(-1)
-    end
-
-    file_to_test = File.expand_path(seq_file)
-
-    $SAMPLEFILES << file_to_test
-
-    # automatic format detection
-    format_info = %x[testformat.sh #{file_to_test}].chop.split("\t")
-
-    if (nfiles != 1)
-     format_info[3] = "paired"
-    end
-
-    options[:qual_format] = format_info[0]
-    options[:file_format] = format_info[1]
-    options[:sample_type] = format_info[3]
-    
-  end	
-
-  #preloading params 
-
-  output = File.expand_path(OUTPUT_PATH)
-
-  if options[:sample_type] == 'paired'
-
-       file_one = File.join(output,'paired_1.fastq')
-       file_two = File.join(output,'paired_2.fastq')
-
-       $OUTPUTFILES = ['paired_1.fastq','paired_2.fastq'] if !options[:write_in_gzip]
-       $OUTPUTFILES = ['paired_1.fastq.gz','paired_2.fastq.gz'] if options[:write_in_gzip]
-
-    elsif options[:sample_type] == 'interleaved'
-
-       file_one = File.join(output,'interleaved.fastq')
-
-       $OUTPUTFILES = ['interleaved.fastq'] if !options[:write_in_gzip]
-       $OUTPUTFILES = ['interleaved.fastq.gz'] if options[:write_in_gzip]
-
-    else
-    
-       file_one = File.join(output,'sequences_.fastq')
-
-       $OUTPUTFILES = ['sequences_.fastq'] if !options[:write_in_gzip]
-       $OUTPUTFILES = ['sequences_.fastq.gz'] if options[:write_in_gzip]
-
-    end
-  
+   if (!seq_file.nil? && seq_file!='-' && !File.exists?(File.expand_path(seq_file)))
+    $LOG.error "Input file: #{seq_file} doesn't exists"
+    exit(-1)
+   end
+  end 
 end
 
-# qual file
+# check for qual files existence
 if options[:qual]
-
   options[:qual].each do |qual_file|
     # qual file
     if (!qual_file.nil? && qual_file!='-' && !File.exists?(File.expand_path(qual_file)))
@@ -463,27 +354,25 @@ if options[:qual]
       exit(-1)
     end
   end
-  $SAMPLEQUALS = options[:qual]
-
 end
 
 s = Seqtrim.new(options)
 
 #generate report
 
-if !options[:skip_report] && system("which generate_report.rb > /dev/null ")
-  cmd="generate_report.rb #{OUTPUT_PATH} 2> report_generation_errors.log"
-  $LOG.info "Generating report #{cmd}"
+#if !options[:skip_report] && system("which generate_report.rb > /dev/null ")
+#  cmd="generate_report.rb #{OUTPUT_PATH} 2> report_generation_errors.log"
+ # $LOG.info "Generating report #{cmd}"
   # `#{cmd}`
-else
-  skip_text=','
-  if options[:skip_report]
-    skip_text=' and remove the -R option from the command line.'
-  end
+#else
+ # skip_text=','
+  #if options[:skip_report]
+   # skip_text=' and remove the -R option from the command line.'
+  #end
 
   #$LOG.info "If you want a detailed report in PDF format, be sure you have installed the optional seqtrimbb_report gem (gem install seqtrimbb_report)#{skip_text}"
-  $LOG.info "Closing"
-end
+  #$LOG.info "Closing"
+#end
 
 if (Seqtrim.exit_status>=0) 
   FileUtils.mv OUTPUT_PATH, DEFAULT_FINAL_OUTPUT_PATH

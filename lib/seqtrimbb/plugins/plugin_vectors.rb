@@ -15,13 +15,23 @@ class PluginVectors < Plugin
     max_ram = @params.get_param('max_ram')
     cores = @params.get_param('workers')
     sample_type = @params.get_param('sample_type')
+    write_in_gzip = @params.get_param('write_in_gzip')
     save_singles = @params.get_param('save_unpaired')
+    nativelibdir = File.join($BBPATH,'jni')
+    classp = File.join($BBPATH,'current')
 
     cmd_add = Array.new
 
   # Vectors trimming params
-
     vectors_db = @params.get_param('vectors_db')
+    # Set references
+    if File.exists?(vectors_db) && File.file?(vectors_db)
+      vectors_db_fasta = vectors_db
+    elsif Dir.exists?(vectors_db)
+      vectors_db_fasta = Dir[File.join(vectors_db,'*.fasta*')].join(',')
+    else
+      vectors_db_fasta = Dir[File.join($DB_PATH,'fastas',vectors_db,'*.fasta*')].join(',')
+    end
     vectors_trimming_position = @params.get_param('vectors_trimming_position')
     vectors_kmer_size = @params.get_param('vectors_kmer_size')
     vectors_min_external_kmer_size = @params.get_param('vectors_min_external_kmer_size')
@@ -29,7 +39,6 @@ class PluginVectors < Plugin
     vectors_trimming_aditional_params = @params.get_param('vectors_trimming_aditional_params')
 
   # Name and path for the statistics to be generated in the trimming process
-
     outstats1 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats.txt")
     outstats3 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats_cmd.txt")
 
@@ -39,41 +48,35 @@ class PluginVectors < Plugin
 
   # Adding invariable fragment
 
-    cmd_add_add.push("bbduk2.sh -Xmx#{max_ram} t=#{cores} k=#{vectors_kmer_size} mink=#{vectors_min_external_kmer_size} hdist=#{vectors_max_mismatches}")
+    cmd_add_add.push("java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=#{vectors_kmer_size} mink=#{vectors_min_external_kmer_size} hdist=#{vectors_max_mismatches}")
 
   # Adding necessary fragment to save unpaired singles
-
-    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_vectors_trimming.fastq.gz")
+    if write_in_gzip   
+        suffix = 'fastq.gz'
+    else
+         suffix = 'fastq'
+    end
+    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_vectors_trimming.#{suffix}")
     cmd_add_add.push("outs=#{outsingles}") if save_singles == 'true'
 
   # Choosing which tips are going to be trimmed
 
     if vectors_trimming_position == 'both'
-
-      cmd_add_add.push("rref=#{vectors_db} lref=#{vectors_db}")
-
+      cmd_add_add.push("rref=#{vectors_db_fasta} lref=#{vectors_db_fasta}")
     elsif vectors_trimming_position == 'right'
-
-      cmd_add_add.push("rref=#{vectors_db}")
-
+      cmd_add_add.push("rref=#{vectors_db_fasta}")
     elsif vectors_trimming_position == 'left'
-
-      cmd_add_add.push("lref=#{vectors_db}")
-
+      cmd_add_add.push("lref=#{vectors_db_fasta}")
     end
 
-   if vectors_trimming_aditional_params != nil
-
+   if !vectors_trimming_aditional_params.nil?
     cmd_add_add.push(vectors_trimming_aditional_params)
-
    end
 
   # Adding necessary info to process paired samples
 
     if sample_type == "paired" || sample_type == "interleaved"
-
       cmd_add_add.push("int=t")
-
     end 
     
   # Adding closing args to the call and joining it
@@ -90,7 +93,32 @@ class PluginVectors < Plugin
 
     minratio = @params.get_param('vectors_minratio')
     vectors_filtering_aditional_params = @params.get_param('vectors_filtering_aditional_params')
-    vectors_path = File.dirname(vectors_db)
+    
+  # Vectors DB checkpoint
+
+  if File.file?(vectors_db)
+
+    vectors_db_update = CheckDatabaseExternal.new(vectors_db,cores,max_ram)
+    db_info = db_update.info
+  # Single-file database
+    db_index = db_info["db_index"]
+    db_name = db_info["db_name"]
+
+   else
+      
+    if Dir.exists?(vectors_db)
+      db_update = CheckDatabaseExternal.new(vectors_db,cores,max_ram)
+      db_info = db_update.info
+  #External directory database
+      db_index = db_info["db_index"]
+      db_name = db_info["db_name"]
+    else
+  # Internal directory database
+      db_index = File.join($DB_PATH,'indices',vectors_db)
+      db_name = vectors_db
+    end
+
+  end
 
   # Creates an array to store the fragments
 
@@ -98,7 +126,7 @@ class PluginVectors < Plugin
 
   # Adding invariable fragment
 
-   cmd_add_add.push("bbsplit.sh -Xmx#{max_ram} t=#{cores} minratio=#{minratio}")
+   cmd_add_add.push("java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio}")
 
   # Adding necessary info to process sample as paired
 
@@ -106,14 +134,12 @@ class PluginVectors < Plugin
 
   # Adding reference and path to the index 
 
-   cmd_add_add.push("ref=#{vectors_db} path=#{vectors_path}")
+   cmd_add_add.push("path=#{db_index}")
 
   # Adding closing args to the call
 
-   if vectors_filtering_aditional_params != nil
-
+   if !vectors_filtering_aditional_params.nil?
     cmd_add_add.push(vectors_filtering_aditional_params)
-
    end
 
   # Name and path for the statistics to be generated in the filtering process
@@ -150,13 +176,9 @@ class PluginVectors < Plugin
      cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats_cmd.txt")
 
      File.open(cmd_file).each do |line|
-
       line.chomp!
-
       if !line.empty?
-
-        if (line =~ /Exception in thread/)
-
+        if (line =~ /Exception in thread/) || (line =~ /Error/)
            STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
            exit -1 
         end
@@ -166,25 +188,15 @@ class PluginVectors < Plugin
     # Extracting stats 
 
     File.open(stat_file1).each do |line|
-
       line.chomp!
-
      if !line.empty?
-
-       if (line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo
-    
+       if (line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo   
          line[0]=''
-
          splitted = line.split(/\t/)
-
          plugin_stats["plugin_vectors"]["sequences_with_vector"]["count"] += splitted[1].to_i if splitted[0] == 'Matched'
-
        else 
-
-         splitted = line.split(/\t/)
-         
+         splitted = line.split(/\t/)        
          plugin_stats["plugin_vectors"]["vector_id"][splitted[0]] = splitted[1].to_i
-
        end
      end
     end
@@ -194,13 +206,9 @@ class PluginVectors < Plugin
      cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_filtering_stats_cmd.txt")
 
      File.open(cmd_file).each do |line|
-
       line.chomp!
-
       if !line.empty?
-
         if (line =~ /Exception in thread/)
-
            STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
            exit -1 
         end
@@ -210,21 +218,13 @@ class PluginVectors < Plugin
     # Extracting stats 
 
     File.open(stat_file2).each do |line|
-
       line.chomp!
-
      if !line.empty?
-
-       if !(line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo
-    
+       if !(line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo    
          splitted = line.split(/\t/)
-
          nreads = splitted[6].to_i + splitted[7].to_i
-
-         plugin_stats["plugin_vectors"]["vector_id"][splitted[0]] += nreads.to_i
-         
-         plugin_stats["plugin_vectors"]["sequences_with_vector"]["count"] += nreads.to_i
-       
+         plugin_stats["plugin_vectors"]["vector_id"][splitted[0]] += nreads.to_i        
+         plugin_stats["plugin_vectors"]["sequences_with_vector"]["count"] += nreads.to_i      
        end
      end
     end
@@ -242,12 +242,16 @@ class PluginVectors < Plugin
     params.check_param(errors,'max_ram','String',default_value,comment)
 
     comment='Number of Threads'
-    default_value = 1
+    default_value = 
     params.check_param(errors,'workers','String',default_value,comment)
 
     comment='Type of sample: paired, single-ended or interleaved.'
     default_value = 
     params.check_param(errors,'sample_type','String',default_value,comment)
+
+    comment='Write in gzip?'
+    default_value = 
+    params.check_param(errors,'write_in_gzip','String',default_value,comment)
 
     comment='Save reads which became unpaired after every step? true or false (default)'
     default_value = 'false'
@@ -258,8 +262,8 @@ class PluginVectors < Plugin
     params.check_param(errors,'vectors_trimming_position','String',default_value,comment)
 
     comment='Sequences of adapters to use in trimming: list of fasta files (comma separated)' 
-    default_value = File.join(File.expand_path($DB_PATH),'vectors/vectors.fasta')
-    params.check_param(errors,'vectors_db','String',default_value,comment)
+    default_value = 'vectors'
+    params.check_param(errors,'vectors_db','DB',default_value,comment)
 
     comment='Main kmer size to use in vectors trimming'
     default_value = 31

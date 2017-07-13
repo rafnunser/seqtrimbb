@@ -5,13 +5,20 @@ class PluginQualityTest < Minitest::Test
   def test_plugin_quality
 
     outstats = File.join(OUTPUT_PATH,"quality_trimming_stats.txt")
+    nativelibdir = File.join($BBPATH,'jni')
+    classp = File.join($BBPATH,'current')
+    max_ram = '1G'
+    cores = '1'
+    sample_type = 'paired'
+    save_unpaired = 'false'
 
     options = {}
 
-    options['max_ram'] = '1G'
-    options['workers'] = '1'
-    options['sample_type'] = 'paired'
-    options['save_unpaired'] = 'false'
+    options['max_ram'] = max_ram
+    options['workers'] = cores
+    options['write_in_gzip'] = 'true'
+    options['sample_type'] = sample_type
+    options['save_unpaired'] = save_unpaired
 
     threshold = 20
 
@@ -31,7 +38,7 @@ class PluginQualityTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=rl in=stdin.fastq out=stdout.fastq 2> #{outstats}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{threshold} qtrim=rl in=stdin.fastq out=stdout.fastq 2> #{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -49,7 +56,7 @@ class PluginQualityTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=l int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{threshold} qtrim=l int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -63,7 +70,7 @@ class PluginQualityTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=r int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{threshold} qtrim=r int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -77,7 +84,7 @@ class PluginQualityTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=rl int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{threshold} qtrim=rl int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
@@ -91,7 +98,7 @@ class PluginQualityTest < Minitest::Test
 
     params = Params.new(faketemplate,options)
 
-    result = "bbduk2.sh -Xmx1G t=1 trimq=#{threshold} qtrim=rl int=t add_param=test in=stdin.fastq out=stdout.fastq 2> #{outstats}"
+    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{threshold} qtrim=rl int=t add_param=test in=stdin.fastq out=stdout.fastq 2> #{outstats}"
 
     manager = PluginManager.new(plugin_list,params)
 
