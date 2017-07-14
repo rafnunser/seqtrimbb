@@ -19,5 +19,5 @@ plugin_list = PluginAdapters,PluginContaminants,PluginQuality,PluginUserFilter,P
 
 minlength=80
 
-user_filter_dbs = #Type here the folder or file to use in filtering
+user_filter_db = #Type here the folder or file to use in filtering
 
