@@ -103,6 +103,7 @@ require 'install_database.rb'
 require 'check_database.rb'
 require 'check_external_database.rb'
 require 'getsetram.rb' 
+require 'zlib'
 
 def show_additional_help
 
