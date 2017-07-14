@@ -77,9 +77,9 @@ class PluginReadInputBb < Plugin
 
     # First look for internal errors in cmd execution
 
-     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"input_stats.txt")
-
-     File.open(cmd_file).each do |line|
+    cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"input_stats.txt")
+    open_cmd_file= File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/) || (line =~ /Error/)
@@ -87,7 +87,8 @@ class PluginReadInputBb < Plugin
            exit -1 
         end
       end
-     end
+    end
+    open_cmd_file.close
 
     # DOES NOTHING
 

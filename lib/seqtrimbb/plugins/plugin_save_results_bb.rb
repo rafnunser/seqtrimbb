@@ -53,9 +53,9 @@ class PluginSaveResultsBb < Plugin
 
     # First look for internal errors in cmd execution
 
-     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"output_stats.txt")
-
-     File.open(cmd_file).each do |line|
+    cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"output_stats.txt")
+    open_cmd_file= File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/) || (line =~ /Error/)
@@ -63,11 +63,12 @@ class PluginSaveResultsBb < Plugin
            exit -1 
         end
       end
-     end
-
+    end
+    open_cmd_file.close
     # Extracting stats 
 
-    File.open(stat_file1).each do |line|
+    open_stat_file1 = File.open(stat_file1)
+    open_stat_file1.each do |line|
      line.chomp!
      if !line.empty? && (line =~ /^Input:/) #Es el encabezado de la tabla o el archivo
          splitted = line.split(/\t/)
@@ -75,8 +76,10 @@ class PluginSaveResultsBb < Plugin
          plugin_stats["sequences"]["input_count"] = nreads[0].to_i
      end
     end
+    open_stat_file1.close
 
-    File.open(stat_file2).each do |line|
+    open_stat_file2 = File.open(stat_file2)
+    open_stat_file2.each do |line|
       line.chomp!
      if !line.empty? && (line =~ /^Output:/) #Es el encabezado de la tabla o el archivo
          splitted = line.split(/\t/)
@@ -88,7 +91,8 @@ class PluginSaveResultsBb < Plugin
          plugin_stats["sequences"]["final_short_reads_discards"] = nreads[0].to_i
      end
     end
-
+    open_stat_file2.close
+    
     plugin_stats["sequences"]["rejected"] = plugin_stats["sequences"]["input_count"].to_i - plugin_stats["sequences"]["output_count"].to_i
     
     return plugin_stats

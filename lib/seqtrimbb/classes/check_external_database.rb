@@ -131,18 +131,16 @@ class CheckDatabaseExternal
   $LOG.info("Checking for errors in external databases index update")
                
   if Dir.exists?(@info["db_index"]) and File.exists?(@info["db_stderror"])
-
-    File.open(@info["db_stderror"]).each do |line|
-
+    open_db_stderror = File.open(@info["db_stderror"])
+    open_db_stderror.each do |line|
       line.chomp!
-
       if !line.empty?
-
         if (line =~ /Error/) || (line =~ /Exception in thread/)
           errors.push "Internal error in #{@info["db_name"]} index update. For more details: #{@update_error}. To retry, remove #{@info["db_index"]} folder"
         end
       end
-    end         
+    end 
+    open_db_stderror.close        
   else
     errors.push "Internal error in #{@info["db_name"]} index update. For more details: #{@update_error}. To retry, remove #{@info["db_index"]} folder"
   end

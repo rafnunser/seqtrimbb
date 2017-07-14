@@ -57,13 +57,15 @@ class PluginUserFilterTest < Minitest::Test
     path_refs = File.join($DB_PATH,'status_info','fastas_'+db+'.txt')
 
     db_list = []
-
-    File.open(path_refs).each_line do |line|
+    
+    f = File.open(path_refs)
+    f.each_line do |line|
        line.chomp!
        species = File.basename(line).split(".")[0].split("_")[0..1].join(" ")
        db_list.push(species)
     end 
-
+    f.close
+    
     params = Params.new(faketemplate,options)
 
     precmd = "java -ea -Xmx#{max_ram} -cp #{classp} jgi.ReformatReads t=#{cores} in=stdin.fastq minlength=#{minlength} int=t out=stdout.fastq 2> #{preoutstats}"

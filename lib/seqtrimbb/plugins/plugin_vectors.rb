@@ -173,9 +173,9 @@ class PluginVectors < Plugin
 
     # First look for internal errors in cmd execution
 
-     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats_cmd.txt")
-
-     File.open(cmd_file).each do |line|
+    cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats_cmd.txt")
+    open_cmd_file= File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/) || (line =~ /Error/)
@@ -183,11 +183,13 @@ class PluginVectors < Plugin
            exit -1 
         end
       end
-     end
+    end
+    open_cmd_file.close
 
     # Extracting stats 
 
-    File.open(stat_file1).each do |line|
+    open_stat_file1 = File.open(stat_file1)
+    open_stat_file1.each do |line|
       line.chomp!
      if !line.empty?
        if (line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo   
@@ -200,12 +202,13 @@ class PluginVectors < Plugin
        end
      end
     end
+    open_stat_file1.close
 
     # First look for internal errors in cmd execution
 
-     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_filtering_stats_cmd.txt")
-
-     File.open(cmd_file).each do |line|
+    cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_filtering_stats_cmd.txt")
+    open_cmd_file= File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/)
@@ -213,11 +216,14 @@ class PluginVectors < Plugin
            exit -1 
         end
       end
-     end
+    end
+    open_cmd_file.close
 
     # Extracting stats 
 
-    File.open(stat_file2).each do |line|
+    open_stat_file2 = File.open(stat_file2)
+    open_stat_file2.each do |line|
+
       line.chomp!
      if !line.empty?
        if !(line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo    
@@ -228,6 +234,7 @@ class PluginVectors < Plugin
        end
      end
     end
+    open_stat_file2.close
 
     return plugin_stats
 

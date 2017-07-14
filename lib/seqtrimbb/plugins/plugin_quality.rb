@@ -77,9 +77,10 @@ class PluginQuality < Plugin
     stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"quality_trimming_stats.txt")
 
     # First look for internal errors in cmd execution
-     cmd_file = stat_file
-
-     File.open(cmd_file).each do |line|
+    
+    cmd_file = stat_file
+    open_cmd_file= File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/) || (line =~ /Error/)
@@ -87,10 +88,13 @@ class PluginQuality < Plugin
            exit -1 
         end
       end
-     end
+    end
+    open_cmd_file.close
 
     # Extracting stats 
-    File.open(stat_file).each do |line|
+
+    open_stat_file = File.open(stat_file)
+    open_stat_file.each do |line|
       line.chomp!
      if !line.empty? && (line =~ /^QTrimmed:/) #Es el encabezado de la tabla o el archivo
          splitted = line.split(/\t/)
@@ -100,6 +104,7 @@ class PluginQuality < Plugin
          plugin_stats["plugin_quality"]["quality_trimmed_bases"] = nbases[0].to_i
      end
     end
+    open_stat_file.close
 
     return plugin_stats
 

@@ -50,13 +50,14 @@ class PluginContaminantsTest < Minitest::Test
     path_refs = File.join($DB_PATH,'status_info','fastas_'+db+'.txt')
 
     db_list = {}
-
-    File.open(path_refs).each_line do |line|
+    f = File.open(path_refs)
+    f.each_line do |line|
        line.chomp!
        species = File.basename(line).split(".")[0].split("_")[0..1].join(" ")
        db_list[species] = line
     end 
-
+    f.close
+    
     params = Params.new(faketemplate,options)
 
     plugin_list = 'PluginContaminants'

@@ -27,7 +27,8 @@ class Params
 
     if path_file && File.exists?(path_file)
       comments= []
-      File.open(path_file).each_line do |line|
+      open_path_file = File.open(path_file)
+      open_path_file.each_line do |line|
         line.chomp! # delete end of line
         if !line.empty?
           if !(line =~ /^\s*#/)   # if line is not a comment
@@ -46,6 +47,7 @@ class Params
           end # end if comentario
         end #end if line
       end #end each
+      open_path_file.close
       if @params.empty?
         puts "INVALID PARAMETER FILE: #{path_file}. No parameters defined"
         exit

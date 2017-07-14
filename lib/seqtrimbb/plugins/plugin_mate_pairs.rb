@@ -26,7 +26,8 @@ class PluginMatePairs < Plugin
     # look for internal errors in  first cmd execution
 
     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_adapters_trimming_stats_cmd.txt")
-    File.open(cmd_file).each do |line|
+    open_cmd_file = File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/) || (line =~ /Error/)
@@ -35,13 +36,15 @@ class PluginMatePairs < Plugin
         end
       end
     end
+    open_cmd_file.close
 
     system(cmd2)
 
     # look for internal errors in second cmd execution
 
     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"LMP_extra_cmds.txt")
-    File.open(cmd_file).each do |line|
+    open_cmd_file = File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/) || (line =~ /Error/)
@@ -50,6 +53,7 @@ class PluginMatePairs < Plugin
         end
       end
     end
+    open_cmd_file.close
 
     @outfiles.each do |outfile|
      if File.exists?(outfile)
@@ -172,7 +176,8 @@ class PluginMatePairs < Plugin
 
     # Extracting stats 
     
-    File.open(stat_file1).each do |line|
+    open_stat_file1 = File.open(stat_file1)
+    open_stat_file1.each do |line|
       line.chomp!
      if !line.empty?
        if (line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo
@@ -185,10 +190,12 @@ class PluginMatePairs < Plugin
        end
      end
     end
+    open_stat_file1.close
 
     # Extracting stats
 
-    File.open(stat_file2).each do |line|
+    open_stat_file2 = File.open(stat_file2)
+    open_stat_file2.each do |line|
 
       line.chomp!
 
@@ -221,6 +228,7 @@ class PluginMatePairs < Plugin
        end
      end
     end
+    open_stat_file2.close
 
     return plugin_stats
 

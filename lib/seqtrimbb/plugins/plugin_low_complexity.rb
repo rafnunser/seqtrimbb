@@ -77,7 +77,8 @@ class PluginLowComplexity < Plugin
 
      cmd_file = stat_file
 
-     File.open(cmd_file).each do |line|
+    open_cmd_file= File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/) || (line =~ /Error/)
@@ -85,11 +86,13 @@ class PluginLowComplexity < Plugin
            exit -1 
         end
       end
-     end
+    end
+    open_cmd_file.close
 
     # Extracting stats 
 
-    File.open(stat_file).each do |line|
+    open_stat_file = File.open(stat_file)
+    open_stat_file.each do |line|
       line.chomp!
      if !line.empty? && (line =~ /^Low/) #Es el encabezado de la tabla o el archivo
          splitted = line.split(/\t/)
@@ -97,7 +100,8 @@ class PluginLowComplexity < Plugin
          plugin_stats["plugin_low_complexity"]["low_complexity_discarded_reads"] = nreads[0].to_i
      end
     end
-
+    open_stat_file.close
+    
     return plugin_stats
 
  end

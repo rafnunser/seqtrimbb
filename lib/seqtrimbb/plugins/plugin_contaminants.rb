@@ -84,11 +84,13 @@ class PluginContaminants < Plugin
       end
 
      #Fill the array with the species presents in the external database
-      File.open(path_refs).each_line do |line|
+      f = File.open(path_refs)
+      f.each_line do |line|
        line.chomp!
        species = File.basename(line).split(".")[0].split("_")[0..1].join(" ")
        db_list[species] = line
       end 
+      f.close
 
     # Adding database's specific fragment considering decontamination mode.
     # Regular decontamination mode
@@ -172,8 +174,9 @@ class PluginContaminants < Plugin
    end
 
     # First look for internal errors in cmd execution
-
-     File.open(cmd_file).each do |line|
+    
+    open_cmd_file= File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/) || (line =~ /Error\S/)
@@ -181,11 +184,13 @@ class PluginContaminants < Plugin
            exit -1 
         end
       end
-     end
-
+    end
+    open_cmd_file.close
+     
     # Extracting stats 
 
-    File.open(stat_file).each do |line|
+    open_stat_file = File.open(stat_file)
+    open_stat_file.each do |line|
       line.chomp!
      if !line.empty?
        if !(line =~ /^\s*#/) 
@@ -196,6 +201,7 @@ class PluginContaminants < Plugin
        end
      end
     end
+    open_stat_file.close
 
     return plugin_stats
 

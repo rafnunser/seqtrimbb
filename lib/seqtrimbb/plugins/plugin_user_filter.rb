@@ -82,11 +82,13 @@ class PluginUserFilter < Plugin
        end
 
       #Fill the array with the species presents in the external database
-      File.open(path_refs).each_line do |line|
+      f = File.open(path_refs)
+      f.each_line do |line|
        line.chomp!
        species = File.basename(line).split(".")[0].split("_")[0..1].join(" ")
        db_list.push(species)
       end
+      f.close
     end
 
      # Name and path for the statistics to be generated in the filtering process
@@ -143,10 +145,10 @@ class PluginUserFilter < Plugin
 
   user_filter_dbs = @params.get_param('user_filter_db')
 
-    plugin_stats = {}
-    plugin_stats["plugin_user_filter"] = {}
-    plugin_stats["plugin_user_filter"]["filtered_sequences_count"] = 0
-    plugin_stats["plugin_user_filter"]["filtering_ids"] = {}
+  plugin_stats = {}
+  plugin_stats["plugin_user_filter"] = {}
+  plugin_stats["plugin_user_filter"]["filtered_sequences_count"] = 0
+  plugin_stats["plugin_user_filter"]["filtering_ids"] = {}
 
   user_filter_dbs.split(/ |,/).each do |db|
 
@@ -167,8 +169,8 @@ class PluginUserFilter < Plugin
    end
 
     # First look for internal errors in cmd execution
-
-    File.open(cmd_file).each do |line|
+    open_cmd_file= File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/) || (line =~ /Error\S/)
@@ -177,10 +179,12 @@ class PluginUserFilter < Plugin
         end
       end
     end
+    open_cmd_file.close
 
     # Extracting stats 
 
-    File.open(stat_file).each do |line|
+    open_stat_file = File.open(stat_file)
+    open_stat_file.each do |line|
      line.chomp!
      if !line.empty?
        if !(line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo   
@@ -191,11 +195,49 @@ class PluginUserFilter < Plugin
        end
      end
     end
+    open_stat_file.close
   end
 
   # Remove empty files from filtered_files
 
-  
+  write_in_gzip = @params.get_param('write_in_gzip')
+  output = File.join(File.expand_path(OUTPUT_PATH),"filtered_files","*.fastq*")
+
+  if write_in_gzip
+
+    fastqfiles = Dir[output]
+    fastqfiles.each do |fastq|
+      openfile = open(fastq)
+      res = true
+      gz = Zlib::GzipReader.new(openfile)
+      gz.each_line do |line|
+        if !line.empty?
+          res = false
+          break
+        end
+      end
+      openfile.close
+      FileUtils.rm(fastq) if res
+    end
+
+  else
+
+    fastqfiles = Dir[output]
+    fastqfiles.each do |fastq|
+      openfile = open(fastq)
+      res = true
+      openfile.each_line do |line|
+        if !line.empty?
+          res = false
+          break
+        end
+      end
+      openfile.close
+      FileUtils.rm(fastq) if res
+    end
+
+  end
+
   return plugin_stats
 
  end

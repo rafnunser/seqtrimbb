@@ -93,8 +93,9 @@ class PluginAdapters < Plugin
 
     # First look for internal errors in cmd execution
      cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimming_stats_cmd.txt")
-
-     File.open(cmd_file).each do |line|
+    
+    open_cmd_file= File.open(cmd_file)
+    open_cmd_file.each do |line|
       line.chomp!
       if !line.empty?
         if (line =~ /Exception in thread/) || (line =~ /Error/)
@@ -103,6 +104,7 @@ class PluginAdapters < Plugin
         end
       end
      end
+     open_cmd_file.close
 
     # Extracting stats 
 
@@ -112,8 +114,9 @@ class PluginAdapters < Plugin
     plugin_stats["plugin_adapters"]["adapter_id"] = {}
 
     stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimming_stats.txt")
-
-    File.open(stat_file).each do |line|
+    
+    open_stat_file = File.open(stat_file)
+    open_stat_file.each do |line|
      line.chomp!
      if !line.empty?
        if (line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo
@@ -126,7 +129,8 @@ class PluginAdapters < Plugin
        end
      end
     end
-
+    open_stat_file.close
+    
     return plugin_stats
 
  end

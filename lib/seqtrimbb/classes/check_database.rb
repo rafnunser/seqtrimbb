@@ -111,7 +111,8 @@ class CheckDatabase
   # first condition
     if Dir.exists?(db_index) and File.exists?(update_error)
       # Open update_error file and look up for errors
-      File.open(update_error).each do |line|
+      open_update_error = File.open(update_error)
+      open_update_error.each do |line|
        line.chomp!
        if !line.empty?
          if (line =~ /Error/) || (line =~ /Exception in thread/)
@@ -121,6 +122,7 @@ class CheckDatabase
          end
        end
       end 
+      open_update_error.close
       current_indices.push(db_name) if !stderr
     end
   end 
