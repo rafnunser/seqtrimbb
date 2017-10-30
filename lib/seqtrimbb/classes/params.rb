@@ -1,56 +1,48 @@
 #########################################
 
-# This class provided the methods to read the parameter's file and to create the structure where will be storaged the param's name and the param's numeric-value
+# This class provided the methods to read the parameter's file (template) and to create the structure where will be storaged the param's name and the param's value
 #########################################
-#require 'scbi_fasta'
 
 class Params
 
   #Creates the structure and start the reading of parameter's file
-  def initialize(path, options)
+  def initialize(options)
 
     @params = {}
     @comments = {}
-    # @param_order={}
     @plugin_comments = {}
 
-    read_file(path)
+    read_file(options[:template])
     save_options(options)
 
-    #puts @params.to_json
   end
 
   # Reads param's file
   def read_file(path_file)
-
-    $LOG.debug ("Loading params from template: #{path_file}")
-
-    if path_file && File.exists?(path_file)
-      comments= []
-      open_path_file = File.open(path_file)
-      open_path_file.each_line do |line|
-        line.chomp! # delete end of line
-        if !line.empty?
-          if !(line =~ /^\s*#/)   # if line is not a comment
-            # extract the parameter's name in params[0] and the parameter's value in params[1]
-            line =~ /^\s*([^=]*)\s*=\s*(.*)\s*$/
-            params=[$1,$2]          
-            # store in the hash the pair key/value, in our case will be name/numeric-value ,
-            # that are save in params[0] and params[1],  respectively
-            if (!params[0].nil?) && (!params[1].nil?)
-              set_param(params[0].strip,params[1].strip,comments)
-              comments=[]
-            end
-            $LOG.debug "read: #{params[0]}= #{params[1]}" if !$LOG.nil?  
-          else
-            comments << line.gsub(/^\s*#/,'')
-          end # end if comentario
-        end #end if line
-      end #end each
-      open_path_file.close
+  
+     comments= []
+     open_path_file = File.open(path_file)
+     open_path_file.each_line do |line|
+         line.chomp! # delete end of line
+         if !line.empty?
+             if !(line =~ /^\s*#/)   # if line is not a comment
+               # extract the parameter's name in params[0] and the parameter's value in params[1]
+                 line =~ /^\s*([^=]*)\s*=\s*(.*)\s*$/
+                 params=[$1,$2]          
+              # store in the hash the pair key/value, in our case will be name/value ,
+              # that are save in params[0] and params[1],  respectively
+                 if (!params[0].nil?) && (!params[1].nil?)
+                     set_param(params[0].strip,params[1].strip,comments)
+                     comments=[]
+                 end
+             else
+                 comments << line.gsub(/^\s*#/,'')
+             end 
+        end 
+     end 
+     open_path_file.close
       if @params.empty?
-        puts "INVALID PARAMETER FILE: #{path_file}. No parameters defined"
-        exit
+        $LOG.warn "EMPTY PARAMETER FILE: #{path_file}. No parameters defined"
       end
     end
 
@@ -60,51 +52,62 @@ class Params
   def save_options(options)
 
     options.each do |opt_name,opt_value|
-
-      if opt_name.to_s == 'file'
-       # Set inputfiles
-        set_param('inputfiles',opt_value,"# Original input files value from input options")
-       # automatic format detection
-        format_info = %x[testformat.sh #{opt_value[0]}].chop.split("\t")
-       # paired count
-        format_info[3] = "paired" if opt_value.count == 2
-       # Set format info
-        set_param('qual_format',format_info[0],"# Quality format value from input files")
-        set_param('file_format',format_info[1],"# File format value from input files")
-        set_param('sample_type',format_info[3],"# # Sample type value from input files")
-      # Preloading output params 
-        if options[:write_in_gzip]
-          suffix = '.fastq.gz'
-        else
-          suffix = '.fastq'
-        end
-       # Set outputfiles 
-        if format_info[3] == 'paired'
-          set_param('outputfiles',[File.join(File.expand_path(OUTPUT_PATH),"paired_1#{suffix}"),File.join(File.expand_path(OUTPUT_PATH),"paired_2#{suffix}")],"# Preloaded output files") 
-        elsif format_info[3] == 'interleaved'
-          set_param('outputfiles',[File.join(File.expand_path(OUTPUT_PATH),"interleaved#{suffix}")],"# Preloaded output files") 
-        elsif format_info[3] == 'single-ended'
-          set_param('outputfiles',[File.join(File.expand_path(OUTPUT_PATH),"sequences_#{suffix}")],"# Preloaded output files") 
-        end
-      elsif opt_name.to_s == 'qual'  
-       # Set input qual files
-        set_param('inputqualfiles',opt_value,"# Original input qual files value from input options")
-       # Overwrite template's params
-      elsif opt_name.to_s == 'overwrite_params' && opt_value != nil
-       # Overwrite each param
-        opt_value.split(";").each do |param_to_overwrite|
-          #Store param name and value
-          oparameter = param_to_overwrite.split("=")[0]
-          oparameter_value = param_to_overwrite.split("=").drop(1).join("=")
-          #Set param
-          set_param(oparameter.to_s,oparameter_value,"#{oparameter} value from input options")
-          $LOG.debug "Overwriting param: #{oparameter}, with value: #{oparameter_value}"
-        end
-      else
       # Save options
       set_param(opt_name.to_s,opt_value,"#{opt_name} value from input options")
+    end
 
-      end
+  end
+
+  # Process saved params to add new useful general params
+  def process_params(db_path)
+
+     # Set db_path param (to access it from plugins)
+     set_param('db_path',db_path,"# Databases path")
+
+     # Writing options
+     suffix = get_param('write_in_gzip') ? '.fastq.gz' : '.fastq'
+     set_param('suffix',suffix,"# outfiles file extension")
+
+     # test inputfiles format
+     format_info = bbtools.execute('reformat',{in:nil,int:nil,out:nil,files:[get_param('file')[0]]})
+     # paired count (to avoid false single-files)
+     format_info[3] = 'paired' if get_param('file').count == 2
+     # Set format info
+     set_param('qual_format',format_info[0],"# Quality format value from input files")
+     set_param('file_format',format_info[1],"# File format value from input files")
+     set_param('sample_type',format_info[3],"# Sample type value from input files")
+     # Preloading output params 
+     # Setting outputfiles 
+     case format_info[3]
+         when 'paired'
+          files_out = [File.join(File.expand_path(OUTPUT_PATH),"paired_1#{suffix}"),File.join(File.expand_path(OUTPUT_PATH),"paired_2#{suffix}")]
+         when 'interleaved'
+          files_out = [File.join(File.expand_path(OUTPUT_PATH),"interleaved#{suffix}")]
+         when 'single-ended'
+          files_out = [File.join(File.expand_path(OUTPUT_PATH),"sequences_#{suffix}")]
+     end
+     set_param('outputfiles',files_out,"# Preloaded output files")
+ 
+     #Set and store default options. First add paired/interleaved information
+     paired = (format_info[3] == 'paired' || format_info[3] == 'interleaved') ? 't' : 'f'
+     default_options = { "in" => "stdin.fastq", "out" => "stdout.fastq", "int" => paired }
+     set_param('default_options',files_out,"# Preloaded default BBtools input/output/paired_info")
+
+     # Finally Overwrite template's params
+     overwrite_params(get_param('overwrite_params').split(";")) if !get_param('overwrite_params').nil?
+
+  end
+
+  # Overwrite given params
+  def overwrite_params(params)
+
+    params.each do |param_to_overwrite|
+        #Store param name and value
+       param_to_overwrite =~ /^\s*([^=]*)\s*=\s*(.*)\s*$/
+       params=[$1,$2]  
+        #Set param
+       set_param(params[0].to_s,params[1],"#{params[0]} value from input options")
+       $LOG.debug "Overwriting param: #{params[0]}, with value: #{params[1]}"
     end
 
   end
@@ -176,7 +179,7 @@ class Params
        res =@plugin_comments[plugin][param]
      end
      return res
-   end
+  end
   
   # Set comment
   def set_comment(plugin,param,comment)
@@ -214,30 +217,32 @@ class Params
        end
      end
 
-   end
+  end
  
-  # Returns true if exists the parameter and nil if don't
-  def exists?(param_name)
-     return !@params[param_name].nil?
-   end
+  # Returns true if exists the parameter and false if not
+  def exist?(param_name)
+
+     return @params.key?(param_name)
+
+  end
  
   def check_plugin_list_param(errors,param_name)
 
-     # get plugin list
-     pl_list=get_param(param_name)
-     # puts pl_list,param_name
-     list=pl_list.split(',')
-     list.map!{|e| e.strip}
-     # always the first plugin is the reader, and last plugin is the writer
-     list.delete('PluginSaveResultsBb')
-     list.delete('PluginReadInputBb')
-     list=['PluginReadInputBb']+list
-     if list.include?('PluginMatePairs')
-       list.delete('PluginMatePairs')
-       list=['PluginMatePairs']+list
-     end
+     # get plugin list (raise if nil or empty)
+     pl_list = get_param(param_name)
+     raise ArgumentError.new('PluginList is nil or empty') if (pl_list.nil? || pl_list.empty?)
+     # split and strips pl_list (String to Array of strings). 
+     # the first plugin is always the reader, and last plugin is always the writer
+     list = ['PluginReadInputBb'] + pl_list.strip.split(',').map!{|e| e.strip}.reject{|p| ['PluginReadInputBb','PluginSaveResultsBb'].include?(p)}
      list << 'PluginSaveResultsBb'
-
+     # checks plugins_names
+     current_plugins = Dir[File.join(File.join(SEQTRIM_PATH,'lib','seqtrimbb','plugins',"*.rb")].map!{|p| File.basename(p,'.rb')} + ['',' ',nil]
+     list.each do |plugin_name|
+         if !current_plugins.include?(plugin_name.decamelize)
+             raise ArgumentError.new("Plugin #{plugin_name} does not exists")
+         end
+     end
+     # Set updated pluginlist
      set_param(param_name,list.join(','))
 
   end
@@ -248,26 +253,24 @@ class Params
     db_list=get_param(db_param_name)
 
     if [nil,'',' '].include?(db_list)
-        errors.push "#{db_param_name} is empty. Specify a database or avoid this step."
-        
+        errors.push "#{db_param_name} is empty. Specify a database or avoid this step."     
     end
 
     # for each database in the list check that database and is properly indexed. Also index external databases.
     db_list.split(/ |,/).each do |db|
     # External database
-      if File.file?(db) || Dir.exists?(db)
+      if File.exist?(db)
     # Check and update
-        db_update = CheckDatabaseExternal.new(db,cores,max_ram)
+        db_update = CheckDatabaseExternal.new(db)
         db_update.update_index
         db_update.test_index(errors)
     # Internal database
-      elsif Dir.exists?(File.join($DB_PATH,'fastas',db))
+      elsif Dir.exist?(File.join($DB_PATH,'fastas',db))
     # Test for errors
-        db_name = db
-        indices_file = File.join($DB_PATH,'status_info','indexed_databases.txt')
-        current_indices = File.readlines(indices_file).map(&:chomp) if File.exists?(indices_file)
-        if !current_indices.include?(db_name)
-            errors.push "#{db} database in #{db_param_name} doesn't exists or is not updated"
+        db_update = CheckDatabase.new($DB_PATH)
+        indexed_databases = db_update.info['indexed_databases']
+        if !indexed_databases.include?(db)
+            errors.push "#{db} database in #{db_param_name} is not updated"
         end
       else
         errors.push "#{db} database in #{db_param_name} doesn't exists"
@@ -276,70 +279,48 @@ class Params
     
   end
   
-  def self.generate_sample_params
-
-     filename = 'sample_params.txt'
-     x=1
-     while File.exists?(filename)
-       filename = "sample_params#{x}.txt"
-       x+=1
-     end
-
-     f=File.open(filename,'w')
-     f.puts "SAMPLE_PARAMS"
-     f.close
-
-     puts "Sample params file generated: #{filename}"
-
-   end
-  
   def check_param(errors,param,param_class,default_value=nil, comment=nil)
 
      if !exists?(param)
-       if default_value.nil? #|| (default_value.is_a?(String) && default_value.empty?
-          nil_exceptions = ['user_filter_species','sample_species','ext_cmd','contaminants_aditional_params','adapters_aditional_params','vectors_trimming_aditional_params','vectors_filtering_aditional_params','quality_aditional_params','lowcomplexity_aditional_params','polyat_aditional_params','user_filter_aditional_params']     
-          $LOG.info "#{param} value is nil" if !nil_exceptions.include?(param)
-       else
+       #if default_value.nil? #|| (default_value.is_a?(String) && default_value.empty?
+          #nil_warnings = ['plugin_list']     
+          #$LOG.info "#{param} value is nil" if nil_warnings.include?(param)
+       #else
          set_param(param,default_value,comment)
-       end
+       #end
      end
 
      s = get_param(param)
      set_comment(get_plugin,param,comment)
 
-     # check_class=Object.const_get(param_class)
      begin
-
-       case param_class
-       when 'Integer'
-         r = Integer(s)
-       when 'Float'
-         r = Float(s)
-       when 'String'
-         r = String(s)
-       when 'Array'
-         r = Array(s)
-       when 'DB'
-         # it is a string
-         r = String(s)
-         # and must be a valid db
-         cores = get_param('workers')
-         max_ram = get_param('max_ram')
-         r = check_db_param(errors,param,cores,max_ram)
-       when 'PluginList'
-         r = String(s)
-         r = check_plugin_list_param(errors,param)
-       end
-
-     rescue Exception => e
-       message="Current value is ##{s}#. "
-       if param_class=='DB'
-         message += e.message
-       end
-       errors.push "Param #{param} is not a valid #{param_class}. #{message}"
+         case param_class
+             when 'Integer'
+                 r = Integer(s)
+             when 'Float'
+                 r = Float(s)
+             when 'String'
+                 r = String(s)
+             when 'Array'
+                 r = Array(s)
+             when 'DB'
+                 # it is a string
+                 r = String(s)
+                 # and must be a valid db
+                 r = check_db_param(errors,param,cores,max_ram)
+             when 'PluginList'
+                 r = String(s)
+                 r = check_plugin_list_param(errors,param)
+         end
+     rescue StandardError => e
+         message="Current value is ##{s}#. "
+         if param_class =='DB'
+             message += e.message
+         end
+         errors.push "Param #{param} is not a valid #{param_class}. #{message}"
      end
      # end
 
-   end
+  end
 
 end

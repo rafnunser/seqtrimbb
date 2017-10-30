@@ -9,7 +9,7 @@ class PluginManager
   
   #Storages the necessary plugins specified in 'plugin_list' and start the loading of plugins
   def initialize(plugin_list,params)
-    @plugin_names = plugin_list.strip.split(',').map{|p| p.strip}.reject{|p| ['',' ',nil].include?(p)}
+    @plugin_names = plugin_list.split(',').reject{|p| ['',' ',nil].include?(p)}
     @params = params
     
     # puts plugin_list
@@ -21,37 +21,42 @@ class PluginManager
   def execute_plugins()
 
     # $LOG.info " Begin process: Execute plugins "
-    cmds=[]
+    @plugin_result={}
+    @plugin_result['plugin_cmds'] = {}
+    @plugin_result['piped_cmd'] = String.new
 
     if !@plugin_names.empty?
-
-      @plugin_names.each do |plugin_name|
-
-        if plugin_name == 'PluginMatePairs'
-
-          $LOG.info("Initiating: Mate Pairs treatment")
-
+       @plugin_names.each do |plugin_name|         
           plugin_class = Object.const_get(plugin_name)
           p = plugin_class.new(@params)
-          p.treat_lmp
-          
-          $LOG.info("Finalizing: Mate Pairs treatment")
-
-        else
-          
-          plugin_class = Object.const_get(plugin_name)
-          p = plugin_class.new(@params)
-          cmds << p.get_cmd
-
-        end
-
-      end #end  each
-      
+    #  Get and Add individual plugins cmd
+          @plugin_result['plugin_cmds'][plugin_name] << p.get_cmd
+       end
+    # Add plugins cmd to pipe
+       pipe_plugins!()
     else
-      raise "Plugin list not found"
+       raise "Plugin list not found"
     end 
+    
+    return plugin_result
 
-    return cmds
+  end
+
+  def pipe_plugins!()
+    # Pipe every plugin, with some exceptions
+      @plugin_result['plugin_cmds'].each do |plugin_name,plugin_cmd|
+          @plugin_result['piped_cmd'] << plugin_cmd
+          # Pipe!
+          case plugin_name
+            when 'PluginMatePairs'
+                @plugin_result['piped_cmd'] << (' && ')
+              when 'PluginSaveResults'
+                @plugin_result['piped_cmd'] << @params.get_param('ext_cmd').nil? ? ('') : (' | ')
+              else
+                @plugin_result['piped_cmd'] << (' | ')
+          end
+      end
+
   end
 
   # Receives the plugin's list , store plugin's stats in a hash

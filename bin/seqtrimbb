@@ -3,139 +3,156 @@
 
 #     SeqTrimBB: Next generation sequencing preprocessor
 #     Copyright (C) <2017>
-#     Authors: Diego Dario Guerrero Fernandez, Rafael
-#              Nuñez Serrano
+#     Authors: Rafael Nuñez Serrano, Diego Dario Guerrero 
+#              Fernandez
 
-#              email: soporte@scbi.uma.es - http://www.scbi.uma.es
-#
-#     This program is free software: you can redistribute it and/or modify
-#     it under the terms of the GNU Affero General Public License as published by
-#     the Free Software Foundation, either version 3 of the License, or
-#     (at your option) any later version.
-#
-#     This program is distributed in the hope that it will be useful,
-#     but WITHOUT ANY WARRANTY; without even the implied warranty of
-#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#     GNU Affero General Public License for more details.
-#
-#     You should have received a copy of the GNU Affero General Public License
-#     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#     email: soporte@scbi.uma.es - http://www.scbi.uma.es
 
-#= SeqtrimBB
-#
-#== Running
-#
-# SeqtrimBB can be run locally or in a parallel/distributted environment.
-#
-#=== Running locally
-#* list
-#
-#=== Running in a distributted environment
-#
-#== SEC 2
-#
-#=== SUB 2.1
-#
+###############################################################################
+# FINDS
+###############################################################################
 
+ROOT_PATH = File.dirname(__FILE__)
+SEQTRIM_PATH = File.join(ROOT_PATH,'..')
 
-# $: << File.expand_path('~/progs/ruby/gems/seqtrimbb/lib/')
+# Finds classes in 'lib' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib'))
+# Finds classes in 'seqtrimbb' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb'))
+# Finds classes in 'classes' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes'))
+# Finds classes in 'plugins' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','plugins'))
 
-require 'seqtrimbb'
-require 'scbi_headers'
+###############################################################################
+# METHODS
+###############################################################################
 
+# Decamelize strings
+class String  
+   def decamelize 
+           self.to_s. 
+                   gsub(/([A-Z\d]+)([A-Z][a-z])/, '\1_\2'). 
+                   gsub(/([a-z]+)([A-Z\d])/, '\1_\2'). 
+                   gsub(/([A-Z]{2,})(\d+)/i, '\1_\2'). 
+                   gsub(/(\d+)([a-z])/i, '\1_\2'). 
+                   gsub(/(.+?)\&(.+?)/, '\1_&_\2'). 
+                   gsub(/\s/, '_').downcase 
+   end
+end
 
-def put_header
-  
-  header = ScbiHeader.new('SeqTrimBB',Seqtrimbb::SEQTRIM_VERSION)
+# Slice hashes (extract a subhash)
+class Hash
+   def slice(*keys)
+           ::Hash[[keys, self.values_at(*keys)].transpose]
+   end
+end
 
-  header.description="SeqtrimBB is a customizable pre-processing software for NGS (Next Generation Sequencing) biological data based on BBtools suite. It is specially suited for Illumina datasets (normal and paired-end), although it could be easyly adapted to any other situation."
-
-  header.copyright='SeqtrimBB 2017. BBTools Copyright (c) 2014, The Regents of the University of California, through Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy).  All rights reserved.'
-
-  header.authors<< "Rafael Núñez"
-  header.authors<< "Darío Guerrero"
-
-  # header.articles<< "Article one: with one description line"
-  # header.articles<< "Article two: with one description line"
-
-  # To output the header
-  puts header
+#Check external requirements. Takes a external call, and test if it can execute
+def check_external_requirements(req,req_call,version=nil,source_url)
+     #Checks if external requirement is present
+       begin
+               cmd = IO.popen(req_call)
+       rescue
+               STDERR.puts "Unable to find external requirement: #{req}\nYou can download it from #{source_url}"
+               exit (-1)
+       end
+     #Checks version
+       if !version.nil?
+             #Extract version 
+               version_from_cmd = cmd.read.split("\n")[0].gsub(/\D/,'').to_i
+               if version_from_cmd < version.to_i
+                       STDERR.puts "Detected an old #{req} version. An updated is required."
+                       exit(-1)
+               end
+       end
+       cmd.close
 
 end
 
-put_header
+#Check for previous execution (looks for outputs folder/s existence)
+def check_previous_execution(output_folders,force_execution)
 
-############ PATHS #######################
+   # test each folder existence
+       folders.each do |folder|
+               if Dir.exist?(folder)
+                       msg = "Output folder #{folder} already exists. "
+                       if force_execution
+                             msg << "Force execution parameter is set to true. Removing #{folder}"
+                             STDERR.puts "WARNING. " + msg
+                             FileUtils.rm_rf(folder)
+                       else
+                             msg << "To retry, remove it or add --force_execution parameter to the command line."
+                             STDERR.puts "ERROR. " + msg
+                             exit(-1)
+                       end
+               end
+       end
 
-OUTPUT_PATH = File.expand_path('output_files_tmp')
-OUTPLUGINSTATS = File.expand_path('output_files_tmp/plugin_stats')
-
-# if there is a BBDB environment var, then use it
-if ENV['BBDB']
-  $DB_PATH = ENV['BBDB']
-else # otherwise use SEQTRIM_PATH + DB
-  $DB_PATH = File.expand_path(File.join(SEQTRIM_PATH, "DB"))
 end
-
-# PATH TO BBTOOLS
-# if there is a BBTOOLS_PATH environment var, then use it
-if ENV['BBTOOLS_PATH']
-   $BBPATH = ENV['BBTOOLS_PATH']
-else # otherwise use the result of which bbmap.sh
-   $BBPATH = File.expand_path(File.dirname(%x[which bbmap.sh]))
-end
-
-#Checks install requeriments
-require 'install_requirements'
-ins = InstallRequirements.new
-if (!ins.check_install_requirements)
-  exit(-1)
-end
-
-require 'logger'
-require 'optparse'
-require 'seqtrim.rb'
-require 'params.rb'
-require 'plugin.rb'
-require 'plugin_manager.rb'
-require 'list_db.rb'
-require 'install_database.rb'
-require 'check_database.rb'
-require 'check_external_database.rb'
-require 'getsetram.rb' 
-require 'zlib'
 
 def show_additional_help
 
-  puts "\n"*3
-  puts "E.g.: processing a fastq file"
-  puts "#{File.basename($0)} -t genomics_basic.txt -Q sequences.fastq"
-  puts "\n"*2
-
-  puts "E.g.: processing a fasta file with qual"
-  puts "#{File.basename($0)} -t genomics_basic.txt -Q sequences.fasta -q sequences_quality.qual"
-
-  templates = Dir.glob(File.join(ROOT_PATH,'templates','*.txt')).map{|t| File.basename(t)}
-
-  puts "\n\n  ========================================================================================================"
-  puts "  Available templates to use with -t option (you can also use your own template):"
-  puts "  Templates at: #{File.join(ROOT_PATH,'templates')}"
-  puts "  ========================================================================================================\n\n"
-
-  templates.map{|e| puts "      "+e}
-
-  puts "\n\n  ========================================================================================================"
-  puts "  Available databases to use in custom template files (you can also use your own database)"
-  puts "  ========================================================================================================\n\n"
-
-  ListDb.new($DB_PATH,'all')
-
-  exit
+     #Fastq preprocessing
+       STDERR.puts "\n\n\nE.g.: processing a fastq file"
+       STDERR.puts "#{File.basename($0)} -t template.txt -Q sequences.fastq\n\n"
+     #Available templates
+       STDERR.puts "\n\n  ========================================================================================================"
+       STDERR.puts "  Available templates to use with -t option (you can also use your own template):"
+       STDERR.puts "  Templates at: #{File.join(SEQTRIM_PATH,'templates')}"
+       STDERR.puts "  ========================================================================================================\n\n"
+       Dir.glob(File.join(SEQTRIM_PATH,'templates','*.txt')).map{|t| puts "      #{File.basename(t)}"}
+     #Exiting
+       exit
 
 end
 
-# Reads the parameters from console. For this is used ARGV, that is an array.
+###############################################################################
+# REQUIRE ESSENTIALS
+###############################################################################
 
+require 'seqtrimbb'
+require 'logger'
+require 'fileutils'
+require 'optparse'
+require 'json'
+require 'params'
+require 'database_support'
+require 'plugin'
+require 'plugin_manager'
+require 'bbtools'
+
+###############################################################################
+# WORKING PATHS AND HEADER
+###############################################################################
+
+#temp output path
+OUTPUT_PATH = File.expand_path('output_files_tmp')
+#If there is a BBDB environment var (databases location), then use it
+if ENV['BBDB']
+       db_path = ENV['BBDB']
+else # otherwise use SEQTRIM_PATH + DB
+       db_path = File.expand_path(File.join(SEQTRIM_PATH, "DB"))
+end
+#First checks if BBtools is installed, then set a BBtools path. If there is a BBTOOLS_PATH environment var, then use it
+check_external_requirements('BBtools','bbversion.sh',37.53,"http://sourceforge.net/projects/bbmap/")
+if ENV['BBTOOLS_PATH']
+       bb_path = ENV['BBTOOLS_PATH']
+else # otherwise use the result of which bbmap.sh
+       bb_path  = File.expand_path(File.dirname(%x[which bbmap.sh]))
+end
+#Puts header
+STDERR.puts "SeqTrimBB version #{Seqtrimbb::SEQTRIM_VERSION}"
+STDERR.puts " - Command: #{$0}"
+STDERR.puts " - SeqtrimBB path: #{SEQTRIM_PATH}"
+STDERR.puts " - BBtools version #{bb_version}"
+STDERR.puts " - BBTools path: #{bb_path}"
+
+###############################################################################
+# OPTIONS PARSING
+###############################################################################
+
+# Reads the parameters from console. For this is used ARGV, that is an array.
 options = {}
 
 optparse = OptionParser.new do |opts|
@@ -146,218 +163,221 @@ optparse = OptionParser.new do |opts|
 
   options[:workers] = 1
   opts.on( '-w', '--workers COUNT', 'Number of threads' ) do |workers|
-      begin
-        options[:workers] = Integer(workers)
-      rescue
-        STDERR.puts "ERROR:Invalid threads parameter #{options[:workers]}"
-        exit -1
-      end
+         begin
+                 options[:workers] = Integer(workers)
+         rescue
+                 STDERR.puts "ERROR:Invalid threads parameter #{options[:workers]}"
+                 exit (-1)
+         end
   end
 
-  options[:max_ram] = nil
-  opts.on( '-m', '--max_RAM MEMORY', 'Max RAM to use, for example, 1g means 1 gig' ) do |max_ram|
-    options[:max_ram] = max_ram.downcase
+  options[:install_db] = false
+  options[:install_db_name] = Array.new
+  opts.on( '-i', '--install_databases [DB_NAME]',Array,'If no DB_NAME is specified, install (or reinstall) all default databases provided with SeqTrimBB. Default databases can be modified with --default_databases options.')
+         options[:install_db] = true
+         options[:install_db_name] = value if !value.nil?
   end
 
   options[:check_db] = true
-  opts.on( '-c', '--check_databases', 'Skip Checking databases step' ) do
-    options[:check_db] = false
+  opts.on( '-c', '--check_databases [RETRY]', 'Skip Checking databases step' ) do
+         options[:check_db] = false
   end
 
-  #options[:install_db] = nil
-  #opts.on( '-i', '--install_databases TYPE', 'Install base databases') do |db_type|
-  #  options[:install_db] = db_type
-  #end
-
-  options[:logfile] = STDOUT
-  opts.on( '-l', '--logfile FILE', 'Write log to FILE' ) do |file|
-    options[:logfile] = file
+  options[:list_db] = false
+  options[:list_db_name] = Array.new
+  opts.on( '-L', '--list_db [DB_NAME]',Array,'List entries in DB_NAME. Use "-L" to view all available databases' ) do |value|
+         options[:list_db] = true
+         options[:list_db_name] = value if !value.nil?
   end
 
-  options[:file] = nil
+  options[:databases_action]='replace'
+  opts.on('-da','--databases_action [ACTION]',%w["replace","add","remove"],'Action to be applied to SeqtrimBB databases configuration: replace (replace SeqtrimBBs default databases list for one provided with -dl option), add (-dl list to default list) or remove (-dl list to default list). This option permanently modifies SeqTrimBBs configuration if user have write permissions. Default value is replace.') do |action|
+         options[:databases_action] = action
+  end
+
+  options[:databases_list] = Array.new
+  opts.on( '-dl', '--databases_list DATABASE DATABASE1,DATABASEN',Array,'List of databases to replace/add/remove. To restore default list provided at installation time, execute SeqTrimBB with "-dl default".') do |database|
+         options[:databases_list] = [database].flatten
+  end
+
+  options[:file] = Array.new
   opts.on( '-Q', '-- FILE FILE1,FILE2',Array, 'Input fastq/fasta file' ) do |file|
-    options[:file] = file
+         if !file.empty? && file.map { |f| File.exist?(File.expand_path(f)) }.all?
+                 options[:file] = file
+         else
+                 STDERR.puts "ERROR. File: #{file.select{ |f| File.exist?(f) }.join(" ")} does not exists"
+                 exit(-1)
+         end
   end
 
-  options[:qual] = nil
+  options[:qual] = Array.new
   opts.on( '-q', '--qual FILE1,FILE2',Array, 'Qual input file' ) do |file|
-    options[:qual] = file
-  end
-
-  options[:list_db] = nil
-  options[:list_db_name] = 'all'
-  opts.on( '-L', '--list_db [DB_NAME]', 'List entries IDs in DB_NAME. Use "-L all" to view all available databases' ) do |value|
-    options[:list_db] = true
-    options[:list_db_name] = value if value
-  end
-
-  options[:gen_params] = false
-  opts.on( '-G', '--generate_template', 'Generates a sample template file with default parameters' ) do
-    options[:gen_params] = true
+         if !file.empty? && file.map { |f| File.exist?(File.expand_path(f)) }.all?
+                 options[:qual] = file
+         else
+                 STDERR.puts "ERROR. File: #{file.select{ |f| File.exist?(f) }.join(" ")} does not exists"
+                 exit(-1)
+         end
   end
 
   options[:template] = nil
   opts.on( '-t', '--template TEMPLATE_FILE', 'Use TEMPLATE_FILE instead of default parameters' ) do |file|
-    options[:template] = file
+         if !file.nil? && (File.exist?(File.expand_path(file)) || File.exist?(File.join(SEQTRIM_PATH,'templates',file)))
+                 options[:template] = File.exists?(File.expand_path(file)) ? File.expand_path(file) : File.join(SEQTRIM_PATH,'templates',file)
+         else
+                 STDERR.puts "Params file: #{file} doesn't exists. \n\nYou can use your own template or specify one from this list:\n=============================\n"
+                 STDERR.puts "#{Dir.glob(File.join(SEQTRIM_PATH,'templates','*.txt')).map{|t| File.basename(t)}.join("\n")}"
+                 exit(-1)
+         end
   end
 
   options[:overwrite_params] = nil
   opts.on( '-P', '--overwrite_params "PARAM1;PARAM2"','Params and their values to overwrite default and templates parameters' ) do |oparams|
-    options[:overwrite_params] = oparams
+         options[:overwrite_params] = oparams
   end
 
   options[:ext_cmd] = nil
   opts.on( '-E', '--external_cmd External call to insert in the pipe', 'Add one call (or more already piped between them) to an assembler or mapping tool' ) do |cmd|
-    options[:ext_cmd] = cmd
+         options[:ext_cmd] = cmd
   end
 
-  options[:skip_report] = false
-  opts.on( '-R', '--no-report', 'Do not generate final PDF report (gem scbi_seqtrimbb_report required if you want to generate PDF report).' ) do
-    options[:skip_report] = true
-  end
+  #options[:skip_report] = false
+  #opts.on( '-R', '--no-report', 'Do not generate final PDF report (gem scbi_seqtrimbb_report required if you want to generate PDF report).' ) do
+  #  options[:skip_report] = true
+  #end
 
   options[:write_in_gzip] = true
-  opts.on( '-z', '--gzip', 'Avoid generating output files in gzip format.' ) do
-    options[:write_in_gzip] = false
+  opts.on( '-z', '--no_gzip', 'Avoid generating output files in gzip format.' ) do
+         options[:write_in_gzip] = false
   end
 
   options[:force_execution] = false
   opts.on( '-F', '--force', 'Force SeqtrimBB execution deleting previous output files' ) do
-    options[:force_execution] = true
+         options[:force_execution] = true
+  end
+
+  options[:generate_stats] = false
+  opts.on('-G','--generate_stats [OPTION]','Generate initial and/or final FastQC reports. Use -G to generate both reports, -G initial to generate just the initial report and -G final for the final report.')
+  #TERMINAR
   end
 
   options[:final_output_path] = 'output_files'
   opts.on( '-O', '--ouput output_files', 'Output folder. It should not exists. output_files by default') do |folder|
-    options[:final_output_path] = folder
+         options[:final_output_path] = folder
   end
 
 # This displays the help screen, all programs are assumed to have this option.
   opts.on_tail('-h', '--help', 'Display this screen') do
-    puts opts
-    show_additional_help
-    exit -1
+         STDERR.puts opts
+         show_additional_help
+         exit(-1)
   end
 end
-
 # parse options and remove from ARGV
 optparse.parse!
 
-# Set Final output path
-DEFAULT_FINAL_OUTPUT_PATH = options[:final_output_path]
+STDERR.puts " - Using options: \n"+ JSON::pretty_generate(options))
 
+###############################################################################
+# Initialize BBtools
+###############################################################################
+
+bbtools = BBtools.new(bb_path)
+
+###############################################################################
+# GENERAL CHECK POINTS AND OPTIONAL WORKS
+###############################################################################
+
+## Works related to internal databases
+
+# First initialize DatabasesSupport class. If options[:install databases] also install databases
+stbb_databases = DatabasesSupport.new(options.slice(:workers,:databases_action,:databases_list),db_path,bbtools)
+# OPT: list databases
 if options[:list_db]
-  # List database entries in a database
-  ListDb.new($DB_PATH,options[:list_db_name])
-  exit -1
+     # List database entries in a database
+       stbb_databases.list_databases(options[:list_db_name])
+       exit(-1)
 end
+# DATABASES MAINTENANCE (If its needed or requested. Build databases structure, install databases, check and update index)
+stbb_databases.maintenance(options.slice(:install_db,:install_db_name,:check_db))
 
-if options[:gen_params]
-  # Generates a sample params file in current directory
-  Params.generate_sample_params
-  exit -1
+# SAVING DATABASES INFO JSON
+#stbb_databases.save_json if stbb_databases.save_info
+## Other optional works
+
+## Checks for required options
+if (ARGV.count != 0) || ([:file,:template].map { |opt| options[opt].empty? }.any?) 
+       STDERR.puts "To preprocess a sample you must provide all required options.\n"
+       puts optparse.help
+       exit(-1)
 end
+## Checks for a previous execution!
+check_previous_execution([OUTPUT_PATH,options[:final_output_path]],options[:force_execution])
 
-if options[:max_ram].nil?
-# Setting RAM usage
-  free_memory = GetSetRAM.new
-  options[:max_ram] = free_memory.value
-end
+###############################################################################
+# READ AND PROCESS PARAMS
+###############################################################################
 
-#set logger
-#system('rm logs/*')
+# Reads parameters from template
+#$LOG.info "Reading params"
+#$LOG.info "Using params file: #{options[:template]}"
+# Read and process
+#params = Params.new(options)
+#params.process_params(bbtools,db_path)
 
-FileUtils.mkdir('logs') if !File.exists?('logs')
+# Store default options from params in bbtools
+#bbtools.store_default(param.get_param('default_options'))
 
-$LOG = Logger.new(options[:logfile])
-$LOG.datetime_format = "%Y-%m-%d %H:%M:%S"
-#logger.level = Logger::INFO
-
-#DEBUG < INFO < WARN < ERROR < FATAL < UNKNOWN
-
-$LOG.info("SeqTrimBB version #{Seqtrimbb::SEQTRIM_VERSION}")
-$LOG.info("Command: #{$0}")
-$LOG.info("SeqtrimBB path: #{ROOT_PATH}")
-$LOG.info("BBTools path: #{$BBPATH}")
-
-$LOG.info("Using options: \n"+ JSON::pretty_generate(options))
-
-# Install/Check databases on DB_PATH
-
-#if options[:install_db]
-  #install databases
- # InstallDatabase.new(options[:install_db],$DB_PATH)
-  # check databases indices
-  #CheckDatabase.new($DB_PATH,options[:workers],options[:max_ram])
-  #exit
+# Finally checks plugin_list param. If it fails, exit.
+#pl_error = []
+#comment='Plugins applied to every sequence, separated by commas. Order is important'
+#params.check_param(pl_error,'plugin_list','PluginList',nil,comment)
+#if !pl_error.empty?
+ #  $LOG.error pl_error
+  # exit(-1)
 #end
 
-if options[:check_db]
-  # checks databases indices
-  CheckDatabase.new($DB_PATH,options[:workers],options[:max_ram])
-end
+###############################################################################
+# INITIAL STATS
+###############################################################################
+#external_requirements['FastQC']= ['fastqc',"\nYou can download it from http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"]
 
-# checks for essential arguments
+# Extract initial global stats
+#if params.exist?('generate_initial_stats') && params.get_param('generate_initial_stats').to_s=='true'
+  # $LOG.info "Calculating initial stats: i.e. FastQC"
+# fastqc cmd 
+  # cmd="fastqc -q -o #{OUTPUT_PATH} -t #{$GLOBAL_PARAMS['cores']} #{params.get_param('inputfiles').join(" ")}"
+  # system(cmd)
+#else
+  # $LOG.info "Skipping calculating initial stats phase."
+#end
 
-required_options = options[:file] && options[:template]
+###############################################################################
+# MAIN WORK
+###############################################################################
 
-if (ARGV.count != 0) || (!required_options) 
-  puts "You must provide all required options"
-  puts ""
-  puts optparse.help
-  exit(-1)
-end
+# Exit status
+#exit_status = 0
 
-# checks for a previous execution
-if Dir.exists?(DEFAULT_FINAL_OUTPUT_PATH) || Dir.exists?(OUTPUT_PATH)
-  if options[:force_execution]
-   #Warning
-   $LOG.error "Temporal output folder #{OUTPUT_PATH} already exists and --force parameter is active.\n Removing output_files_tmp from the current directory." if Dir.exists?(OUTPUT_PATH)
-   $LOG.error "Output folder #{options[:final_output_path]} already exists and --force parameter is active.\n Removing #{options[:final_output_path]}" if Dir.exists?(DEFAULT_FINAL_OUTPUT_PATH)
-   #Remove old folders
-   FileUtils.rm_rf(OUTPUT_PATH) if File.exists?(OUTPUT_PATH)
-   FileUtils.rm_rf(DEFAULT_FINAL_OUTPUT_PATH) if File.exists?(DEFAULT_FINAL_OUTPUT_PATH)
-  else
-   #Error
-   $LOG.error "Output folder #{options[:final_output_path]}, or temporal output folder #{OUTPUT_PATH} already exists.\n Remove them if you want to launch SeqtrimBB again or add --force_execution parameter to the command line."
-   exit(-1)
-  end
-end
+# load plugin_list
+#plugin_list = params.get_param('plugin_list')
+#$LOG.info "Loading plugins [#{plugin_list}]"
 
-# check for templates existence
-if !File.exists?(options[:template])
-  if File.exists?(File.join(ROOT_PATH,'templates',options[:template]))
-    options[:template] = File.join(ROOT_PATH,'templates',options[:template])
-  else
-    $LOG.error "Params file: #{options[:template]} doesn't exists. \n\nYou can use your own template or specify one from this list:\n============================="
-    puts Dir.glob(File.join(ROOT_PATH,'templates','*.txt')).map{|t| File.basename(t)}
-    exit(-1)
-  end
-end
-$LOG.info "Using params file: #{options[:template]}"
+# Make working directory and subdirectories
+#[OUTPUT_PATH,File.join(OUTPUT_PATH,'plugins_stats')].map{|d| Dir.mkdir(d)}
 
-# check for files existence
-if options[:file]
-  # Test file
-  options[:file].each do |seq_file|
-   if (!seq_file.nil? && seq_file!='-' && !File.exists?(File.expand_path(seq_file)))
-    $LOG.error "Input file: #{seq_file} doesn't exists"
-    exit(-1)
-   end
-  end 
-end
+# Initialize plugins manager
+#plugin_manager = PluginManager.new(plugin_list,params,bbtools)
 
-# check for qual files existence
-if options[:qual]
-  options[:qual].each do |qual_file|
-    # qual file
-    if (!qual_file.nil? && qual_file!='-' && !File.exists?(File.expand_path(qual_file)))
-      $LOG.error "Input file: #{qual_file} doesn't exists"
-      exit(-1)
-    end
-  end
-end
+# load and check plugins params
+#$LOG.info "Loading and checking plugins params"
+#if !plugin_manager.check_plugins_params(params)
+   # $LOG.error "Plugin check failed"
+    # save used params to file
+    #params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
+    #exit(-1)
+#end
 
-s = Seqtrim.new(options)
 
 #generate report
 
@@ -375,8 +395,9 @@ s = Seqtrim.new(options)
   #$LOG.info "Closing"
 #end
 
-if (Seqtrim.exit_status>=0) 
-  FileUtils.mv OUTPUT_PATH, DEFAULT_FINAL_OUTPUT_PATH
-end
-
-exit(Seqtrim.exit_status)
+#if (exit_status>=0) 
+ # FileUtils.mv OUTPUT_PATH, options[:final_output_path]
+#end
+# Exiting
+#exit(exit_status)
+exit
