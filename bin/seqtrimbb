@@ -46,6 +46,13 @@ class Hash
    def slice(*keys)
            ::Hash[[keys, self.values_at(*keys)].transpose]
    end
+   def except(*keys)
+           dup.except!(*keys)
+   end
+   def except!(*keys)
+           keys.each { |key| delete(key) }
+           self
+   end
 end
 
 #Check external requirements. Takes a external call, and test if it can execute
@@ -117,7 +124,7 @@ require 'fileutils'
 require 'optparse'
 require 'json'
 require 'params'
-require 'database_support'
+require 'database_support_handler'
 require 'plugin'
 require 'plugin_manager'
 require 'bbtools'
@@ -290,8 +297,10 @@ bbtools = BBtools.new(bb_path)
 
 ## Works related to internal databases
 
-# First initialize DatabasesSupport class. If options[:install databases] also install databases
-stbb_databases = DatabasesSupport.new(options.slice(:workers,:databases_action,:databases_list),db_path,bbtools)
+# First initialize DatabasesSupport object
+stbb_databases = DatabasesSupportHandler.new(options[:workers],db_path,bbtools)
+# Second initialize(load) internal databases info
+stbb_databases.init_internal(options.slice(:databases_action,:databases_list))
 # OPT: list databases
 if options[:list_db]
      # List database entries in a database
@@ -299,11 +308,10 @@ if options[:list_db]
        exit(-1)
 end
 # DATABASES MAINTENANCE (If its needed or requested. Build databases structure, install databases, check and update index)
-stbb_databases.maintenance(options.slice(:install_db,:install_db_name,:check_db))
+stbb_databases.maintenance_internal(options.slice(:install_db,:install_db_name,:check_db))
 
 # SAVING DATABASES INFO JSON
-#stbb_databases.save_json if stbb_databases.save_info
-## Other optional works
+stbb_databases.save_json(stbb_databases.info,File.join(db_path,'status_info','databases_status_info.json')) if stbb_databases.save?
 
 ## Checks for required options
 if (ARGV.count != 0) || ([:file,:template].map { |opt| options[opt].empty? }.any?) 
