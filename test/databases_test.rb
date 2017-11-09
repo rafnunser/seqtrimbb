@@ -8,6 +8,7 @@ class DatabasesTest < Minitest::Test
          def test_database
 
               # PATHs options hashes
+                 setup_temp
                  source_path = DB_PATH
                  db_path = File.join(OUTPUT_PATH,'DB')
                  Dir.mkdir(db_path)
@@ -78,32 +79,32 @@ class DatabasesTest < Minitest::Test
                  stbb_db.set_external(ext_dbs)
                  assert_equal(stbb_db.external_db_info['databases'],ext_dbs)
               # Maintenance external
-				 stbb_db.maintenance_external(ext_dbs)
-				 assert_equal(stbb_db.external_db_info['indexed_databases'],ext_dbs)
-				 assert_equal(stbb_db.external_db_info['obsolete_databases'],Array.new)
-				 folder_database = ext_dbs[0]
-				 folder_info = {}
-				 folder_info['name'] = File.basename(ext_dbs[0]).gsub(/\Wfasta(\Wgz)?/,'')
-				 folder_info['path'] = folder_database
-				 folder_info['index'] = File.join(folder_database,'index')
-				 folder_info['update_error_file'] = File.join(folder_info['index'],'update_stderror_'+folder_info['name']+'.txt') 
-				 folder_info['fastas'] = Dir[File.join(folder_info['path'],"*.fasta*")].sort
- 				 folder_info['list'] = folder_info['fastas'].map { |fasta| File.basename(fasta).sub(/\Wfasta(\Wgz)?/,'').sub(/_/,' ') }
-				 folder_info['size'] = folder_info['fastas'].map { |file| File.size?(file) }.inject(:+)
-				 folder_info['index_size'] = Dir[File.join(folder_info['index'],'ref',"*/*/*")].map { |file| File.size?(file) }.inject(:+)
-				 assert_equal(stbb_db.external_db_info[folder_database],folder_info)
-				 file_database = ext_dbs[1]
- 				 file_info = {}
-				 file_info['name'] = File.basename(ext_dbs[1]).gsub(/\Wfasta(\Wgz)?/,'')
-				 file_info['path'] = file_database
-				 file_info['index'] = File.join(File.dirname(file_database),'index')
-				 file_info['update_error_file'] = File.join(file_info['index'],'update_stderror_'+file_info['name']+'.txt') 
-				 file_info['fastas'] = [file_database]
-				 file_info['list'] = file_info['fastas'].map { |fasta| File.basename(fasta).sub(/\Wfasta(\Wgz)?/,'').sub(/_/,' ') }
-				 file_info['size'] = file_info['fastas'].map { |file| File.size?(file) }.inject(:+)
-				 file_info['index_size'] = Dir[File.join(file_info['index'],'ref',"*/*/*")].map { |file| File.size?(file) }.inject(:+)
-				 assert_equal(stbb_db.external_db_info[file_database],file_info)
-				 stbb_db.maintenance_external(ext_dbs)
+				         stbb_db.maintenance_external(ext_dbs)
+				         assert_equal(stbb_db.external_db_info['indexed_databases'],ext_dbs)
+				         assert_equal(stbb_db.external_db_info['obsolete_databases'],Array.new)
+				         folder_database = ext_dbs[0]
+				         folder_info = {}
+				         folder_info['name'] = File.basename(ext_dbs[0]).gsub(/\Wfasta(\Wgz)?/,'')
+				         folder_info['path'] = folder_database
+				         folder_info['index'] = File.join(folder_database,'index')
+				         folder_info['update_error_file'] = File.join(folder_info['index'],'update_stderror_'+folder_info['name']+'.txt') 
+				         folder_info['fastas'] = Dir[File.join(folder_info['path'],"*.fasta*")].sort
+ 				         folder_info['list'] = folder_info['fastas'].map { |fasta| File.basename(fasta).sub(/\Wfasta(\Wgz)?/,'').sub(/_/,' ') }
+				         folder_info['size'] = folder_info['fastas'].map { |file| File.size?(file) }.inject(:+)
+				         folder_info['index_size'] = Dir[File.join(folder_info['index'],'ref',"*/*/*")].map { |file| File.size?(file) }.inject(:+)
+				         assert_equal(stbb_db.external_db_info[folder_database],folder_info)
+				         file_database = ext_dbs[1]
+ 				         file_info = {}
+				         file_info['name'] = File.basename(ext_dbs[1]).gsub(/\Wfasta(\Wgz)?/,'')
+				         file_info['path'] = file_database
+				         file_info['index'] = File.join(File.dirname(file_database),'index')
+				         file_info['update_error_file'] = File.join(file_info['index'],'update_stderror_'+file_info['name']+'.txt') 
+				         file_info['fastas'] = [file_database]
+				         file_info['list'] = file_info['fastas'].map { |fasta| File.basename(fasta).sub(/\Wfasta(\Wgz)?/,'').sub(/_/,' ') }
+				         file_info['size'] = file_info['fastas'].map { |file| File.size?(file) }.inject(:+)
+				         file_info['index_size'] = Dir[File.join(file_info['index'],'ref',"*/*/*")].map { |file| File.size?(file) }.inject(:+)
+				         assert_equal(stbb_db.external_db_info[file_database],file_info)
+				         stbb_db.maintenance_external(ext_dbs)
 
               #CLEAN UP
                  FileUtils.rm_rf OUTPUT_PATH if Dir.exist?(OUTPUT_PATH)

@@ -13,6 +13,8 @@ $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb'))
 $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes'))
 # Finds classes in 'classes/databases_support' folder
 $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes','databases_support'))
+# Finds classes in 'classes/params' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes','params'))
 # Finds classes in 'plugins' folder
 $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','plugins'))
 
@@ -29,16 +31,15 @@ end
 OUTPUT_PATH = File.join(ROOT_PATH,'temp')
 DEFAULT_FINAL_OUTPUT_PATH = OUTPUT_PATH
 
-FileUtils.rm_rf OUTPUT_PATH if Dir.exist?(OUTPUT_PATH)
-Dir.mkdir(OUTPUT_PATH)
-
 require 'seqtrimbb'
 require 'minitest/autorun'
 require 'fileutils'
 require 'plugin_manager.rb'
 require 'bbtools.rb'
 require 'databases_support_handler.rb'
-#require 'params.rb'
+require 'params.rb'
+require 'optparse'
+require 'options_stbb.rb'
 
 #Utilities
 class Hash
@@ -52,4 +53,31 @@ class Hash
            keys.each { |key| delete(key) }
            self
    end
+end
+class String  
+   def decamelize 
+           self.to_s. 
+                   gsub(/([A-Z\d]+)([A-Z][a-z])/, '\1_\2'). 
+                   gsub(/([a-z]+)([A-Z\d])/, '\1_\2'). 
+                   gsub(/([A-Z]{2,})(\d+)/i, '\1_\2'). 
+                   gsub(/(\d+)([a-z])/i, '\1_\2'). 
+                   gsub(/(.+?)\&(.+?)/, '\1_&_\2'). 
+                   gsub(/\s/, '_').downcase 
+   end
+end
+def setup_temp
+
+       FileUtils.rm_rf OUTPUT_PATH if Dir.exist?(OUTPUT_PATH)
+       Dir.mkdir(OUTPUT_PATH) if !Dir.exist?(OUTPUT_PATH)
+
+end
+
+def setup_databases
+
+       setup_temp
+       source_path = DB_PATH
+       db_path = File.join(OUTPUT_PATH,'DB')
+       Dir.mkdir(db_path)
+       FileUtils.cp_r File.join(source_path,'fastas'),db_path
+
 end

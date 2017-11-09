@@ -52,7 +52,7 @@ class BBtools
        end
 #Load specific options in to the module
        def concatenate_options(options)
-
+ 
                cmd = []
                options.each do |opt,arg|
                        if !arg.is_a?(Array) && !arg.nil?

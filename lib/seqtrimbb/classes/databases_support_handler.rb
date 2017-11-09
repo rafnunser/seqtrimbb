@@ -97,6 +97,7 @@ class DatabasesSupportHandler
              DatabasesSupportList.new(list,@info)
 
       end
+
 #SAVE JSON
       def save_json(info,file)
 
@@ -104,6 +105,15 @@ class DatabasesSupportHandler
                      f.write(JSON.pretty_generate(info.except('modified')))
              end
              
+      end
+
+#CHECK ON DATABASE STATUS (INFO LEVEL). Return found errors.
+      def check_status(info,database)
+                 
+                 error = ['installed','indexed'].select { |c| info.key?("#{c}_databases") && !info["#{c}_databases"].include?(database) }
+                 error << 'present on internal databases list' if !info['databases'].include?(database)
+                 return error
+
       end
 
 end
