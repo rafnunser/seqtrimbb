@@ -64,6 +64,7 @@ class DatabasesSupportInternal < DatabasesSupport
 #CHECK INFO
       def check_databases(databases,info,bbtools)
 
+             databases = databases.split(/ |,/) if !databases.is_a?(Array)
   #Info
              STDERR.puts "Checking databases status at #{info['dir']}"
   #Check internal databases status
@@ -102,8 +103,11 @@ class DatabasesSupportInternal < DatabasesSupport
       end
   #GET DATABASES INFO
       def get_dbs_info(databases,info)
-
+        
+             databases = databases.split(/ |,/) if !databases.is_a?(Array)
              databases.each do |db_name|
+         # DB name
+                     info[db_name]['name'] = db_name
          #LOAD (or re-load) PATHS
               #Fastas folder path
                      info[db_name]['path'] = File.join(info['dir'],'fastas',db_name)

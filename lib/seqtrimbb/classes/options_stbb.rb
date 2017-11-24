@@ -28,9 +28,7 @@ class OptionsParserSTBB
                              if !file.empty? && file.map { |f| File.exist?(File.expand_path(f)) }.all?
                                      options[:file] = file
                              else
-                                     puts "test_#{file[0]}"
-                                     puts File.exist?('/home/rafa/Dropbox/branch_repo/seqtrimbb/test/DB/testfiles/testfile_single.fastq.gz')
-                                     STDERR.puts "ERROR. Sequences file: #{file.select{ |f| File.exist?(f) }.join(" ")} does not exists"
+                                     STDERR.puts "ERROR. Sequences file: #{file.select{ |f| !File.exist?(f) }.join(" ")} does not exists"
                                      exit(-1)
                              end
                      end
@@ -40,7 +38,7 @@ class OptionsParserSTBB
                              if !file.empty? && file.map { |f| File.exist?(File.expand_path(f)) }.all?
                                      options[:qual] = file
                              else
-                                     STDERR.puts "ERROR. Sequences quality file: #{file.select{ |f| File.exist?(f) }.join(" ")} does not exists"
+                                     STDERR.puts "ERROR. Sequences quality file: #{file.select{ |f| !File.exist?(f) }.join(" ")} does not exists"
                                      exit(-1)
                              end
                      end
@@ -56,7 +54,7 @@ class OptionsParserSTBB
                              end
                      end
                   #Output path
-                     options[:final_output_path] = 'output_files'
+                     options[:final_output_path] = File.expand_path('output_files')
                      opts.on( '-O', '--ouput output_files', 'Output folder. It should not exists. output_files by default') do |folder|
                              options[:final_output_path] = folder
                      end
@@ -88,6 +86,11 @@ class OptionsParserSTBB
                                      when 'final'                  
                                              options[:generate_final_stats] = true
                              end
+                     end
+                  #Save unpaired
+                     options[:save_unpaired] = false
+                     opts.on('--save_unpaired', 'Save unpaired reads generated in some plugins' ) do
+                             options[:save_unpaired] = true
                      end
                   #Install databases trigger, an list of databases to install
                      options[:install_db] = false
@@ -125,8 +128,13 @@ class OptionsParserSTBB
                      end
                   #Adds a cmd to the pipe
                      options[:ext_cmd] = nil
-                     opts.on('--external_cmd External call to insert in the pipe', 'Add one call (or more already piped between them) to an assembler or mapping tool' ) do |cmd|
+                     opts.on('--external_cmd EXTERNAL_CALL to insert in the pipe', 'Add one call (or more already piped between them) to an assembler or mapping tool' ) do |cmd|
                              options[:ext_cmd] = cmd
+                     end
+                  #merge
+                     options[:merge_cmd] = false
+                     opts.on('-M','--merge_cmd','Merge input plugin with the first plugin in the list, and output plugin with the lasts (if they are mergeable)') do
+                             options[:merge_cmd] = true
                      end
 
                   # This displays the help screen, all programs are assumed to have this option.

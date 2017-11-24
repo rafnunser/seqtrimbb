@@ -16,7 +16,6 @@ class ParamsChecker < Params
        #end   
          end
          s = get_param(param)
-         set_comment(get_plugin,param,comment)
          begin
                  case param_class
                          when 'DB'

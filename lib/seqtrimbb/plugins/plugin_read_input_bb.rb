@@ -1,133 +1,83 @@
-require "plugin"
-
 ########################################################
-# 
-# Defines the main methods that are necessary to execute Plugin
-# Inherit: Plugin
+# Defines the main methods that are necessary to read input
 ########################################################
 
 class PluginReadInputBb < Plugin
-  
- def get_cmd
 
-  # General params
-
-    max_ram = @params.get_param('max_ram') 
-    cores = @params.get_param('workers')
-    files = @params.get_param('inputfiles')
-    quals = @params.get_param('inputqualfiles')
-    sample_type = @params.get_param('sample_type')
-    file_format = @params.get_param('file_format')
-
-    outstats = File.join(File.expand_path(OUTPLUGINSTATS),"input_stats.txt")
-
-    nativelibdir = File.join($BBPATH,'jni')
-    classp = File.join($BBPATH,'current')
-
-  # Creates an array to store the fragments to build the call
-
-    cmd_add = Array.new
-
-  # Invariable fragment
-
-    cmd_add.push("java -ea -Xmx#{max_ram} -cp #{classp} jgi.ReformatReads t=#{cores}")
-
-  # Adding input info, vital for a proper processing of paired samples
-
-    if sample_type == "interleaved"
-      file1 = files[0]
-      cmd_add.push("in=#{file1} int=t")
-    elsif sample_type == "single-ended"
-      file1 = files[0]
-      cmd_add.push("in=#{file1}")
-    elsif sample_type == "paired"
-      file1 = files[0]
-      file2 = files[1]
-      cmd_add.push("in=#{file1} in2=#{file2}")
-    end
-
-  # Adding input info, vital for a proper processing of samples in fasta format
-
-    if file_format == "fasta"
-     if !quals.nil?
-      if sample_type == "paired"
-        qual1 = quals[0]
-        qual2 = quals[1]
-        cmd_add.push("qfin=#{qual1} qfin2=#{qual2}")
-      else
-        qual1 = quals[0]
-        cmd_add.push("qfin=#{qual1}")
-      end
-     else
-      cmd_add.push("q=40")
-     end
-    end      
-
-  # Adding closing args and joining the call
-     
-    cmd_add.push("out=stdout.fastq 2> #{outstats}")
-
-    cmd = cmd_add.join(" ")
-
-    return cmd
-
- end
-
- def get_stats
-
-    # First look for internal errors in cmd execution
-
-    cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"input_stats.txt")
-    open_cmd_file= File.open(cmd_file)
-    open_cmd_file.each do |line|
-      line.chomp!
-      if !line.empty?
-        if (line =~ /Exception in thread/) || (line =~ /Error/)
-           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
-           exit -1 
-        end
-      end
-    end
-    open_cmd_file.close
-
-    # DOES NOTHING
-
-    plugin_stats = {}
-    plugin_stats["sequences"] = {}
-
-    return plugin_stats
-
- end
- 
   #Returns an array with the errors due to parameters are missing 
-  def self.check_params(params)
-    errors=[]  
+      def check_params
 
-    comment='Max RAM'
-    default_value = 
-    params.check_param(errors,'max_ram','String',default_value,comment)
+           #Priority, base ram
+             cores =[1]
+             priority = 0
+             ram = [50] #mb
+           #Array to store errors    
+             errors=[]  
+           #Set resources
+             @params.resource('set_requirements',{ 'plugin' => 'PluginReadInputBb','opts' => {'cores' => cores,'priority' => priority,'ram'=>ram}})  
 
-    comment='Number of Threads'
-    default_value = 
-    params.check_param(errors,'workers','String',default_value,comment)
+             return errors
 
-    comment='Input files'
-    default_value = 
-    params.check_param(errors,'inputfiles','Array',default_value,comment)
+      end  
+  #Get options
+      def get_options
 
-    comment='Qual files'
-    default_value = 
-    params.check_param(errors,'qualfiles','Array',default_value,comment)    
+           #Opts Array
+             opts = Array.new
+           #Module options Hash
+             module_options = {}
+           #Adding input info, for a proper processing of paired samples
+             case @params.get_param('sample_type')
+                     when 'interleaved'
+                             module_options["in"] = @params.get_param('file')[0]
+                             module_options["int"] = "t"
+                     when 'single-ended'
+                             module_options["in"] = @params.get_param('file')[0]
+                             module_options["int"] = "f"
+                     when 'paired'
+                             module_options["in"] = @params.get_param('file')[0]
+                             module_options["in2"] = @params.get_param('file')[1]
+                             module_options["int"] = "f"
+             end   
+           #Adding input info, vital for a proper processing of samples in fasta format
+             if @params.get_param('file_format') == "fasta"
+                     if !@params.get_param('qual').empty?
+                             if @params.get_param('sample_type') == "paired"
+                                     module_options["qfin"] = @params.get_param('qual')[0]
+                                     module_options["qfin2"] = @params.get_param('qual')[1]
+                             else
+                                     module_options["qfin"] = @params.get_param('qual')[0]
+                             end
+                     else
+                             module_options["q"] = 40
+                     end
+             end
+           # Adding commandline redirection
+             module_options['redirection'] = ["2>",File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"input_stats.txt")]    
+           #Add hash to array and return
+             opts << module_options
+             return opts
 
-    comment='Type of sample: paired, single-ended or interleaved.'
-    default_value = 
-    params.check_param(errors,'sample_type','String',default_value,comment)
+      end
+  #Get cmd
+      def get_cmd(result_hash)
 
-    comment='Format of the sample: fastq or fasta'
-    default_value = 
-    params.check_param(errors,'file_format','String',default_value,comment)
+           #Return  
+             return @bbtools.load_reformat(result_hash['opts'].first)
 
-    return errors
-  end
+      end
+  #Get stats!
+      def get_stats(stats_files,stats)
+
+             #Number of input reads!
+             stats["sequences"] = {} if !stats.key?("sequences")
+             #Call to super with regexp
+             regexp_str = "^(Input:|Reads Used:)"
+             lines = super(regexp_str,stats_files['cmd'].first)
+             #Set input reads
+             stats["sequences"]["input_count"] = lines[0].split(/\t/)[1].split(" ")[0].to_i
+
+      end
+ 
 
 end

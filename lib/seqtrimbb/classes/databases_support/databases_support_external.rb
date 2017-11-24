@@ -8,6 +8,7 @@ class DatabasesSupportExternal < DatabasesSupport
   #CHECKS INFO
       def check_databases(databases,info,bbtools)
 
+             databases = databases.split(/ |,/) if !databases.is_a?(Array)
   #Check external databases status
              databases.each do |db|
                      check_database_status(db,info,get_current_fastas(db))
@@ -34,11 +35,11 @@ class DatabasesSupportExternal < DatabasesSupport
       end
   #GET DATABASES INFO
       def get_dbs_info(databases,info)
-
+             
+             databases = databases.split(/ |,/) if !databases.is_a?(Array)
              databases.each do |db|
          #LOAD (or re-load) PATHS --- Case internal | internal 
-                     db_name = File.basename(db).gsub(/\Wfasta(\Wgz)?/,'')
-                     info[db]['name'] = db_name
+                     info[db]['name'] = File.basename(db).gsub(/\Wfasta(\Wgz)?/,'')
                      #Set a database directory
                      db_dir = File.directory?(db) ? db : File.dirname(db)
                      #Fastas folder path
@@ -47,14 +48,37 @@ class DatabasesSupportExternal < DatabasesSupport
                      if File.writable?(db_dir)
                               info[db]['index'] = File.join(db_dir,'index')
                      else
-                             info[db]['index'] = File.join(OUTPUT_PATH,'temp_indices',db_name)
+                             info[db]['index'] = File.join(OUTPUT_PATH,'temp_indices',info[db]['name'])
+                             Dir.mkdir(File.join(OUTPUT_PATH,'temp_indices')) if !Dir.exist?(File.join(OUTPUT_PATH,'temp_indices'))
                      end 
                        #Error file path
-                     info[db]['update_error_file'] = File.join(info[db]['index'],'update_stderror_'+db_name+'.txt')                  
+                     info[db]['update_error_file'] = File.join(info[db]['index'],'update_stderror_'+info[db]['name']+'.txt')                  
              end
          # STATUS INFO (fastas,size...
              super
 
+      end
+
+      def update_database_by_refs(refs,info,bbtools)
+             
+          #Database essential hash building
+             db = File.basename(File.dirname(refs.first))+'_excluding'
+             i = 1
+             while info.key?(db)
+                     db = db+'_'+i.to_s
+                     i += 1
+             end
+             info[db] = {}           
+             info[db]['name'] = db
+             info[db]['path'] = refs.join(',')
+             info[db]['index'] = File.join(OUTPUT_PATH,'temp_indices',info[db]['name'])
+             Dir.mkdir(File.join(OUTPUT_PATH,'temp_indices')) if !Dir.exist?(File.join(OUTPUT_PATH,'temp_indices'))
+             info[db]['update_error_file'] = File.join(info[db]['index'],'update_stderror_'+info[db]['name']+'.txt')
+          #Update!
+             update_index(db,info,bbtools)
+
+             return db
+    
       end
 
 end

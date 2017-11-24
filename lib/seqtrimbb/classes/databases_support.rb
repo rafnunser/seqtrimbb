@@ -31,10 +31,9 @@ class DatabasesSupport
   #GET DATABASES INFO
       def get_dbs_info(databases,info)
 
+             databases = databases.split(/ |,/) if !databases.is_a?(Array)
              databases.each do |db_name|
          # STATUS INFO (fastas,size...
-               # DB name
-                     info[db_name]['name'] = db_name if !info[db_name].key?('name')
                # Fastas paths and list
                      info[db_name]['fastas'] = File.directory?(info[db_name]['path']) ? Dir[File.join(info[db_name]['path'],"*.fasta*")].sort : [info[db_name]['path']]
                      info[db_name]['list'] = info[db_name]['fastas'].map { |fasta| File.basename(fasta).sub(/\Wfasta(\Wgz)?/,'').sub(/_/,' ') }
@@ -69,9 +68,11 @@ class DatabasesSupport
       def update_index(databases,info,bbtools)
         
              exit_trigger = false
+             databases = databases.split(/ |,/) if !databases.is_a?(Array)
            # Updating obsolete databases
              databases.each do |db_name| 
            # Removing old index,and old stderror. Make new index folder
+                     puts info[db_name]['index']
                      FileUtils.rm_rf(info[db_name]['index']) if Dir.exist?(info[db_name]['index'])
                      FileUtils.rm(info[db_name]['update_error_file']) if File.exist?(info[db_name]['update_error_file'])
                      Dir.mkdir(info[db_name]['index'])
@@ -128,6 +129,7 @@ class DatabasesSupport
    #CHECK INSTALLATION
       def check_installation(dir,databases)
 
+             databases = databases.split(/ |,/) if !databases.is_a?(Array)
              installed_dbs = databases.select { |d| ( Dir.exist?(File.join(dir,'fastas',d)) || !Dir[File.join(dir,'fastas',d,"*.fasta*")].empty? ) }
              return installed_dbs
 

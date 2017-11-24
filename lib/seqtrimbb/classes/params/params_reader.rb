@@ -48,19 +48,21 @@ class ParamsReader < Params
              suffix = get_param('write_in_gzip') ? '.fastq.gz' : '.fastq'
              set_param('suffix',suffix,"# Output files file extension")
      # test inputfiles format
-             format_info = %x[#{bbtools.load_testformat({'in' => nil,'int' => nil,'out' => nil,'files' => [get_param('file')[0]]})}].split(" ")
+             if !get_param('file').nil? && File.exist?(get_param('file')[0].to_s)
+                     format_info = %x[#{bbtools.load_testformat({'in' => nil,'int' => nil,'out' => nil,'files' => [get_param('file')[0]]})}].split(" ")
      # Set format info (test number of files for paired)
-             set_param('qual_format',format_info[0],"# Quality format value from input files")
-             set_param('file_format',format_info[1],"# File format value from input files")
-             set_param('sample_type',get_param('file').count == 2 ? 'paired' : format_info[3],"# Sample type value from input files")
+                     set_param('qual_format',format_info[0],"# Quality format value from input files")
+                     set_param('file_format',format_info[1],"# File format value from input files")
+                     set_param('sample_type',get_param('file').count == 2 ? 'paired' : format_info[3],"# Sample type value from input files")
      # Preloading output params 
      # Setting outputfiles 
-             set_param('outputfiles',preset_outputfiles,"# Preloaded output files")
+                     set_param('outputfile',preset_outputfiles,"# Preloaded output files")
      #Set and store default options. First add paired/interleaved information
-             paired = (get_param('sample_type') == 'paired' || get_param('sample_type') == 'interleaved') ? 't' : 'f'
-           	 default_options = { "in" => "stdin.fastq", "out" => "stdout.fastq", "int" => paired }
-             set_param('default_options',default_options,"# Preloaded default BBtools input/output/paired_info")
-             bbtools.store_default(default_options)
+                     paired = (get_param('sample_type') == 'paired' || get_param('sample_type') == 'interleaved') ? 't' : 'f'
+           	         default_options = { "in" => "stdin.fastq", "out" => "stdout.fastq", "int" => paired }
+                     set_param('default_options',default_options,"# Preloaded default BBtools input/output/paired_info")
+                     bbtools.store_default(default_options)
+             end
      # Finally Overwrite template's params with option -P params
              get_param('overwrite_params').split(";").map { |param| overwrite_param(param) } if !get_param('overwrite_params').nil?
       end

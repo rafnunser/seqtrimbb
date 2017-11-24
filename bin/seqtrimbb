@@ -21,6 +21,10 @@ $: << File.expand_path(File.join(SEQTRIM_PATH,'lib'))
 $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb'))
 # Finds classes in 'classes' folder
 $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes'))
+# Finds classes in 'classes/databases_support' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes','databases_support'))
+# Finds classes in 'classes/params' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes','params'))
 # Finds classes in 'plugins' folder
 $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','plugins'))
 
@@ -68,7 +72,7 @@ def check_external_requirements(req,req_call,source_url,version=nil)
        if !version.nil?
              #Extract version 
                version_from_cmd = cmd.read.split("\n")[0].gsub(/\D/,'').to_i
-               if version_from_cmd < version.to_i
+               if version_from_cmd < version.to_s.gsub(/\D/,'').to_i
                        STDERR.puts "Detected an old #{req} version. An updated is required."
                        exit(-1)
                end
@@ -99,13 +103,14 @@ def check_previous_execution(output_folders,force_execution)
 end
 
 ###############################################################################
-# REQUIRE ESSENTIALS
+# REQUIRE
 ###############################################################################
 
 require 'seqtrimbb'
 require 'fileutils'
 require 'optparse'
 require 'json'
+require 'zlib'
 require 'params'
 require 'database_support_handler'
 require 'plugin'
@@ -125,7 +130,7 @@ else # otherwise use SEQTRIM_PATH + DB
        db_path = File.expand_path(File.join(SEQTRIM_PATH, "DB"))
 end
 #First checks if BBtools is installed, then set a BBtools path. If there is a BBTOOLS_PATH environment var, then use it
-check_external_requirements('BBtools','bbversion.sh',"http://sourceforge.net/projects/bbmap/",37.53)
+check_external_requirements('BBtools','bbversion.sh',"http://sourceforge.net/projects/bbmap/","37.53")
 if ENV['BBTOOLS_PATH']
        bb_path = ENV['BBTOOLS_PATH']
 else # otherwise use the result of which bbmap.sh
@@ -133,6 +138,7 @@ else # otherwise use the result of which bbmap.sh
 end
 #Puts header
 STDERR.puts "SeqTrimBB version #{Seqtrimbb::SEQTRIM_VERSION}"
+STDERR.puts "###############################################"
 STDERR.puts " - Command: #{$0}"
 STDERR.puts " - SeqtrimBB path: #{SEQTRIM_PATH}"
 STDERR.puts " - BBtools version #{bb_version}"
@@ -194,59 +200,98 @@ STDERR.puts "Using params file: #{options[:template]}"
 # Initialize params object and load params from template and options
 params = Params.new(options,bbtools)
 
-# Store default options from params in bbtools
-bbtools.store_default(param.get_param('default_options'))
-
 # Finally checks plugin_list param. If it fails, exit.
-pl_error = []
-params.check_param(pl_error,'plugin_list','PluginList',nil,'Plugins applied to every sequence, separated by commas. Order is important')
+params.check_param(pl_error = [],'plugin_list','PluginList',nil,'Plugins applied to every sequence, separated by commas. Order is important')
 if !pl_error.empty?
-      STDERR.puts pl_error
-      exit(-1)
+       STDERR.puts pl_error
+       exit(-1)
+end
+# Make working directory and subdirectories
+if File.writable?(File.dirname(OUTPUT_PATH))
+       [OUTPUT_PATH,File.join(OUTPUT_PATH,'plugins_logs')].map{ |d| Dir.mkdir(d) if !Dir.exist?(d) }
+else
+       STDERR.puts "Error in writing permissions. Impossible to make output folder: #{OUTPUT_PATH}."
+       exit(-1)
 end
 
 ###############################################################################
 # INITIAL STATS
 ###############################################################################
-external_requirements['FastQC']= ['fastqc',"\nYou can download it from http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"]
 check_external_requirements('FastQC','fastqc -v',"http://www.bioinformatics.babraham.ac.uk/projects/fastqc/")
 
 # Extract initial global stats
-#if params.exist?('generate_initial_stats') && params.get_param('generate_initial_stats').to_s=='true'
-  # $LOG.info "Calculating initial stats: i.e. FastQC"
+if params.exist?('generate_initial_stats') && params.get_param('generate_initial_stats').to_s=='true'
+       STDERR.puts "Calculating initial stats: i.e. FastQC"
 # fastqc cmd 
-  # cmd="fastqc -q -o #{OUTPUT_PATH} -t #{$GLOBAL_PARAMS['cores']} #{params.get_param('inputfiles').join(" ")}"
-  # system(cmd)
-#else
-  # $LOG.info "Skipping calculating initial stats phase."
-#end
+       Dir.mkdir(File.join(OUTPUT_PATH,'initial_stats'))
+       cmd="fastqc -q -o #{File.join(OUTPUT_PATH,'initial_stats')} -t #{params.get_param('workers')} #{params.get_param('file').join(" ")}"
+       system(cmd)
+else
+       STDERR.puts "Skipping calculating initial stats phase."
+end
 
 ###############################################################################
 # MAIN WORK
 ###############################################################################
 
 # Exit status
-#exit_status = 0
+exit_status = 0
 
 # load plugin_list
-#plugin_list = params.get_param('plugin_list')
-#$LOG.info "Loading plugins [#{plugin_list}]"
-
-# Make working directory and subdirectories
-#[OUTPUT_PATH,File.join(OUTPUT_PATH,'plugins_stats')].map{|d| Dir.mkdir(d)}
+plugin_list = params.get_param('plugin_list')
+STDERR.puts "Loading plugins: [#{plugin_list}]"
 
 # Initialize plugins manager
-#plugin_manager = PluginManager.new(plugin_list,params,bbtools)
+plugin_manager = PluginManager.new(plugin_list,params,bbtools,stbb_db)
 
 # load and check plugins params
-#$LOG.info "Loading and checking plugins params"
-#if !plugin_manager.check_plugins_params(params)
-   # $LOG.error "Plugin check failed"
+STDERR.puts "Loading and checking plugins params"
+if !plugin_manager.check_plugins_params
+       STDERR.puts "Plugin check failed"
     # save used params to file
-    #params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
-    #exit(-1)
-#end
+       params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
+       exit(-1)
+end
 
+# EXECUTE PLUGINS:
+plugin_manager.execute_plugins
+STDERR.puts "Plugin_results=#{plugin_manager.plugin_results.each { |plugin| plugin['cmd'] }.join("\n")}"
+
+# Pipe! plugins and launch cmd
+cmd_to_execute = plugin_manager.pipe!
+STDERR.puts "CMD_TO_EXECUTE:\n#{cmd_to_execute}"
+STDERR.puts "Initializing cleaning process..."
+##LAUNCH
+STDERR.puts "Cleaning reads!"
+system(cmd_to_execute)
+STDERR.puts "...Finalizing cleaning process..."
+
+# Storing all plugins stats and error checking
+stats = plugin_manager.extract_stats
+# Saving stats
+File.open("#{OUTPUT_PATH}/stats.json","w") do |f|
+       f.write(JSON.pretty_generate(stats))
+end
+
+###############################################################################
+# FINAL STATS
+###############################################################################
+
+# Extract initial global stats
+if params.exist?('generate_final_stats') && params.get_param('generate_initial_stats').to_s=='true'
+       STDERR.puts "Calculating initial stats: i.e. FastQC"
+# fastqc cmd 
+       Dir.mkdir(File.join(OUTPUT_PATH,'final_stats'))
+       cmd="fastqc -q -o #{File.join(OUTPUT_PATH,'final_stats')} -t #{params.get_param('workers')} #{params.get_param('outputfile').join(" ")}"
+       system(cmd)
+else
+       STDERR.puts "Skipping calculating initial stats phase."
+end
+
+
+###############################################################################
+# REPORT
+###############################################################################
 
 #generate report
 
@@ -264,9 +309,11 @@ check_external_requirements('FastQC','fastqc -v',"http://www.bioinformatics.babr
   #$LOG.info "Closing"
 #end
 
-#if (exit_status>=0) 
- # FileUtils.mv OUTPUT_PATH, options[:final_output_path]
-#end
+###############################################################################
+# EXIT
+###############################################################################
+
+#Move files to final_output_folder
+FileUtils.mv OUTPUT_PATH, options[:final_output_path]
 # Exiting
-#exit(exit_status)
 exit

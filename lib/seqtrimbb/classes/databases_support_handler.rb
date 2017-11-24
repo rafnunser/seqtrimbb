@@ -81,6 +81,13 @@ class DatabasesSupportHandler
              @external_databases.check_databases(paths_to_dbs,@external_db_info,@bbtools)
 
       end
+  #SET EXCLUDING! ...
+      def set_excluding(refs)
+             
+             init_external?
+             return @external_databases.update_database_by_refs(refs,@external_db_info,@bbtools)
+
+      end
   #TEST if INIT
       def init_external?
      
@@ -100,13 +107,30 @@ class DatabasesSupportHandler
 
 #SAVE JSON
       def save_json(info,file)
-
+             
+             if !File.writable?(File.dirname(file))
+                     STDERR.puts "Error in writing permissions. Unable to write databases info JSON."
+                     return
+             end
              File.open(file,"w") do |f|
                      f.write(JSON.pretty_generate(info.except('modified')))
              end
              
       end
+#GET INFO
+      def get_info(*levels)
 
+             if @info.key?(levels[0]) #Database is internal
+                     return @info.dig(*levels)
+             elsif @external_db_info.key?(levels[0]) #Database is external
+                     return @external_db_info.dig(*levels)
+             else 
+                     STDERR.puts '#{levels.join('')} info does not exists. Returning nil'
+                     return nil
+             end
+
+
+      end
 #CHECK ON DATABASE STATUS (INFO LEVEL). Return found errors.
       def check_status(info,database)
                  

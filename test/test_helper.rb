@@ -20,7 +20,7 @@ $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','plugins'))
 
 ROOT_PATH=File.join(File.dirname(__FILE__))
 
-DB_PATH = File.join(ROOT_PATH, "DB")
+FILES_PATH = File.join(ROOT_PATH, "files")
 
 if ENV['BBTOOLS_PATH']
    BBPATH = ENV['BBTOOLS_PATH']
@@ -35,11 +35,15 @@ require 'seqtrimbb'
 require 'minitest/autorun'
 require 'fileutils'
 require 'plugin_manager.rb'
+require 'plugin.rb'
+require 'json'
 require 'bbtools.rb'
 require 'databases_support_handler.rb'
 require 'params.rb'
 require 'optparse'
 require 'options_stbb.rb'
+require 'plugin_merger.rb'
+require 'zlib'
 
 #Utilities
 class Hash
@@ -75,9 +79,15 @@ end
 def setup_databases
 
        setup_temp
-       source_path = DB_PATH
+       source_path = FILES_PATH
        db_path = File.join(OUTPUT_PATH,'DB')
        Dir.mkdir(db_path)
        FileUtils.cp_r File.join(source_path,'fastas'),db_path
 
+end
+
+def clean_up
+
+       FileUtils.rm_rf OUTPUT_PATH if Dir.exist?(OUTPUT_PATH)    
+     
 end

@@ -28,11 +28,19 @@ class Params
              @params_reader.process_params(bbtools)
 
       end
+  #Access to resourcer
+      def resource(input_method,opt_hash)
+             
+             require 'params_resourcer' unless defined?(ParamsResourcer)
+             @resourcer = ParamsResourcer.new unless defined?(@resourcer)
+             @resourcer.method(input_method).call(opt_hash)
+
+      end
 #GETTER/SETTER
   # Sets a parameter
       def set_param(param,value,comment = nil,plugin = nil)
-
-             plugin=get_plugin
+             
+             plugin = get_plugin if plugin.nil?
            # Store param in the hash params
              @@params[param] = value
            # Store comment
@@ -77,14 +85,15 @@ class Params
   # Gets plugin
       def get_plugin
 
-             at = caller(2)[6]
+             at = caller(2)[3]
              if /^(.+?):(\d+)(?::in `(.*)')?/ =~ at
                      file = Regexp.last_match[1]
                      plugin=File.basename(file,File.extname(file))
                      if !Dir[File.join(SEQTRIM_PATH,'lib','seqtrimbb','plugins',"*.rb")].map!{|p| File.basename(p,'.rb')}.include?(plugin)
                              plugin='General'
                      end
-             end  
+             end
+             return plugin  
 
       end
 # COMMENTS METHODS
@@ -132,6 +141,15 @@ class Params
 
              @@params.each do |key, value|
                      puts "#{key} = #{value} "
+             end
+
+      end
+  # Prints comments
+      def print_comments()
+
+             @@plugin_comments.each do |key, value|
+                     puts "#{key}"
+                     puts "#{value} "
              end
 
       end

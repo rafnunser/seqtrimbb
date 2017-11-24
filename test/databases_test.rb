@@ -8,11 +8,8 @@ class DatabasesTest < Minitest::Test
          def test_database
 
               # PATHs options hashes
-                 setup_temp
-                 source_path = DB_PATH
+                 setup_databases
                  db_path = File.join(OUTPUT_PATH,'DB')
-                 Dir.mkdir(db_path)
-                 FileUtils.cp_r File.join(source_path,'fastas'),db_path
                  databases = ['adapters','contaminants','contaminants_seqtrim1','cont_bacteria','cont_fungi','cont_mitochondrias','cont_plastids','cont_ribosome','cont_viruses','vectors']
                  json = File.join(db_path,'status_info','databases_status_info.json')
                  bb_path = BBPATH
@@ -107,7 +104,7 @@ class DatabasesTest < Minitest::Test
 				         stbb_db.maintenance_external(ext_dbs)
 
               #CLEAN UP
-                 FileUtils.rm_rf OUTPUT_PATH if Dir.exist?(OUTPUT_PATH)
+                 clean_up
 
          end
 

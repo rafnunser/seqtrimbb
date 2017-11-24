@@ -1,193 +1,93 @@
-require "plugin"
-
 ########################################################
-# 
-# Defines the main methods that are necessary to execute Plugin
-# Inherit: Plugin
+# Defines the main methods that are necessary to trim adapters
 ########################################################
 
 class PluginAdapters < Plugin
-  
- def get_cmd
 
-  # General params
-
-    max_ram = @params.get_param('max_ram')
-    cores = @params.get_param('workers')
-    sample_type = @params.get_param('sample_type')
-    save_singles = @params.get_param('save_unpaired')
-    write_in_gzip = @params.get_param('write_in_gzip')
-    nativelibdir = File.join($BBPATH,'jni')
-    classp = File.join($BBPATH,'current')
-
-  # Adapters trimming params
-    # Set references
-    if File.exists?(@params.get_param('adapters_db')) && File.file?(@params.get_param('adapters_db'))
-      adapters_db = @params.get_param('adapters_db')
-    else
-      if Dir.exists?(@params.get_param('adapters_db'))
-         fastas = File.join(@params.get_param('adapters_db'),'*.fasta*')
-         adapters_db = Dir[fastas].join(',')
-      else
-         fastas = File.join($DB_PATH,'fastas',@params.get_param('adapters_db'),'*.fasta*')
-         adapters_db = Dir[fastas].join(',')
-      end
-    end
-    adapters_trimming_position = @params.get_param('adapters_trimming_position')
-    adapters_kmer_size = @params.get_param('adapters_kmer_size')
-    adapters_min_external_kmer_size = @params.get_param('adapters_min_external_kmer_size')
-    adapters_max_mismatches = @params.get_param('adapters_max_mismatches')
-    adapters_aditional_params = @params.get_param('adapters_aditional_params')
-    adapters_merging_pairs_trimming = @params.get_param('adapters_merging_pairs_trimming')
-
-  # Name and path for the statistics to be generated in the trimming process
-    outstats = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimming_stats.txt")
-    outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimming_stats_cmd.txt")
-
-  # Creates an array to store the necessary fragments to assemble the call
-    cmd_add = Array.new
-
-  # Adding invariable fragment
-    cmd_add.push("java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=#{adapters_kmer_size} mink=#{adapters_min_external_kmer_size} hdist=#{adapters_max_mismatches}")
-
-  # Adding necessary fragment to save unpaired singles
-    if write_in_gzip   
-        suffix = 'fastq.gz'
-    else
-         suffix = 'fastq'
-    end
-    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_adapters_trimming.#{suffix}")
-    cmd_add.push("outs=#{outsingles}") if save_singles == 'true'
-
-  # Choosing which tips are going to be trimmed
-    if adapters_trimming_position == 'both'
-      cmd_add.push("rref=#{adapters_db} lref=#{adapters_db}")
-    elsif adapters_trimming_position == 'right'
-      cmd_add.push("rref=#{adapters_db}")
-    elsif adapters_trimming_position == 'left'
-      cmd_add.push("lref=#{adapters_db}")
-    end
-
-  # Adding necessary info to process paired samples
-    if sample_type == "paired" || sample_type == "interleaved"
-      cmd_add.push("int=t")
-      cmd_add.push("tbo tpe") if adapters_merging_pairs_trimming == 'true'
-    end 
-    
-  # Adding closing args to the call and joining it
-    if !adapters_aditional_params.nil?
-      cmd_add.push(adapters_aditional_params)
-    end
-
-    closing_args = "in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}" 
-
-    cmd_add.push(closing_args)
-
-    cmd = cmd_add.join(" ")
-
-    return cmd
-
- end
-
- def get_stats
-
-    # First look for internal errors in cmd execution
-     cmd_file = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimming_stats_cmd.txt")
-    
-    open_cmd_file= File.open(cmd_file)
-    open_cmd_file.each do |line|
-      line.chomp!
-      if !line.empty?
-        if (line =~ /Exception in thread/) || (line =~ /Error/)
-           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
-           exit -1 
-        end
-      end
-     end
-     open_cmd_file.close
-
-    # Extracting stats 
-
-    plugin_stats = {}
-    plugin_stats["plugin_adapters"] = {}
-    plugin_stats["plugin_adapters"]["sequences_with_adapter"] = {}
-    plugin_stats["plugin_adapters"]["adapter_id"] = {}
-
-    stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"adapters_trimming_stats.txt")
-    
-    open_stat_file = File.open(stat_file)
-    open_stat_file.each do |line|
-     line.chomp!
-     if !line.empty?
-       if (line =~ /^\s*#/) #Es el encabezado de la tabla o el archivo
-         line[0]=''
-         splitted = line.split(/\t/)
-         plugin_stats["plugin_adapters"]["sequences_with_adapter"]["count"] = splitted[1].to_i if splitted[0] == 'Matched'
-       else 
-         splitted = line.split(/\t/)
-         plugin_stats["plugin_adapters"]["adapter_id"][splitted[0]] = splitted[1].to_i
-       end
-     end
-    end
-    open_stat_file.close
-    
-    return plugin_stats
-
- end
- 
   #Returns an array with the errors due to parameters are missing 
-  def self.check_params(params)
-    errors=[]  
-   
-    comment='Max RAM'
-    default_value = 
-    params.check_param(errors,'max_ram','String',default_value,comment)
+      def check_params
+       
+       #Priority, base ram
+             cores = [1]
+             priority = 1
+             ram = [100] #mb
+       #Array to store errors 
+             errors=[]  
+       #Check params (errors,param_name,param_class,default_value,comment)
+             @params.check_param(errors,'adapters_trimming_position','String','both','Trim adapters in which position: right, left or both (default)')
+             #if plugins trims reads in both tips, double the requirements
+             if @params.get_param('adapters_trimming_position') == 'both'
+                     cores << 1
+                     ram << 100
+             end 
 
-    comment='Number of Threads'
-    default_value =
-    params.check_param(errors,'workers','String',default_value,comment)
+             @params.check_param(errors,'adapters_db','DB','adapters','Sequences of adapters to use in trimming',@stbb_db)
+             ram.map!{ |iram| iram * @params.get_param('adapters_db').split(/ |,/).count }
+             
+             @params.check_param(errors,'adapters_3_kmer_size','Integer',15,'Main kmer size to use in adapters trimming. Right tip.')
+             @params.check_param(errors,'adapters_5_kmer_size','Integer',@params.get_param('adapters_3_kmer_size').to_i + 6,'Main kmer size to use in adapters trimming. Left tip.')
+             @params.check_param(errors,'adapters_3_min_external_kmer_size','Integer',8,'Minimal kmer size to use in read tips during adapters trimming. Right tip.')
+             @params.check_param(errors,'adapters_5_min_external_kmer_size','Integer',@params.get_param('adapters_3_min_external_kmer_size').to_i + 6,'Minimal kmer size to use in read tips during adapters trimming. Left tip.')    
+             @params.check_param(errors,'adapters_3_max_mismatches','Integer',1,'Max number of mismatches accepted during adapters trimming. Right tip.')
+             @params.check_param(errors,'adapters_5_max_mismatches','Integer',@params.get_param('adapters_3_max_mismatches').to_i,'Max number of mismatches accepted during adapters trimming. Left tip.')
 
-    comment='Type of sample: paired, single-ended or interleaved.'
-    default_value = 
-    params.check_param(errors,'sample_type','String',default_value,comment)
+             @params.check_param(errors,'adapters_aditional_params','String',nil,'Aditional BBduk2 parameters, add them together between quotation marks and separated by one space')
 
-    comment='Write in gzip?'
-    default_value = 
-    params.check_param(errors,'write_in_gzip','String',default_value,comment)
+             @params.check_param(errors,'adapters_merging_pairs_trimming','String','true','Trim adapters of paired reads using mergind reads methods')
+       #Set resources
+             @params.resource('set_requirements',{ 'plugin' => 'PluginAdapters','opts' => {'cores' => cores,'priority' => priority,'ram'=>ram}})
 
-    comment='Save reads which became unpaired after every step? true or false (default)'
-    default_value = 'false'
-    params.check_param(errors,'save_unpaired','String',default_value,comment)
+             return errors
 
-    comment='Trim adapters in which position: right, left or both (default)' 
-    default_value = 'both'
-    params.check_param(errors,'adapters_trimming_position','String',default_value,comment)
+      end
+  #Get options
+      def get_options
 
-    comment='Sequences of adapters to use in trimming' 
-    default_value = 'adapters'
-    params.check_param(errors,'adapters_db','String',default_value,comment)
+           #Opts Array
+             opts = Array.new
+           # Choosing which tips are going to be trimmed
+             case @params.get_param('adapters_trimming_position')
+                     when 'both'
+                             ['r','l'].map { |tip| opts << get_trimming_module(tip,'adapters') }
+                     when 'right'
+                             opts << get_trimming_module('r','adapters')
+                     when 'left'
+                             opts << get_trimming_module('l','adapters')
+             end 
 
-    comment='Main kmer size to use in adapters trimming'
-    default_value = 15
-    params.check_param(errors,'adapters_kmer_size','Integer',default_value,comment)
+             return opts
 
-    comment='Minimal kmer size to use in read tips during adapters trimming'
-    default_value = 8
-    params.check_param(errors,'adapters_min_external_kmer_size','Integer',default_value,comment)
-    
-    comment='Max number of mismatches accepted during adapters trimming'
-    default_value = 1
-    params.check_param(errors,'adapters_max_mismatches','Integer',default_value,comment)
+      end
 
-    comment='Aditional BBduk2 parameters, add them together between quotation marks and separated by one space'
-    default_value = nil
-    params.check_param(errors,'adapters_aditional_params','String',default_value,comment)
+ #Get cmd
+      def get_cmd(result_hash)
+           
+           #Return  
+             return result_hash['opts'].map { |opt| @bbtools.load_bbduk(opt) }.join(' | ')
 
-    comment='Trim adapters of paired reads using mergind reads methods'
-    default_value = 'true'
-    params.check_param(errors,'adapters_merging_pairs_trimming','String',default_value,comment)
+      end
+ #Get stats
+      def get_stats(stats_files,stats)
 
-    return errors
-  end
+             stats["plugin_adapters"] = {} if !stats.key?('plugin_adapters')
+             stats["plugin_adapters"]["sequences_with_adapter"] = {} if !stats['plugin_adapters'].key?('sequences_with_adapter')
+             stats["plugin_adapters"]["adapter_id"] = {} if !stats['plugin_adapters'].key?('adapter_id')
+             stats["plugin_adapters"]["sequences_with_adapter"]["count"] ||= 0
+             stats["plugin_adapters"]["adapter_type"] = {} if !stats['plugin_adapters'].key?('adapter_type') 
+         #Extracting stats 
+             trimming_stats_files = stats_files['stats'].select { |file| (File.basename(file,'.txt') =~ /\S*trimming\S*/) }
+             trimming_stats_files.each do |file|
+                     lines = super('',file)
+                     tip = File.basename(file,'.txt').split("_")[1]
+                     header_matched = lines.select { |line| (line =~ /^\s*#Matched/) }
+                     ids = lines.select { |line| (line =~ /^(?!\s*#).+/) }
+                     stats["plugin_adapters"]["sequences_with_adapter"]["count"] += header_matched.first.split(/\t/)[1].to_i if !header_matched.empty?         
+                     stats["plugin_adapters"]["adapter_type"][tip.to_s] ||= 0
+                     stats["plugin_adapters"]["adapter_type"][tip.to_s] += header_matched.first.split(/\t/)[1].to_i if !header_matched.empty? 
+                     ids.map { |line| stats["plugin_adapters"]["adapter_id"][line.split(/\t/)[0]] ||= 0 }                     
+                     ids.map { |line| stats["plugin_adapters"]["adapter_id"][line.split(/\t/)[0]] += line.split(/\t/)[1].to_i }
+             end
+
+      end
 
 end

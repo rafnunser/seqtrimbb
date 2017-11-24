@@ -1,8 +1,5 @@
 ########################################################
-
-#
 # Defines the methods that are necessary to load a BBtools module
-#
 ########################################################
 
 class BBtools
@@ -15,7 +12,7 @@ class BBtools
                nativelibdir = File.join(dir,'jni')
              #Store modules in a hash
  	             @modules = {}
- 	             @modules['reformat'] = "java -ea -cp #{classp} jgi.ReformatReads}"
+ 	             @modules['reformat'] = "java -ea -cp #{classp} jgi.ReformatReads"
  	             @modules['bbduk'] = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF"
                @modules['bbsplit'] = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6"
                @modules['splitnextera'] = "java -ea -cp #{classp} jgi.SplitNexteraLMP"
@@ -54,6 +51,7 @@ class BBtools
        def concatenate_options(options)
  
                cmd = []
+               redirection = options.delete('redirection') if options.key?('redirection')
                options.each do |opt,arg|
                        if !arg.is_a?(Array) && !arg.nil?
                                cmd << "#{opt}=#{arg}"
@@ -61,6 +59,7 @@ class BBtools
                                cmd << arg.compact.join(" ")
                        end       
                end
+               cmd << redirection if defined?(redirection)
              #Return concatenate options string
                return cmd
 

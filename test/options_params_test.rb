@@ -14,23 +14,23 @@ class OptionsParamsTest < Minitest::Test
                options = OptionsParserSTBB.parse(args)
                assert_equal(options[:workers],4)
              #File
-               args = ["-Q", File.join(ROOT_PATH,"DB","testfiles","testfile_single.fastq.gz")]               
+               args = ["-Q", File.join(ROOT_PATH,"files","testfiles","testfile_single.fastq.gz")]               
                options = OptionsParserSTBB.parse(args)
-               assert_equal(options[:file],[File.join(ROOT_PATH,"DB","testfiles","testfile_single.fastq.gz")])
-               args = ["-Q", "#{File.join(ROOT_PATH,"DB","testfiles","testfile_1.fastq.gz")},#{File.join(ROOT_PATH,"DB","testfiles","testfile_2.fastq.gz")}"]               
+               assert_equal(options[:file],[File.join(ROOT_PATH,"files","testfiles","testfile_single.fastq.gz")])
+               args = ["-Q", "#{File.join(ROOT_PATH,"files","testfiles","testfile_1.fastq.gz")},#{File.join(ROOT_PATH,"files","testfiles","testfile_2.fastq.gz")}"]               
                options = OptionsParserSTBB.parse(args)
                assert_equal(options[:file].count,2)
              #Qual
-               args = ['-q',File.join(ROOT_PATH,"DB","testfiles","qualfile_1.qual.gz")]               
+               args = ["-Q", File.join(ROOT_PATH,"files","testfiles","testfile_single.fastq.gz"),"-q",File.join(ROOT_PATH,"files","testfiles","qualfile_1.qual.gz")]               
                options = OptionsParserSTBB.parse(args)
-               assert_equal(options[:qual],[File.join(ROOT_PATH,"DB","testfiles","qualfile_1.qual.gz")])
-               args = ['-q',"#{File.join(ROOT_PATH,"DB","testfiles","qualfile_1.qual.gz")},#{File.join(ROOT_PATH,"DB","testfiles","qualfile_2.qual.gz")}"]               
+               assert_equal(options[:qual],[File.join(ROOT_PATH,"files","testfiles","qualfile_1.qual.gz")])
+               args = ['-q',"#{File.join(ROOT_PATH,"files","testfiles","qualfile_1.qual.gz")},#{File.join(ROOT_PATH,"files","testfiles","qualfile_2.qual.gz")}"]               
                options = OptionsParserSTBB.parse(args)
                assert_equal(options[:qual].count,2)
              #Template
-               args = ["-t","#{File.join(DB_PATH,"faketemplate.txt")}"]               
+               args = ["-t","#{File.join(ROOT_PATH,"files","faketemplate.txt")}"]               
                options = OptionsParserSTBB.parse(args)
-               assert_equal(options[:template],File.join(DB_PATH,"faketemplate.txt"))
+               assert_equal(options[:template],File.join(ROOT_PATH,"files","faketemplate.txt"))
              #Output
                args = ['-O', OUTPUT_PATH]               
                options = OptionsParserSTBB.parse(args)
@@ -102,7 +102,7 @@ class OptionsParamsTest < Minitest::Test
 	     def test_params
 	            
 	           #Load options
-	             args = ['-Q',File.join(ROOT_PATH,"DB","testfiles","testfile_single.fastq.gz"),'-t',File.join(SEQTRIM_PATH,'templates','genomics.txt') ]
+	             args = ['-Q',File.join(ROOT_PATH,"files","testfiles","testfile_single.fastq.gz"),'-t',File.join(SEQTRIM_PATH,'templates','genomics.txt') ]
                options = OptionsParserSTBB.parse(args)
              #Load Databases
                setup_databases
@@ -119,7 +119,7 @@ class OptionsParamsTest < Minitest::Test
              #Test params processing
                assert_equal('.fastq.gz',params.get_param('suffix'))
                #Overwrite params
-	             args = ['-Q',File.join(ROOT_PATH,"DB","testfiles","testfile_single.fastq.gz"),'-t',File.join(SEQTRIM_PATH,'templates','genomics.txt'),'--overwrite_params',"PARAM1=VALUE1;PARAM2=VALUE2"]
+	             args = ['-Q',File.join(ROOT_PATH,"files","testfiles","testfile_single.fastq.gz"),'-t',File.join(SEQTRIM_PATH,'templates','genomics.txt'),'--overwrite_params',"PARAM1=VALUE1;PARAM2=VALUE2"]
                options = OptionsParserSTBB.parse(args)
                params = Params.new(options,bbtools)
                assert_equal('VALUE1',params.get_param('PARAM1'))
@@ -129,28 +129,28 @@ class OptionsParamsTest < Minitest::Test
                assert_equal('sanger',params.get_param('qual_format'))
                assert_equal('single-ended',params.get_param('sample_type'))
                assert_equal('f',params.get_param('default_options')['int'])
-               assert_equal([File.join(File.expand_path(OUTPUT_PATH),"sequences_#{params.get_param('suffix')}")],params.get_param('outputfiles'))
+               assert_equal([File.join(File.expand_path(OUTPUT_PATH),"sequences_#{params.get_param('suffix')}")],params.get_param('outputfile'))
                #Interleaved file
-	             args = ['-Q',File.join(ROOT_PATH,"DB","testfiles","testfile_interleaved.fastq.gz"),'-t',File.join(SEQTRIM_PATH,'templates','genomics.txt')]
+	             args = ['-Q',File.join(ROOT_PATH,"files","testfiles","testfile_interleaved.fastq.gz"),'-t',File.join(SEQTRIM_PATH,'templates','genomics.txt')]
                options = OptionsParserSTBB.parse(args)
                params = Params.new(options,bbtools)               
                assert_equal('interleaved',params.get_param('sample_type'))
                assert_equal('t',params.get_param('default_options')['int'])
-               assert_equal([File.join(File.expand_path(OUTPUT_PATH),"interleaved#{params.get_param('suffix')}")],params.get_param('outputfiles'))               
+               assert_equal([File.join(File.expand_path(OUTPUT_PATH),"interleaved#{params.get_param('suffix')}")],params.get_param('outputfile'))               
                #Fasta / Paired
-	             args = ['-Q',"#{File.join(ROOT_PATH,"DB","testfiles","testfile_1.fasta.gz")},#{File.join(ROOT_PATH,"DB","testfiles","testfile_1.fasta.gz")}",'-t',File.join(SEQTRIM_PATH,'templates','genomics.txt')]
+	             args = ['-Q',"#{File.join(ROOT_PATH,"files","testfiles","testfile_1.fasta.gz")},#{File.join(ROOT_PATH,"files","testfiles","testfile_1.fasta.gz")}",'-t',File.join(SEQTRIM_PATH,'templates','genomics.txt')]
                options = OptionsParserSTBB.parse(args)
                params = Params.new(options,bbtools)  
                assert_equal('paired',params.get_param('sample_type'))
                assert_equal('t',params.get_param('default_options')['int'])
-               assert_equal([File.join(File.expand_path(OUTPUT_PATH),"paired_1#{params.get_param('suffix')}"),File.join(File.expand_path(OUTPUT_PATH),"paired_2#{params.get_param('suffix')}")],params.get_param('outputfiles'))               
+               assert_equal([File.join(File.expand_path(OUTPUT_PATH),"paired_1#{params.get_param('suffix')}"),File.join(File.expand_path(OUTPUT_PATH),"paired_2#{params.get_param('suffix')}")],params.get_param('outputfile'))               
                #Fasta with qual	             
-	             args = ['-Q',"#{File.join(ROOT_PATH,"DB","testfiles","testfile_1.fasta.gz")},#{File.join(ROOT_PATH,"DB","testfiles","testfile_1.fasta.gz")}",'-q',"#{File.join(ROOT_PATH,"DB","testfiles","qualfile_1.qual.gz")},#{File.join(ROOT_PATH,"DB","testfiles","qualfile_1.qual.gz")}",'-t',File.join(SEQTRIM_PATH,'templates','genomics.txt')]
+	             args = ['-Q',"#{File.join(ROOT_PATH,"files","testfiles","testfile_1.fasta.gz")},#{File.join(ROOT_PATH,"files","testfiles","testfile_1.fasta.gz")}",'-q',"#{File.join(ROOT_PATH,"files","testfiles","qualfile_1.qual.gz")},#{File.join(ROOT_PATH,"files","testfiles","qualfile_1.qual.gz")}",'-t',File.join(SEQTRIM_PATH,'templates','genomics.txt')]
                options = OptionsParserSTBB.parse(args)
                params = Params.new(options,bbtools)  
                assert_equal('paired',params.get_param('sample_type'))
                assert_equal('t',params.get_param('default_options')['int'])
-               assert_equal([File.join(File.expand_path(OUTPUT_PATH),"paired_1#{params.get_param('suffix')}"),File.join(File.expand_path(OUTPUT_PATH),"paired_2#{params.get_param('suffix')}")],params.get_param('outputfiles'))
+               assert_equal([File.join(File.expand_path(OUTPUT_PATH),"paired_1#{params.get_param('suffix')}"),File.join(File.expand_path(OUTPUT_PATH),"paired_2#{params.get_param('suffix')}")],params.get_param('outputfile'))
              #Test Check plugin list params
                pl_error = []
                params.check_param(pl_error,'plugin_list','PluginList',nil,'Plugins applied to every sequence, separated by commas. Order is important')
@@ -190,7 +190,9 @@ class OptionsParamsTest < Minitest::Test
                params.overwrite_param('workers=uno')
                params.check_param(param_errors,'workers','Integer',1)
                assert_equal(["Param workers is not a valid Integer. Current value is #uno#. "],param_errors)               
-                 
+           #CLEAN UP
+               clean_up
+                                
 	     end
 
 end
