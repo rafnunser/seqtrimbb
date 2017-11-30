@@ -17,15 +17,17 @@ class DatabasesSupport
 #METHODS
   #SET DATABASES
       def set_databases?(action,list,info)
-             
+
              case action.downcase
                      when 'replace'                             
                              info['databases'] = list
                      when 'add'
-                             list.map { |d| info['databases'].push(d) if !info['databases'].include?(d)}
+                             list.map { |d| info['databases'].push(d) if !info['databases'].include?(d) }
                      when 'remove'
-                             list.map { |d| info['databases'].delete(d) if info['databases'].include?(d)}
+                             list.map { |d| info['databases'].delete(d) if info['databases'].include?(d) }
              end
+             #Clean up
+             ['indexed','obsolete'].map { |key| (info["#{key}_databases"] - info['databases']).map { |d| info["#{key}_databases"].delete(d) if info["#{key}_databases"].include?(d) } }
              
       end
   #GET DATABASES INFO
@@ -69,18 +71,15 @@ class DatabasesSupport
         
              exit_trigger = false
              databases = databases.split(/ |,/) if !databases.is_a?(Array)
+             STDERR.puts "Updating databases indices:"
            # Updating obsolete databases
              databases.each do |db_name| 
            # Removing old index,and old stderror. Make new index folder
-                     puts info[db_name]['index']
                      FileUtils.rm_rf(info[db_name]['index']) if Dir.exist?(info[db_name]['index'])
                      FileUtils.rm(info[db_name]['update_error_file']) if File.exist?(info[db_name]['update_error_file'])
                      Dir.mkdir(info[db_name]['index'])
-           # Info
-                     STDERR.puts("Updating #{db_name} database index")
            # Loading BBtools module and cmd execution
-                     cmd = bbtools.load_bbsplit({'ref' =>  info[db_name]['path'], 'path' => info[db_name]['index'], 'in' => nil, 'out' => nil, 'int' => nil})
-                     cmd << " 2> #{info[db_name]['update_error_file']}"
+                     cmd = bbtools.load_bbsplit({'ref' =>  info[db_name]['path'], 'path' => info[db_name]['index'], 'in' => nil, 'out' => nil, 'int' => nil, 'redirection' => ['2>',info[db_name]['update_error_file']]})
                      system(cmd)
            # Look for errors
                      error = check_update_error(db_name,info)
@@ -94,10 +93,20 @@ class DatabasesSupport
                      else
            #Exit_trigger = true if database indexing failed
                              exit_trigger = error if !exit_trigger
+           #Remove failed index
+                             FileUtils.rm_rf(info[db_name]['index']) 
                      end              
              end
            #Exit if at least one error was found
              if exit_trigger
+                     STDERR.puts"One o more errors were found in databases update"
+                     if info.key?('modified')
+                             STDERR.puts "Saving internal databases info"
+                             File.open(File.join(File.dirname(info[databases.first]['update_error_file']),'databases_status_info.json'),"w") do |f|
+                                     f.write(JSON.pretty_generate(info.except('modified')))
+                             end 
+                     end
+                     STDERR.puts "Exiting"                    
                      exit(-1)
              end 
 
@@ -112,13 +121,13 @@ class DatabasesSupport
                      open_error.each do |line|
                              line.chomp!
                              if !line.empty? && ( (line =~ /Error/) || (line =~ /Exception in thread/) )
-                                     STDERR.puts "ERROR. Failed to update #{database} database index. For more details: #{info[database]['update_error_file']}"
+                                     STDERR.puts "ERROR! Failed to update #{database} database index:\n\t#{line}\nFor more details: #{info[database]['update_error_file']}"
                                      return true
                              end 
                      end
                      open_error.close
                    #Info if no error was found
-                     STDERR.puts "#{database} database index is updated"
+                     STDERR.puts "\s#{database} database index is updated"
                      return false
              else
                      STDERR.puts "ERROR. Unable to find #{database} database index (#{info[database]['index']}) or update error file (#{info[database]['update_error_file']}). Database is obsolete."

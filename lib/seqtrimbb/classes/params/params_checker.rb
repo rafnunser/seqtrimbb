@@ -73,7 +73,7 @@ class ParamsChecker < Params
     #For internal databases checks if it is in databases array, installed and updated
          internal_dbs.each do |db|
                  error = stbb_db.check_status(stbb_db.info,db)
-                 errors << "Database #{db_param_name} is NOT:\n#{error.join(" and/or ")}" if !error.empty?
+                 errors << "Database #{db} is NOT:\n#{error.join(" and/or ")}" if !error.empty?
          end
     #For external databases SET/MAINTENANCE/CHECK
          if !external_dbs.empty?
@@ -82,7 +82,7 @@ class ParamsChecker < Params
     #Checks errors
                  external_dbs.each do |db|
                          error = stbb_db.check_status(stbb_db.external_db_info,db)
-                         errors << "External satabase #{db_param_name} is NOT:\n#{error.join(" and/or ")}" if !error.empty?
+                         errors << "External database #{db_param_name} is NOT:\n#{error.join(" and/or ")}" if !error.empty?
                  end
          end
     #Raise if errors were found

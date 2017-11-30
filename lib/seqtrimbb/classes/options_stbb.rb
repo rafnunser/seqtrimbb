@@ -11,7 +11,7 @@ class OptionsParserSTBB
          #Init OptionParser object
              optparse = OptionParser.new do |opts|
                   #Set a banner, displayed at the top of the help screen.
-                     opts.banner = "Usage: #{$0} -t template_file \{-Q seq_file\} [options]"
+                     opts.banner = "Usage: /path/to/seqtrimbb -t template_file -Q seq_file [options]"
                   #Cores
                      options[:workers] = 1
                      opts.on( '-w', '--workers COUNT', 'Number of threads' ) do |workers|
@@ -43,12 +43,12 @@ class OptionsParserSTBB
                              end
                      end
                   #Input template file
-                     options[:template] = nil
+                     options[:template] = ''
                      opts.on( '-t', '--template TEMPLATE_FILE', 'Use TEMPLATE_FILE instead of default parameters' ) do |file|
                              if !file.nil? && (File.exist?(File.expand_path(file)) || File.exist?(File.join(SEQTRIM_PATH,'templates',file)))
                                      options[:template] = File.exist?(File.expand_path(file)) ? File.expand_path(file) : File.join(SEQTRIM_PATH,'templates',file)
                              else
-                                     STDERR.puts "Params file: #{file} doesn't exists. \n\nYou can use your own template or specify one from this list:\n=============================\n"
+                                     STDERR.puts "ERROR.Params file: #{file} doesn't exists. \n\nYou can use your own template or specify one from this list:\n=============================\n"
                                      STDERR.puts "#{Dir.glob(File.join(SEQTRIM_PATH,'templates','*.txt')).map{|t| File.basename(t)}.join("\n")}"
                                      exit(-1)
                              end
@@ -70,7 +70,7 @@ class OptionsParserSTBB
                      end
                   #Force execution
                      options[:force_execution] = false
-                     opts.on( '-F', '--force', 'Force SeqtrimBB execution deleting previous output files' ) do
+                     opts.on( '--force', 'Force SeqtrimBB execution deleting previous output files' ) do
                              options[:force_execution] = true
                      end
                   #Generate stats with FastQC
@@ -113,12 +113,12 @@ class OptionsParserSTBB
                      end
                   #Action to be applied on databases cofiguration
                      options[:databases_action]='replace'
-                     opts.on('--databases_action [ACTION]','Action to be applied to SeqtrimBB databases configuration: replace (replace SeqtrimBBs default databases list for one provided with -dl option), add (-dl list to default list) or remove (-dl list to default list). This option permanently modifies SeqTrimBBs configuration if user have write permissions. Default value is replace.') do |action|
+                     opts.on('--databases_action [ACTION]','Action to be applied to SeqtrimBB databases configuration: replace (replace SeqtrimBBs default databases list for one provided with --databases_list option), add (--databases_list list to default list) or remove (--databases_list list from default list). This option permanently modifies SeqTrimBBs configuration if user have write permissions. Default value is replace.') do |action|
                              options[:databases_action] = action if !action.nil?
                      end
                   #List of databases to act with
                      options[:databases_list] = Array.new
-                     opts.on('--databases_list [DATABASE] [DATABASE1,DATABASEN]',Array,'List of databases to replace/add/remove. To restore default list provided at installation time, execute SeqTrimBB with "-dl default".') do |database|
+                     opts.on('--databases_list [DATABASE] [DATABASE1,DATABASEN]',Array,'List of databases to replace/add/remove. To restore default list provided at installation time, execute SeqTrimBB with "--databases_list default".') do |database|
                              options[:databases_list] = [database].flatten if !database.nil?
                      end
                   #To overwrite params that will be loaded later
@@ -139,11 +139,22 @@ class OptionsParserSTBB
 
                   # This displays the help screen, all programs are assumed to have this option.
                      opts.on_tail('-h', '--help', 'Display this screen') do
+                             STDERR.puts "-----------------------------------------------\n"
                              STDERR.puts opts
-                             show_additional_help
+                            #Fastq preprocessing
+                             STDERR.puts "\n\s\s========================================================================================================"
+                             STDERR.puts "\tE.g.: processing a paired sample in two fastq format files"
+                             STDERR.puts "\s\s========================================================================================================\n\n"
+                             STDERR.puts "\t#{File.basename($0)} -t template.txt -Q reads_1.fastq,reads_2.fastq"
+                            #Available templates
+                             STDERR.puts "\n\s\s========================================================================================================"
+                             STDERR.puts "  Available templates to use with -t option (you can also use your own template):"
+                             STDERR.puts "  Templates at: #{File.join(SEQTRIM_PATH,'templates')}"
+                             STDERR.puts "\s\s========================================================================================================\n\n"
+                             Dir.glob(File.join(SEQTRIM_PATH,'templates','*.txt')).map{|t| puts "\t#{File.basename(t)}"}                     
+                             
                              exit(-1)
                      end
-
              end
            # parse options and remove from ARGV
              optparse.parse!(args)
@@ -154,19 +165,6 @@ class OptionsParserSTBB
       def self.help
 
              self.parse(['-h'])
-
-      end
-  #Additional help
-      def show_additional_help
-           #Fastq preprocessing
-             STDERR.puts "\n\n\nE.g.: processing a fastq file"
-             STDERR.puts "#{File.basename($0)} -t template.txt -Q sequences.fastq\n\n"
-           #Available templates
-             STDERR.puts "\n\n  ========================================================================================================"
-             STDERR.puts "  Available templates to use with -t option (you can also use your own template):"
-             STDERR.puts "  Templates at: #{File.join(SEQTRIM_PATH,'templates')}"
-             STDERR.puts "  ========================================================================================================\n\n"
-             Dir.glob(File.join(SEQTRIM_PATH,'templates','*.txt')).map{|t| puts "      #{File.basename(t)}"}
 
       end
 

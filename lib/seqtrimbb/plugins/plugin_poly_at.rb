@@ -1,4 +1,4 @@
-########################################################
+  ########################################################
 # Defines the main methods that are necessary to trim Poly AT
 ########################################################
 
@@ -45,7 +45,6 @@ class PluginPolyAt < Plugin
            # Adding commandline redirection
              module_options['redirection'] = ["2>",File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"polyat_trimming_stats.txt")]
            #Add hash to array and return
-             puts opts
              opts << module_options
              return opts
 

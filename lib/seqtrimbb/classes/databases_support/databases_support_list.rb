@@ -29,7 +29,7 @@ class DatabasesSupportList < DatabasesSupport
              to_list.each do |db_name|
              	     case db_name
              	           when 'all'
-                                     puts "Installed databases: (databases at #{dir}"
+                                     puts "Installed databases: databases at #{dir}"
                                      puts "-"
                                      all_databases.sort.map { |d| puts d }
                                      puts ""

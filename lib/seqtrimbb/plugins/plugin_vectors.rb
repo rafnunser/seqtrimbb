@@ -8,27 +8,29 @@ class PluginVectors < Plugin
        def check_params
 
         #Priority, base ram
-             cores = [1]
+             cores = []
              priority = 2
-             ram = [100]
+             ram = []
              base_ram = 720 #mb
+             ram_sum = 0
         #Array to store errors        
              errors=[]    
         #Check params (errors,param_name,param_class,default_value,comment) 
-             @params.check_param(errors,'vectors_trimming_position','String','both','Trim vectors in which position: right, left or both (default)')
-             #if plugins trims reads in both tips, double the requirements
-             if @params.get_param('vectors_trimming_position') == 'both'
-                     cores << 1
-                     ram << 100
-             end 
-
              @params.check_param(errors,'vectors_db','DB','vectors','Sequences of vectors to use in trimming: list of fasta files (comma separated)',@stbb_db)
              #Adds 1 core for each database
              @params.get_param('vectors_db').split(/ |,/).each do |database|
                      cores << 1
-                     ram << (@stbb_db.get_info(database,'index_size')/2.0**20).round(0) + base_ram 
+                     ram << (@stbb_db.get_info(database,'index_size')/2.0**20).round(0) + base_ram
+                     ram_sum += (@stbb_db.get_info(database,'index_size')/2.0**20).round(0)
              end
-             ram.map!{ |iram| iram * @params.get_param('vectors_db').split(/ |,/).count }
+             @params.check_param(errors,'vectors_trimming_position','String','both','Trim vectors in which position: right, left or both (default)')
+             #if plugins trims reads in both tips, double the requirements
+             j = @params.get_param('vectors_trimming_position') == 'both' ? 2:1
+             ram_sum = 
+             j.times do        
+                     cores << 1
+                     ram << 50 + ram_sum
+             end 
 
              @params.check_param(errors,'vectors_kmer_size','Integer',31,'Main kmer size to use in vectors trimming')
 
@@ -55,6 +57,14 @@ class PluginVectors < Plugin
 
            #Opts Array
              opts = Array.new
+           #FILTERING MODULE
+           # Load aditional params
+             @params.set_param('vectors_aditional_params',@params.get_param('vectors_filtering_aditional_params'))
+           #Iteration to assemble individual options
+             @params.get_param('vectors_db').split(/ |,/).each do |db|              
+                #Add hash to array and return
+                     opts << get_filtering_module(db,'vectors')
+             end 
            #TRIMING MODULE
            # Load aditional params
              @params.set_param('vectors_aditional_params',@params.get_param('vectors_trimming_aditional_params'))
@@ -67,14 +77,6 @@ class PluginVectors < Plugin
                      when 'left'
                              opts << get_trimming_module('l','vectors')
              end 
-           #FILTERING MODULE
-           # Load aditional params
-             @params.set_param('vectors_aditional_params',@params.get_param('vectors_filtering_aditional_params'))
-           #Iteration to assemble individual options
-             @params.get_param('vectors_db').split(/ |,/).each do |db|              
-                #Add hash to array and return
-                     opts << get_filtering_module(db,'vectors')
-             end 
            #Return
              return opts
 
@@ -84,9 +86,9 @@ class PluginVectors < Plugin
            
                cmd = Array.new
            #Trimming
-               result_hash['opts'].take(result_hash['opts'].count - @params.get_param('vectors_db').split(/ |,/).count).map { |opt| cmd << @bbtools.load_bbduk(opt) }
+               result_hash['opts'].take(@params.get_param('vectors_db').split(/ |,/).count).map { |opt| cmd << @bbtools.load_bbsplit(opt) }
            #Filtering
-               result_hash['opts'].drop(cmd.count).map { |opt| cmd << @bbtools.load_bbsplit(opt) }
+               result_hash['opts'].drop(@params.get_param('vectors_db').split(/ |,/).count).map { |opt| cmd << @bbtools.load_bbduk(opt) }
            #Return  
                return cmd.join(' | ')
 

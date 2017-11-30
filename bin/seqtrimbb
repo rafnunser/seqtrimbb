@@ -13,7 +13,7 @@
 ###############################################################################
 
 ROOT_PATH = File.dirname(__FILE__)
-SEQTRIM_PATH = File.join(ROOT_PATH,'..')
+SEQTRIM_PATH = File.dirname(ROOT_PATH)
 
 # Finds classes in 'lib' folder
 $: << File.expand_path(File.join(SEQTRIM_PATH,'lib'))
@@ -57,6 +57,25 @@ class Hash
            keys.each { |key| delete(key) }
            self
    end
+end
+
+# PATCH OLD_RUBY
+## DIG
+module RubyDig
+       def dig(key, *rest)
+               if value = (self[key] rescue nil)
+                       if rest.empty?
+                               value
+                       elsif value.respond_to?(:dig)
+                               value.dig(*rest)
+                       end
+               end
+       end
+end
+##PATCH!
+if RUBY_VERSION < '2.3'
+       Array.send(:include, RubyDig)
+       Hash.send(:include, RubyDig)
 end
 
 #Check external requirements. Takes a external call, and test if it can execute
@@ -111,8 +130,9 @@ require 'fileutils'
 require 'optparse'
 require 'json'
 require 'zlib'
+require 'options_stbb'
 require 'params'
-require 'database_support_handler'
+require 'databases_support_handler'
 require 'plugin'
 require 'plugin_manager'
 require 'bbtools'
@@ -129,19 +149,23 @@ if ENV['BBDB']
 else # otherwise use SEQTRIM_PATH + DB
        db_path = File.expand_path(File.join(SEQTRIM_PATH, "DB"))
 end
-#First checks if BBtools is installed, then set a BBtools path. If there is a BBTOOLS_PATH environment var, then use it
-check_external_requirements('BBtools','bbversion.sh',"http://sourceforge.net/projects/bbmap/","37.53")
+
+#First set a BBtools path, then checks if BBtools is properly installed. If there is a BBTOOLS_PATH environment var, then use it
 if ENV['BBTOOLS_PATH']
        bb_path = ENV['BBTOOLS_PATH']
 else # otherwise use the result of which bbmap.sh
        bb_path  = File.expand_path(File.dirname(%x[which bbmap.sh]))
 end
+check_external_requirements('BBtools',"java -Xmx80m -cp #{File.join(bb_path,'current')} driver.BBVersion","http://sourceforge.net/projects/bbmap/","37.53")
+
 #Puts header
-STDERR.puts "SeqTrimBB version #{Seqtrimbb::SEQTRIM_VERSION}"
 STDERR.puts "###############################################"
-STDERR.puts " - Command: #{$0}"
+STDERR.puts "SeqTrimBB v#{Seqtrimbb::SEQTRIM_VERSION}"
+STDERR.puts "###############################################"
+STDERR.puts " - cmd: #{$0} #{$*.join(' ')}"
 STDERR.puts " - SeqtrimBB path: #{SEQTRIM_PATH}"
-STDERR.puts " - BBtools version #{bb_version}"
+STDERR.puts " - Ruby version: #{RUBY_VERSION}"
+STDERR.puts " - BBtools version: #{`java -Xmx80m -cp #{File.join(bb_path,'current')} driver.BBVersion`}"
 STDERR.puts " - BBTools path: #{bb_path}"
 
 ###############################################################################
@@ -151,7 +175,11 @@ STDERR.puts " - BBTools path: #{bb_path}"
 # Reads the parameters from console. For this is used ARGV, that is an array.
 options = OptionsParserSTBB.parse(ARGV)
 # Print options from input
-STDERR.puts " - Using options: \n"+ JSON::pretty_generate(options))
+STDERR.puts " - Using options:  "
+options.each do |option,value|
+       STDERR.puts "\t- #{option}: #{value}"
+end
+STDERR.puts "-----------------------------------------------\n"
 
 ###############################################################################
 # INIT BBTOOLS
@@ -177,15 +205,13 @@ if options[:list_db]
 end
 # DATABASES MAINTENANCE (If its needed or requested. Build databases structure, install databases, check and update index)
 stbb_databases.maintenance_internal(options.slice(:install_db,:install_db_name,:check_db))
-
 # SAVING DATABASES INFO JSON
 stbb_databases.save_json(stbb_databases.info,File.join(db_path,'status_info','databases_status_info.json')) if stbb_databases.save?
 
 ## Checks for required options
 if (ARGV.count != 0) || ([:file,:template].map { |opt| options[opt].empty? }.any?) 
-       STDERR.puts "To preprocess a sample you must provide all required options (input file:-Q,template:-t).\n"
-       puts OptionParserSTBB.help
-       exit(-1)
+       STDERR.puts "\nTo preprocess a sample you must provide all required options (input file:-Q,template:-t).\n"
+       puts OptionsParserSTBB.help
 end
 ## Checks for a previous execution!
 check_previous_execution([OUTPUT_PATH,options[:final_output_path]],options[:force_execution])
@@ -206,6 +232,7 @@ if !pl_error.empty?
        STDERR.puts pl_error
        exit(-1)
 end
+
 # Make working directory and subdirectories
 if File.writable?(File.dirname(OUTPUT_PATH))
        [OUTPUT_PATH,File.join(OUTPUT_PATH,'plugins_logs')].map{ |d| Dir.mkdir(d) if !Dir.exist?(d) }
@@ -217,6 +244,7 @@ end
 ###############################################################################
 # INITIAL STATS
 ###############################################################################
+
 check_external_requirements('FastQC','fastqc -v',"http://www.bioinformatics.babraham.ac.uk/projects/fastqc/")
 
 # Extract initial global stats
@@ -227,27 +255,24 @@ if params.exist?('generate_initial_stats') && params.get_param('generate_initial
        cmd="fastqc -q -o #{File.join(OUTPUT_PATH,'initial_stats')} -t #{params.get_param('workers')} #{params.get_param('file').join(" ")}"
        system(cmd)
 else
-       STDERR.puts "Skipping calculating initial stats phase."
+       STDERR.puts "Skipping initial stats phase."
 end
 
 ###############################################################################
 # MAIN WORK
 ###############################################################################
 
-# Exit status
-exit_status = 0
-
 # load plugin_list
 plugin_list = params.get_param('plugin_list')
 STDERR.puts "Loading plugins: [#{plugin_list}]"
 
 # Initialize plugins manager
-plugin_manager = PluginManager.new(plugin_list,params,bbtools,stbb_db)
+plugin_manager = PluginManager.new(plugin_list,params,bbtools,stbb_databases)
 
 # load and check plugins params
-STDERR.puts "Loading and checking plugins params"
+STDERR.puts "Checking plugins params"
 if !plugin_manager.check_plugins_params
-       STDERR.puts "Plugin check failed"
+       STDERR.puts "ERROR. Plugin check failed!"
     # save used params to file
        params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
        exit(-1)
@@ -255,11 +280,17 @@ end
 
 # EXECUTE PLUGINS:
 plugin_manager.execute_plugins
-STDERR.puts "Plugin_results=#{plugin_manager.plugin_results.each { |plugin| plugin['cmd'] }.join("\n")}"
-
+STDERR.puts "-----------------------------------------------\n"
+STDERR.puts "PLUGINS RESULTS:"
+plugin_manager.plugin_result.each do |plugin,plugin_hash|
+       cmd = plugin_hash['cmd']
+       STDERR.puts "\s#{plugin}:\n#{cmd}"
+end
+STDERR.puts "-----------------------------------------------\n"
 # Pipe! plugins and launch cmd
 cmd_to_execute = plugin_manager.pipe!
-STDERR.puts "CMD_TO_EXECUTE:\n#{cmd_to_execute}"
+STDERR.puts "CMD TO EXECUTE:\n#{cmd_to_execute}"
+STDERR.puts "-----------------------------------------------\n"
 STDERR.puts "Initializing cleaning process..."
 ##LAUNCH
 STDERR.puts "Cleaning reads!"
@@ -268,24 +299,28 @@ STDERR.puts "...Finalizing cleaning process..."
 
 # Storing all plugins stats and error checking
 stats = plugin_manager.extract_stats
+#Clean up!
+plugin_manager.clean_garbage!
 # Saving stats
 File.open("#{OUTPUT_PATH}/stats.json","w") do |f|
        f.write(JSON.pretty_generate(stats))
 end
+# Save used params to file
+params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
 
 ###############################################################################
 # FINAL STATS
 ###############################################################################
 
 # Extract initial global stats
-if params.exist?('generate_final_stats') && params.get_param('generate_initial_stats').to_s=='true'
-       STDERR.puts "Calculating initial stats: i.e. FastQC"
+if params.exist?('generate_final_stats') && params.get_param('generate_final_stats').to_s=='true'
+       STDERR.puts "Calculating final stats: i.e. FastQC"
 # fastqc cmd 
        Dir.mkdir(File.join(OUTPUT_PATH,'final_stats'))
        cmd="fastqc -q -o #{File.join(OUTPUT_PATH,'final_stats')} -t #{params.get_param('workers')} #{params.get_param('outputfile').join(" ")}"
        system(cmd)
 else
-       STDERR.puts "Skipping calculating initial stats phase."
+       STDERR.puts "Skipping final stats phase."
 end
 
 
@@ -316,4 +351,5 @@ end
 #Move files to final_output_folder
 FileUtils.mv OUTPUT_PATH, options[:final_output_path]
 # Exiting
+STDERR.puts "EXITING"
 exit

@@ -69,8 +69,10 @@ class PluginManager
           #Merge plugin list
              if @params.get_param('merge_cmd')
                      require 'plugin_merger'
+                     STDERR.puts "Merging parameter (-M) is ON. Merging plugin list!"
                      merger = PluginMerger.new(@plugin_names)
                      @plugin_list = merger.list
+                     STDERR.puts "Merged list: [#{@plugin_list.join(',')}]"
              else
                      @plugin_list = @plugin_names
              end  
@@ -94,7 +96,8 @@ class PluginManager
       def pipe!
 
           # Pipe every plugin, with some exceptions
-             piped_cmd = @plugin_list.map { |plugin_name| @plugin_result[plugin_name]['cmd'] }.join (' | ')            
+             piped_cmd = @plugin_list.map { |plugin_name| @plugin_result[plugin_name]['cmd'] }.join (' | ')
+             piped_cmd << (' | ' + @params.get_param('ext_cmd').to_s) if !@params.get_param('ext_cmd').nil?           
              return piped_cmd
 
       end

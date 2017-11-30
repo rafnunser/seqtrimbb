@@ -7,14 +7,14 @@ class DatabasesSupportHandler
 	   attr_accessor :info 
 	   attr_accessor :external_db_info 
 #INIT
-	    def initialize(options,dir,bbtools)
+	    def initialize(cores,dir,bbtools)
              
              require 'databases_support.rb'
   #Instance variables
       #Databases path
              @dir = dir
       #Cores
-             @cores = options[:workers]
+             @cores = cores
       #BBtools
              @bbtools = bbtools
 
@@ -112,6 +112,7 @@ class DatabasesSupportHandler
                      STDERR.puts "Error in writing permissions. Unable to write databases info JSON."
                      return
              end
+             STDERR.puts"Saving internal databases info"
              File.open(file,"w") do |f|
                      f.write(JSON.pretty_generate(info.except('modified')))
              end

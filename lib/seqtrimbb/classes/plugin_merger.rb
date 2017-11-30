@@ -2,6 +2,7 @@
 # This class provided the methods to merge plugins if possible
 #########################################
 
+#TODO! Merge middle plugins. Stats paths in merge...
 class PluginMerger
   attr_accessor :list
 

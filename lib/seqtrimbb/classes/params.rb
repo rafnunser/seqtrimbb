@@ -126,11 +126,11 @@ class Params
 
              f=File.open(path_file,'w')
              @@plugin_comments.keys.sort.reverse.each do |plugin_name|
-                     f.puts "#"*50 + "\n" + "# " + plugin_name + "#"*50 + "\n"
+                     f.puts "#"*50 + "\n\s#{plugin_name}\n" + "#"*50 + "\n"
                      @@plugin_comments[plugin_name].keys.each do |param|
                              comment=get_comment(plugin_name,param)
                              f.puts comment.map{|c| '# '+c}
-                             f.puts "\n#{param} = #{@params[param]}\n"
+                             f.puts "#{param} = #{@@params[param]}\n"
                      end
              end
              f.close

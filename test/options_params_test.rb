@@ -40,7 +40,7 @@ class OptionsParamsTest < Minitest::Test
                options = OptionsParserSTBB.parse(args)
                assert(!options[:write_in_gzip])
              #Force execution
-               args = ['-F']
+               args = ['--force']
                options = OptionsParserSTBB.parse(args)
                assert(options[:force_execution])
              #Generate stats
@@ -173,7 +173,7 @@ class OptionsParamsTest < Minitest::Test
                params.delete_param('fake_databases')
                params.check_param(databases_error,'fake_databases','DB','fake_db','Fake databases',stbb_db)
                str_db = ['installed','indexed','present on internal databases list'].join(" and/or ")
-               assert_equal("Param fake_databases is not a valid DB. Current value is #fake_db#. Database fake_databases is NOT:\n#{str_db}",databases_error[0])
+               assert_equal("Param fake_databases is not a valid DB. Current value is #fake_db#. Database fake_db is NOT:\n#{str_db}",databases_error[0])
               #Check external databases
                sample_file =stbb_db.info[['adapters','contaminants','contaminants_seqtrim1','cont_bacteria','cont_fungi','cont_mitochondrias','cont_plastids','cont_ribosome','cont_viruses','vectors'].sample]['fastas'].sample
                ext_dbs = [File.join(File.join(OUTPUT_PATH,'DB'),'external_database'),File.join(File.join(OUTPUT_PATH,'DB'),File.basename(sample_file))]

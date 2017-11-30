@@ -104,9 +104,20 @@ class PluginUserFilter < Plugin
   #CLEAN UP
       def clean_up
 
-         #Clean up! Remove empty files from filtered_files
-             fastqfiles = Dir[File.join(File.expand_path(OUTPUT_PATH),"filtered_files","*.fastq*")]
-             fastqfiles.each do |fastq_file|
+         #Apply minlength to filtered files!
+             filtered_files = Dir[File.join(File.expand_path(OUTPUT_PATH),"filtered_files","*.fastq*")].sort
+             return if filtered_files.empty?
+             slice_size = @params.get_param('sample_type') == 'paired' ? 2:1
+             filtered_files = filtered_files.each_slice(slice_size).to_a
+             remove_short_reads(filtered_files,'pre_','')
+         #Remove emptied files
+             remove_empty_files(Dir[File.join(File.expand_path(OUTPUT_PATH),"filtered_files","*.fastq*")].sort)
+
+      end
+
+      def remove_empty_files(files)
+
+             files.each do |fastq_file|
          #Test if file is empty
                     openfile = @params.get_param('write_in_gzip') ? Zlib::GzipReader.new(open(fastq_file)) : open(fastq_file)
                     res = true
@@ -119,21 +130,23 @@ class PluginUserFilter < Plugin
                     openfile.close
                     FileUtils.rm(fastq_file) if res
              end
-         #Apply minlength to filtered files!
-             filtered_files = Dir[File.join(File.expand_path(OUTPUT_PATH),"filtered_files","*.fastq*")].sort
-             return if filtered_files.empty?
-             filtered_files = filtered_files.each_slice(2).to_a if @params.get_param('sample_type') == 'paired'
-             filtered_files.each do |files|
-                     outfiles = files.map { |file| file.sub(/#{suffix}/,suffix.sub(/_pre/,'')) }
-                     h = { 'in' => files[0],'out' => outfiles[0],'minlength' => @params.get_param('minlength'),'ow' => 't' }
+
+      end
+
+      def remove_short_reads(files,to_remove,to_add)
+
+             files.each do |file_array|
+                     outfiles = file_array.map { |file| file.sub(/#{to_remove}/,to_add) }
+                     h = { 'in' => file_array[0],'out' => outfiles[0],'minlength' => @params.get_param('minlength'),'ow' => 't','redirection' => ['2>','/dev/null']}
                      if @params.get_param('sample_type') == 'paired' && outfiles.count == 2
-                             h['in2'] = files[1]
+                             h['in2'] = file_array[1]
                              h['out2'] = outfiles[1]
                              h['int'] = 'f'
                      end
                      system(@bbtools.load_reformat(h))
-                     files.each_with_index { |file,i| FileUtils.rm(file) if File.exist?(outfiles[i]) }
+                     file_array.each_with_index { |file,i| FileUtils.rm(file) if File.exist?(outfiles[i]) }
              end
+
       end
 
 end

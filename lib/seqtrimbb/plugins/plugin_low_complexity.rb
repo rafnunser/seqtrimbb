@@ -14,7 +14,7 @@ class PluginLowComplexity < Plugin
        #Array to store errors 
              errors=[]   
        #Check params (errors,param_name,param_class,default_value,comment)
-             @params.check_param(errors,'low_complexity_threshold','String',0.001,'Complexity threshold to be applied. Complexity is calculated using the counts of unique short kmers that occur in a window, such that the more unique kmers occur within the window - and the more even the distribution of counts - the closer the value approaches 1. Complexity_threshold = 0.01 for example will only filter homopolymers')
+             @params.check_param(errors,'low_complexity_threshold','String',0.01,'Complexity threshold to be applied. Complexity is calculated using the counts of unique short kmers that occur in a window, such that the more unique kmers occur within the window - and the more even the distribution of counts - the closer the value approaches 1. Complexity_threshold = 0.01 for example will only filter homopolymers')
 
              @params.check_param(errors,'minlength','String',50,'Minimal reads length to be keep')
 
@@ -43,7 +43,7 @@ class PluginLowComplexity < Plugin
            #TO AVOID A BBDUKs "BUG" discard all reads smaller than entropywindow
              module_options['minlength'] = module_options['entropywindow'].to_i   
            #Adding necessary fragment to save unpaired singles
-             module_options['outs'] = File.join(File.expand_path(OUTPUT_PATH),"singles_low_complexity_filtering#{@params.get_param('suffix')}") if @params.get_param('save_unpaired') == 'true'
+             module_options['outs'] = File.join(File.expand_path(OUTPUT_PATH),"singles_low_complexity_filtering#{@params.get_param('suffix')}") if @params.get_param('save_unpaired')
            #Adding low_complexity aditional params
              booleans << @params.get_param('low_complexity_aditional_params') if !@params.get_param('low_complexity_aditional_params').nil?
            #Adding booleans to module_options

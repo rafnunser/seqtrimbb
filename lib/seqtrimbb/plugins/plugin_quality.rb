@@ -37,7 +37,7 @@ class PluginQuality < Plugin
            #Quality's trimming params
              module_options['trimq'] = @params.get_param('quality_threshold')
            #Adding necessary fragment to save unpaired singles
-             if @params.get_param('save_unpaired') == 'true'
+             if @params.get_param('save_unpaired')
                      module_options['outs'] = File.join(File.expand_path(OUTPUT_PATH),"singles_quality_trimming#{@params.get_param('suffix')}")
              end
            #Choosing which tips are going to be trimmed

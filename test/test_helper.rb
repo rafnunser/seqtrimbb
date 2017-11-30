@@ -69,6 +69,24 @@ class String
                    gsub(/\s/, '_').downcase 
    end
 end
+# PATCH OLD_RUBY
+## DIG
+module RubyDig
+       def dig(key, *rest)
+               if value = (self[key] rescue nil)
+                       if rest.empty?
+                               value
+                       elsif value.respond_to?(:dig)
+                               value.dig(*rest)
+                       end
+               end
+       end
+end
+##PATCH!
+if RUBY_VERSION < '2.3'
+       Array.send(:include, RubyDig)
+       Hash.send(:include, RubyDig)
+end
 def setup_temp
 
        FileUtils.rm_rf OUTPUT_PATH if Dir.exist?(OUTPUT_PATH)

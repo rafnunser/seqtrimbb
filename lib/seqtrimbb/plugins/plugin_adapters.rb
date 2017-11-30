@@ -31,7 +31,7 @@ class PluginAdapters < Plugin
              @params.check_param(errors,'adapters_3_max_mismatches','Integer',1,'Max number of mismatches accepted during adapters trimming. Right tip.')
              @params.check_param(errors,'adapters_5_max_mismatches','Integer',@params.get_param('adapters_3_max_mismatches').to_i,'Max number of mismatches accepted during adapters trimming. Left tip.')
 
-             @params.check_param(errors,'adapters_aditional_params','String',nil,'Aditional BBduk2 parameters, add them together between quotation marks and separated by one space')
+             @params.check_param(errors,'adapters_aditional_params','String',nil,'Aditional BBduk parameters, add them together between quotation marks and separated by one space')
 
              @params.check_param(errors,'adapters_merging_pairs_trimming','String','true','Trim adapters of paired reads using mergind reads methods')
        #Set resources

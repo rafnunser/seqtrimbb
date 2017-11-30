@@ -74,17 +74,17 @@ class DatabasesSupportInternal < DatabasesSupport
   #Get info about installation
              failed_dbs = databases.select { |d| !info['installed_databases'].include?(d) }
              if !failed_dbs.empty?
-                     STDERR.puts "ERROR. Databases: #{failed_dbs.join(" ")} is/are empty or not installed.\n Databases can be reinstalled with --install_databases option."
+                     STDERR.puts "ERROR. Databases: #{failed_dbs.join(" ")} are empty or not installed.\n Databases can be reinstalled with --install_databases option."
                      exit(-1)
              end             
   #Get info for obsolete databases
              if !info['obsolete_databases'].empty?
-                     STDERR.puts "Databases: #{info['obsolete_databases'].join(" ")} are obsolete"
+                     STDERR.puts "The following databases are obsolete:\n #{info['obsolete_databases'].join("\n\s")}"
                      get_dbs_info(info['obsolete_databases'].select { |d| databases.include?(d) },info)
                      info['modified'] = true                   
                    #Check writing permissions
                      if !File.writable?(File.join(info['dir'],'indices')) || !File.writable?(File.join(info['dir'],'status_info'))
-                             STDERR.puts "ERROR. Impossible to update databases (#{info['obsolete_databases'].join(" ")}) index because folders: #{File.join(info['dir'],'indices')} and/or #{File.join(info['dir'],'status_info')} are not writable. Please contact your admin to update your databases or add -c tag to avoid this step."
+                             STDERR.puts "ERROR!. Impossible to update databases (#{info['obsolete_databases'].join(" ")}) index because folders: #{File.join(info['dir'],'indices')} and/or #{File.join(info['dir'],'status_info')} are not writable. Please contact your admin to update your databases or add -c tag to avoid this step."
                              exit(-1)
                      else 
                    #Update index!     

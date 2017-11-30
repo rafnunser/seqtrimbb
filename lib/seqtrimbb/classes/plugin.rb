@@ -80,7 +80,7 @@ class Plugin
             #Name and path for the statistics to be generated in the trimming process
              module_options['stats'] = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{plugin}_#{ntip}_trimming_stats.txt")
             #Adding necessary fragment to save unpaired singles
-             module_options['outs'] = File.join(File.expand_path(OUTPUT_PATH),"singles_#{plugin}_#{ntip}_trimming#{@params.get_param('suffix')}") if @params.get_param('save_unpaired') == 'true'
+             module_options['outs'] = File.join(File.expand_path(OUTPUT_PATH),"singles_#{plugin}_#{ntip}_trimming#{@params.get_param('suffix')}") if @params.get_param('save_unpaired')
             #Adding necessary info to process paired samples
              if (@params.get_param('sample_type') == "paired" || @params.get_param('sample_type') == "interleaved") && @params.get_param("#{plugin}_merging_pairs_trimming") == 'true'
                      ['tbo','tpe'].map { |tag| booleans << tag }

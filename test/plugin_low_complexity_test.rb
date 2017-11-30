@@ -20,7 +20,7 @@ class PluginLowComplexityTest < Minitest::Test
              params.set_param('sample_type','single-ended')
              default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 'f'}
              bbtools.store_default(default_options)
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f entropy=0.001 entropywindow=50 minlength=50 t=1 -Xmx50m 2> #{outstats}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f entropy=0.01 entropywindow=50 minlength=50 t=1 -Xmx50m 2> #{outstats}"             
              manager = PluginManager.new('PluginLowComplexity',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -33,7 +33,7 @@ class PluginLowComplexityTest < Minitest::Test
              default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
              bbtools.store_default(default_options)
              outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_low_complexity_filtering.fastq.gz")
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t entropy=0.001 entropywindow=50 minlength=50 outs=#{outsingles} t=1 -Xmx50m 2> #{outstats}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t entropy=0.01 entropywindow=50 minlength=50 outs=#{outsingles} t=1 -Xmx50m 2> #{outstats}"             
              manager = PluginManager.new('PluginLowComplexity',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -42,7 +42,7 @@ class PluginLowComplexityTest < Minitest::Test
 
           # Minlength < 50
              params.set_param('minlength',40)
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t entropy=0.001 entropywindow=40 minlength=40 outs=#{outsingles} t=1 -Xmx50m 2> #{outstats}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t entropy=0.01 entropywindow=40 minlength=40 outs=#{outsingles} t=1 -Xmx50m 2> #{outstats}"             
              manager = PluginManager.new('PluginLowComplexity',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -51,14 +51,14 @@ class PluginLowComplexityTest < Minitest::Test
 
           #Aditional params
              params.set_param('low_complexity_aditional_params','add_param=test')
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t entropy=0.001 entropywindow=40 minlength=40 outs=#{outsingles} add_param=test t=1 -Xmx50m 2> #{outstats}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t entropy=0.01 entropywindow=40 minlength=40 outs=#{outsingles} add_param=test t=1 -Xmx50m 2> #{outstats}"             
              manager = PluginManager.new('PluginLowComplexity',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
              plugin_cmd = manager.plugin_result['PluginLowComplexity']['cmd']
              assert_equal(result,plugin_cmd)
            #CLEAN UP
-               clean_up
+            clean_up
 
       end
 
