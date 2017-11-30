@@ -27,7 +27,7 @@ class PluginAdapters < Plugin
              @params.check_param(errors,'adapters_3_kmer_size','Integer',15,'Main kmer size to use in adapters trimming. Right tip.')
              @params.check_param(errors,'adapters_5_kmer_size','Integer',@params.get_param('adapters_3_kmer_size').to_i + 6,'Main kmer size to use in adapters trimming. Left tip.')
              @params.check_param(errors,'adapters_3_min_external_kmer_size','Integer',8,'Minimal kmer size to use in read tips during adapters trimming. Right tip.')
-             @params.check_param(errors,'adapters_5_min_external_kmer_size','Integer',@params.get_param('adapters_3_min_external_kmer_size').to_i + 6,'Minimal kmer size to use in read tips during adapters trimming. Left tip.')    
+             @params.check_param(errors,'adapters_5_min_external_kmer_size','Integer',@params.get_param('adapters_3_min_external_kmer_size').to_i + 3,'Minimal kmer size to use in read tips during adapters trimming. Left tip.')    
              @params.check_param(errors,'adapters_3_max_mismatches','Integer',1,'Max number of mismatches accepted during adapters trimming. Right tip.')
              @params.check_param(errors,'adapters_5_max_mismatches','Integer',@params.get_param('adapters_3_max_mismatches').to_i,'Max number of mismatches accepted during adapters trimming. Left tip.')
 

@@ -29,7 +29,7 @@ class PluginLowComplexityTest < Minitest::Test
 
            # Saving singles
              params.set_param('sample_type','paired')
-             params.set_param('save_unpaired','true')
+             params.set_param('save_unpaired',true)
              default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
              bbtools.store_default(default_options)
              outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_low_complexity_filtering.fastq.gz")

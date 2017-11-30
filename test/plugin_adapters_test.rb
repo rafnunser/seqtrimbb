@@ -28,29 +28,29 @@ class PluginAdaptersTest < Minitest::Test
              params.set_param('sample_type','single-ended')
              default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 'f'}
              bbtools.store_default(default_options)
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} t=1 -Xmx100m 2> #{r_outstats2} | java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f ref=#{adapters_db} k=21 mink=14 hdist=1 ktrim=l stats=#{l_outstats} t=1 -Xmx100m 2> #{l_outstats2}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} t=1 -Xmx100m 2> #{r_outstats2} | java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f ref=#{adapters_db} k=21 mink=11 hdist=1 ktrim=l stats=#{l_outstats} t=1 -Xmx100m 2> #{l_outstats2}"             
              manager = PluginManager.new('PluginAdapters',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
              plugin_cmd = manager.plugin_result['PluginAdapters']['cmd']
              assert_equal(result,plugin_cmd)
            # Saving singles
-             params.set_param('save_unpaired','true')
+             params.set_param('save_unpaired',true)
              outsingles3 = File.join(File.expand_path(OUTPUT_PATH),"singles_adapters_3_trimming.fastq.gz")
              outsingles5 = File.join(File.expand_path(OUTPUT_PATH),"singles_adapters_5_trimming.fastq.gz")
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} outs=#{outsingles3} t=1 -Xmx100m 2> #{r_outstats2} | java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f ref=#{adapters_db} k=21 mink=14 hdist=1 ktrim=l stats=#{l_outstats} outs=#{outsingles5} t=1 -Xmx100m 2> #{l_outstats2}"
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} outs=#{outsingles3} t=1 -Xmx100m 2> #{r_outstats2} | java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f ref=#{adapters_db} k=21 mink=11 hdist=1 ktrim=l stats=#{l_outstats} outs=#{outsingles5} t=1 -Xmx100m 2> #{l_outstats2}"
              manager = PluginManager.new('PluginAdapters',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
              plugin_cmd = manager.plugin_result['PluginAdapters']['cmd']
              assert_equal(result,plugin_cmd)
-             params.set_param('save_unpaired','false')           
+             params.set_param('save_unpaired',false)
            # Triming mode: Left
              params.set_param('adapters_trimming_position','left')
              params.set_param('sample_type','paired')
              default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
              bbtools.store_default(default_options)             
-             result = "java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=21 mink=14 hdist=1 ktrim=l stats=#{l_outstats} tbo tpe t=1 -Xmx100m 2> #{l_outstats2}"             
+             result = "java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=21 mink=11 hdist=1 ktrim=l stats=#{l_outstats} tbo tpe t=1 -Xmx100m 2> #{l_outstats2}"             
              manager = PluginManager.new('PluginAdapters',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
