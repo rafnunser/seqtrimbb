@@ -2,98 +2,47 @@ require 'test_helper'
 
 class PluginMatePairsTest < Minitest::Test
 
-  def test_plugin_mate_pairs
+      def test_plugin_mate_pairs
+         
+          #SETUP
+             setup_databases   
+             db_path = File.join(OUTPUT_PATH,'DB')
+          #PARAMS
+             nativelibdir = File.join(BBPATH,'jni')
+             classp = File.join(BBPATH,'current')
+             bbtools = BBtools.new(BBPATH)
+             stbb_db = DatabasesSupportHandler.new({:workers => 1},db_path,bbtools)
+             args = ['-w','1','-t',File.join(ROOT_PATH,"files","faketemplate.txt") ]
+             options = OptionsParserSTBB.parse(args)
+             params = Params.new(options,bbtools)
+             params.set_param('plugin_list','PluginMatePairs')
+             outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"LMP_splitting_stats.txt")
+             outstats1 = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"LMP_splitting_stats_cmd.txt")
+             outstats3 = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"LMP_mask_cmd.txt")
 
-    require 'plugin_mate_pairs.rb'
-    plugin_name = 'PluginMatePairs'
+          # Default linker
+             default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
+             bbtools.store_default(default_options)             
+             result = "java -ea -cp #{classp} jgi.SplitNexteraLMP in=stdin.fastq out=stdout.fastq int=t outu=stdout.fastq stats=#{outstats} mask=t t=1 -Xmx50m 2> #{outstats1}"
+             manager = PluginManager.new('PluginMatePairs',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginMatePairs']['cmd']
+             assert_equal(result,plugin_cmd)
 
-    options = {}
-
-    linker = 'AGCTTCGAAGCTTCGA'
-
-    nativelibdir = File.join($BBPATH,'jni')
-    classp = File.join($BBPATH,'current')
-    max_ram = '1g'
-    cores = '1'
-    sample_type = 'paired'
-    file1 = File.join(RT_PATH,"DB","testfiles","testfile_1.fastq.gz")
-    file2 = File.join(RT_PATH,"DB","testfiles","testfile_2.fastq.gz")
-
-    options['file'] = [file1,file2]
-    options['max_ram'] = max_ram
-    options['workers'] = cores
-    options['sample_type'] = sample_type
-    options['linker_literal_seq'] = 'AGCTTCGAAGCTTCGA' 
-
-    adapters_db = File.join($DB_PATH,'fastas/adapters/adapters.fasta')
-    outstats_adapters = File.join(File.expand_path(OUTPUT_PATH),"LMP_adapters_trimming_stats.txt")
-    outstats1 = File.join(File.expand_path(OUTPUT_PATH),"LMP_adapters_trimming_stats_cmd.txt")
-    outstats_split = File.join(File.expand_path(OUTPUT_PATH),"LMP_splitting_stats.txt")
-    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"LMP_splitting_stats_cmd.txt")
-    outstats3 = File.join(File.expand_path(OUTPUT_PATH),"LMP_extra_cmds.txt")
-
-    options['adapters_db'] = 'adapters'
-    options['adapters_kmer_size'] = 15
-    options['adapters_min_external_kmer_size'] = 8
-    options['adapters_max_mismatches'] = 1
-
-    outlongmate = File.join(File.expand_path(OUTPUT_PATH),"longmate.fastq.gz")
-    outunknown = File.join(File.expand_path(OUTPUT_PATH),"unknown.fastq.gz")
-
-    faketemplate = File.join($DB_PATH,"faketemplate.txt")
-
-    params = Params.new(faketemplate,options)
-
-    suffix = '.fastq'
-
-# Paired sample
-
-   input_frag = "in=#{file1} in2=#{file2}"
-   outfiles = [File.join(OUTPUT_PATH,"untreated_LMPreads_1#{suffix}"),File.join(OUTPUT_PATH,"untreated_LMPreads_2#{suffix}")]
-
-   unkmask = '"JJJJJJJJJJJJ"'
-
-   output_frag = "out=#{outfiles[0]} out2=#{outfiles[1]}"
-
-   result = Array.new
-
-   result.push("java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} rref=#{adapters_db} lref=#{adapters_db} k=15 mink=8 hdist=1 stats=#{outstats_adapters} #{input_frag} out=stdout.fastq tpe tbo 2> #{outstats1} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} in=stdin.fastq out=stdout.fastq kmask=J k=19 hdist=1 mink=11 hdist2=0 literal=#{linker} 2> #{outstats3} | java -ea -Xmx#{max_ram} -cp #{classp} jgi.SplitNexteraLMP t=#{cores} int=t in=stdin.fastq out=#{outlongmate} outu=#{outunknown} stats=#{outstats_split} 2> #{outstats2}")
-   result.push("cat #{outlongmate} #{outunknown} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} int=t in=stdin.fastq.gz #{output_frag} lliteral=#{unkmask} rliteral=#{unkmask} k=19 hdist=1 mink=11 hdist2=0 minlength=50 2> #{outstats3}")
-   
-   plugin_class = Object.const_get(plugin_name)
-   p = plugin_class.new(params)
-   test = p.get_cmd
-
-   assert_equal(result,test)
-
-# Interleaved sample
-
-   file1 = File.join(RT_PATH,"DB","testfiles","testfile_interleaved.fastq.gz")
-   outfiles = [File.join(OUTPUT_PATH,"untreated_LMPreads#{suffix}")]
-
-   options['file'] = [file1]
-
-   options['sample_type'] = 'interleaved'
-
-   params = Params.new(faketemplate,options)
-
-   input_frag = "in=#{file1} int=t"
-
-   unkmask = '"JJJJJJJJJJJJ"'
-
-   output_frag = "out=#{outfiles[0]}"
-
-   result = Array.new
-
-   result.push("java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} rref=#{adapters_db} lref=#{adapters_db} k=15 mink=8 hdist=1 stats=#{outstats_adapters} #{input_frag} out=stdout.fastq tpe tbo 2> #{outstats1} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} in=stdin.fastq out=stdout.fastq kmask=J k=19 hdist=1 mink=11 hdist2=0 literal=#{linker} 2> #{outstats3} | java -ea -Xmx#{max_ram} -cp #{classp} jgi.SplitNexteraLMP t=#{cores} int=t in=stdin.fastq out=#{outlongmate} outu=#{outunknown} stats=#{outstats_split} 2> #{outstats2}")
-   result.push("cat #{outlongmate} #{outunknown} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} int=t in=stdin.fastq.gz #{output_frag} lliteral=#{unkmask} rliteral=#{unkmask} k=19 hdist=1 mink=11 hdist2=0 minlength=50 2> #{outstats3}")
-   
-   plugin_class = Object.const_get(plugin_name)
-   p = plugin_class.new(params)
-   test = p.get_cmd
-
-   assert_equal(result,test)
-
-  end
+          # User linker
+             params.set_param('linker_literal_seq','MOCKSEQUENCE')
+             default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
+             bbtools.store_default(default_options)             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t kmask=J k=19 mink=11 hdist=1 hdist2=0 literal=MOCKSEQUENCE t=1 -Xmx50m 2> #{outstats3} | java -ea -cp #{classp} jgi.SplitNexteraLMP in=stdin.fastq out=stdout.fastq int=t outu=stdout.fastq stats=#{outstats} t=1 -Xmx50m 2> #{outstats1}"
+             manager = PluginManager.new('PluginMatePairs',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginMatePairs']['cmd']
+             assert_equal(result,plugin_cmd)
+           #CLEAN UP
+               clean_up
+               
+      end
 
 end

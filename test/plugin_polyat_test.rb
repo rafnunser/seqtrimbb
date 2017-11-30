@@ -2,141 +2,44 @@ require 'test_helper'
 
 class PluginPolyAtTest < Minitest::Test
 
-  def test_plugin_polyat
+      def test_plugin_polyat
 
-    outstats = File.join(File.expand_path(OUTPUT_PATH),"polyat_trimming_stats.txt")
-    outstats2 = File.join(File.expand_path(OUTPUT_PATH),"polyat_trimming_stats_cmd.txt")
-    nativelibdir = File.join($BBPATH,'jni')
-    classp = File.join($BBPATH,'current')
+           #SETUP
+             setup_temp
+             nativelibdir = File.join(BBPATH,'jni')
+             classp = File.join(BBPATH,'current')
+             bbtools = BBtools.new(BBPATH)
+             stbb_db = DatabasesSupportHandler.new({:workers => 1},'',bbtools)
+             args = ['-w','1','-t',File.join(ROOT_PATH,"files","faketemplate.txt") ]
+             options = OptionsParserSTBB.parse(args)
+             params = Params.new(options,bbtools) 
+             params.set_param('plugin_list','PluginPolyAt')
+             outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"polyat_trimming_stats.txt")
 
-    max_ram = '1G'
-    cores = '1'
-    sample_type = 'paired'
-    save_unpaired = 'false'
-    polyat_trimming_position = 'both'
-    polyat_kmer_size = 31
-    polyat_min_external_kmer_size = 9
-    polyat_max_mismatches = 1
-    polyat_additional_params = nil
-    polyat_merging_pairs_trimming = 'true'
+           # Saving singles
+             params.set_param('sample_type','paired')
+             params.set_param('save_unpaired','true')
+             default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
+             bbtools.store_default(default_options)
+             outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_polyat_trimming.fastq.gz")
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t trimpolya=9 outs=#{outsingles} t=1 -Xmx50m 2> #{outstats}"             
+             manager = PluginManager.new('PluginPolyAt',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginPolyAt']['cmd']
+             assert_equal(result,plugin_cmd)
 
-    options = {}
+          #Aditional params
+             params.set_param('polyat_aditional_params','add_param=test')
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t trimpolya=9 outs=#{outsingles} add_param=test t=1 -Xmx50m 2> #{outstats}"             
+             manager = PluginManager.new('PluginPolyAt',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginPolyAt']['cmd']
+             assert_equal(result,plugin_cmd)
+           #CLEAN UP
+               clean_up
 
-    options['max_ram'] = max_ram
-    options['workers'] = cores
-    options['sample_type'] = sample_type
-    options['write_in_gzip'] = 'true'
-    options['save_unpaired'] = save_unpaired
-    options['polyat_trimming_position'] = polyat_trimming_position
-    options['polyat_kmer_size'] = polyat_kmer_size
-    options['polyat_min_external_kmer_size'] = polyat_min_external_kmer_size
-    options['polyat_max_mismatches'] = polyat_max_mismatches
-
-    options['polyat_additional_params'] = polyat_additional_params
-    options['polyat_merging_pairs_trimming'] = polyat_merging_pairs_trimming
-
-    faketemplate = File.join($DB_PATH,"faketemplate.txt")
-
-    params = Params.new(faketemplate,options)
-
-    plugin_list = 'PluginPolyAt'
-
-# Single-ended sample
-
-    options['sample_type'] = 'single-ended'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-    options['sample_type'] = 'paired'
-
-    params = Params.new(faketemplate,options)
-
-# Triming mode: Left
-
-    options['polyat_trimming_position'] = 'left'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-# Triming mode: Right
-
-    options['polyat_trimming_position'] = 'right'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])   
-
-# Triming mode: Both
-
-    options['polyat_trimming_position'] = 'both'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-# Saving singles
-
-    options['save_unpaired'] = 'true' 
-
-    params = Params.new(faketemplate,options)
-
-    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_polyat_trimming.fastq.gz")
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 outs=#{outsingles} rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-    options['save_unpaired'] = 'false'
-
-    params = Params.new(faketemplate,options) 
-
-# Adding some additional params
-
-    options['polyat_aditional_params'] = "add_param=test"
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=9 hdist=1 rliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA lliteral=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA int=t add_param=test in=stdin.fastq out=stdout.fastq stats=#{outstats} 2> #{outstats2}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-    options['polyat_additional_params'] = 'false'
-
-  end
+      end
 
 end

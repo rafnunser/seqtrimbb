@@ -1,0 +1,23 @@
+2.0.0
+CHANGES:
+Moved lib/templates to templates/
+Created new databases structure:
+   Databases info is stored in a hash, and saved in a single JSON file.
+   Classes (or code) dedicated to support or handle databases (internal or external) are now managed with a single class (Databases support handler). 
+TODO Install databases, from an external source with symbolic.
+Added new methods to Plugin Manager, and modified almost all preexisting methods.
+Added new Class Plugin Merger, for plugins cmds merging. This class allows to reduce the number of calls that will be piped. Reducing the number of used threads by default.
+Added tests for manager classes.
+Moved option parsing to OptionsParserSTBB class.
+Splitted params class.
+    ParamsReader to read params file and options. And to process readed params.
+    ParamsChecker to check params.
+    ParamsResourcer to distribute resources (ram memory and cores).
+Added some useful methods to plugin class.
+Rewrited all plugins and their tests.
+Reduced pre-processing workflow to bin/seqtrimbb executable file. Removing seqtrim class.
+Removed scbi_header, and added a simpler header.
+Plugins_stats folder renamed Plugins_logs.
+
+
+

@@ -13,7 +13,7 @@
 # Help: <li>PluginLowComplexity: filtering out reads with low complexity. </li>
 # Help: </ul>
 
-plugin_list = PluginMatePairs,PluginContaminants,PluginQuality,PluginLowComplexity
+plugin_list = PluginAdapters,PluginMatePairs,PluginContaminants,PluginQuality,PluginLowComplexity
 
 # Minimum insert size for every trimmed sequence
 

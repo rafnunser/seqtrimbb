@@ -1,152 +1,83 @@
-require "plugin"
-
 ########################################################
-# 
-# Defines the main methods that are necessary to execute Plugin
-# Inherit: Plugin
+# Defines the main methods that are necessary to trim bad quality
 ########################################################
 
 class PluginQuality < Plugin
-  
- def get_cmd
 
-  # General params
-    max_ram = @params.get_param('max_ram')
-    cores = @params.get_param('workers')
-    sample_type = @params.get_param('sample_type')
-    write_in_gzip = @params.get_param('write_in_gzip')
-    save_singles = @params.get_param('save_unpaired')
-    nativelibdir = File.join($BBPATH,'jni')
-    classp = File.join($BBPATH,'current')
-    
-  # Quality's trimming params
-    quality_threshold = @params.get_param('quality_threshold')
-    quality_trimming_position = @params.get_param('quality_trimming_position')
-    quality_aditional_params = @params.get_param('quality_aditional_params')
-    outstats = File.join(File.expand_path(OUTPLUGINSTATS),"quality_trimming_stats.txt")
-
-  # Creates an array to store the necessary fragments to assemble the call
-    cmd_add = Array.new
-
-  # Adding invariable fragment
-    cmd_add.push("java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{quality_threshold}")
-   
-  # Adding necessary fragment to save unpaired singles
-    if write_in_gzip   
-        suffix = 'fastq.gz'
-    else
-         suffix = 'fastq'
-    end
-    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_quality_trimming.#{suffix}")
-    cmd_add.push("outs=#{outsingles}") if save_singles == 'true'
- 
- # Choosing which tips are going to be trimmed
-    if quality_trimming_position == 'both'
-      cmd_add.push("qtrim=rl")
-    elsif quality_trimming_position == 'right'
-      cmd_add.push("qtrim=r")
-    elsif quality_trimming_position == 'left'
-      cmd_add.push("qtrim=l")
-    end
-
-   # Adding necessary info to process paired samples
-    if sample_type == "paired" || sample_type == "interleaved"
-      cmd_add.push("int=t")
-    end 
-    
-    # Adding closing args to the call and joining it
-    if !quality_aditional_params.nil?
-      cmd_add.push(quality_aditional_params)
-    end
-
-    closing_args = "in=stdin.fastq out=stdout.fastq 2> #{outstats}" 
-
-    cmd_add.push(closing_args)
-
-    cmd = cmd_add.join(" ")
-
-    return cmd
-
- end
-
- def get_stats
-
-    plugin_stats = {}
-    plugin_stats["plugin_quality"] = {}
-
-    stat_file = File.join(File.expand_path(OUTPLUGINSTATS),"quality_trimming_stats.txt")
-
-    # First look for internal errors in cmd execution
-    
-    cmd_file = stat_file
-    open_cmd_file= File.open(cmd_file)
-    open_cmd_file.each do |line|
-      line.chomp!
-      if !line.empty?
-        if (line =~ /Exception in thread/) || (line =~ /Error/)
-           STDERR.puts "Internal error in BBtools execution. For more details: #{cmd_file}"
-           exit -1 
-        end
-      end
-    end
-    open_cmd_file.close
-
-    # Extracting stats 
-
-    open_stat_file = File.open(stat_file)
-    open_stat_file.each do |line|
-      line.chomp!
-     if !line.empty? && (line =~ /^QTrimmed:/) #Es el encabezado de la tabla o el archivo
-         splitted = line.split(/\t/)
-         nreads = splitted[1].split(" ")
-         nbases = splitted[2].split(" ")
-         plugin_stats["plugin_quality"]["quality_trimmed_reads"] = nreads[0].to_i
-         plugin_stats["plugin_quality"]["quality_trimmed_bases"] = nbases[0].to_i
-     end
-    end
-    open_stat_file.close
-
-    return plugin_stats
-
- end
- 
   #Returns an array with the errors due to parameters are missing 
-  def self.check_params(params)
-    errors=[]  
-   
-    comment='Max RAM'
-    default_value = 
-    params.check_param(errors,'max_ram','String',default_value,comment)
+      def check_params
 
-    comment='Number of Threads'
-    default_value = 
-    params.check_param(errors,'workers','String',default_value,comment)
+       #Priority, base ram
+             cores = [1]
+             priority = 1
+             ram = [50] #mb
+       #Array to store errors 
+             errors=[]  
+       #Check params (errors,param_name,param_class,default_value,comment)
+             @params.check_param(errors,'quality_threshold','String',20,'Quality threshold to be applied (Phred quality score)')
 
-    comment='Type of sample: paired, single-ended or interleaved.'
-    default_value = 
-    params.check_param(errors,'sample_type','String',default_value,comment)
+             @params.check_param(errors,'quality_trimming_position','String','both','Trim bad quality bases in which position: right, left or both (default)' )
 
-    comment='Write in gzip?'
-    default_value = 
-    params.check_param(errors,'write_in_gzip','String',default_value,comment)
+             @params.check_param(errors,'quality_aditional_params','String',nil,'Aditional BBduk2 parameters for quality trimming, add them together between quotation marks and separated by one space')
+       #Set resources
+             @params.resource('set_requirements',{ 'plugin' => 'PluginQuality','opts' => {'cores' => cores,'priority' => priority,'ram'=>ram}})
+             
+             return errors
+             
+      end
+  #Get options  
+      def get_options
 
-    comment='Save reads which became unpaired after every step? true or false (default)'
-    default_value = 'false'
-    params.check_param(errors,'save_unpaired','String',default_value,comment)
+           #Opts Array
+             opts = Array.new
+           #Module options Hash
+             module_options = {}
+           #Booleans array}
+             booleans = []    
+           #Quality's trimming params
+             module_options['trimq'] = @params.get_param('quality_threshold')
+           #Adding necessary fragment to save unpaired singles
+             if @params.get_param('save_unpaired')
+                     module_options['outs'] = File.join(File.expand_path(OUTPUT_PATH),"singles_quality_trimming#{@params.get_param('suffix')}")
+             end
+           #Choosing which tips are going to be trimmed
+             case @params.get_param('quality_trimming_position')
+                     when 'both'
+                             module_options['qtrim'] = 'rl'
+                     when 'right'
+                             module_options['qtrim'] = 'r'
+                     when 'left'
+                             module_options['qtrim'] = 'l'
+             end
+           # Adding quality aditional params
+             booleans << @params.get_param('quality_aditional_params') if !@params.get_param('quality_aditional_params').nil?
+           # Adding booleans to module_options
+             module_options['booleans'] = booleans if !booleans.empty?
+           # Adding commandline redirection
+             module_options['redirection'] = ["2>",File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"quality_trimming_stats.txt")]
+           #Add hash to array and return
+             opts << module_options
+             return opts
 
-    comment='Quality threshold to be applied (Phred quality score)' 
-    default_value = '20'
-    params.check_param(errors,'quality_threshold','String',default_value,comment)
+      end
+ #Get cmd
+      def get_cmd(result_hash)
+           
+           #Return  
+             return @bbtools.load_bbduk(result_hash['opts'][0])
 
-    comment='Trim bad quality bases in which position: right, left or both (default)' 
-    default_value = 'both'
-    params.check_param(errors,'quality_trimming_position','String',default_value,comment)
+      end
+#Get stats
+      def get_stats(stats_files,stats)
 
-    comment='Aditional BBduk2 parameters, add them together between quotation marks and separated by one space'
-    default_value = nil
-    params.check_param(errors,'quality_aditional_params','String',default_value,comment)
+             stats["plugin_quality"] = {} if !stats.key?("plugin_quality")
+          # Extracting stats
+             regexp = "^QTrimmed:" 
+             lines = super(regexp,stats_files['cmd'].first)
+             splitted_line = lines[0].split(/\t/)
+             stats["plugin_quality"]["quality_trimmed_reads"] = splitted_line[1].split(" ")[0].to_i
+             stats["plugin_quality"]["quality_trimmed_bases"] = splitted_line[2].split(" ")[0].to_i             
 
-    return errors
-  end
+      end
 
 end

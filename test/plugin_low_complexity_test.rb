@@ -2,102 +2,64 @@ require 'test_helper'
 
 class PluginLowComplexityTest < Minitest::Test
 
-  def test_plugin_lowcomplexity
+      def test_plugin_lowcomplexity
 
-    options = {}
+           #SETUP
+             setup_temp
+             nativelibdir = File.join(BBPATH,'jni')
+             classp = File.join(BBPATH,'current')
+             bbtools = BBtools.new(BBPATH)
+             stbb_db = DatabasesSupportHandler.new({:workers => 1},'',bbtools)
+             args = ['-w','1','-t',File.join(ROOT_PATH,"files","faketemplate.txt") ]
+             options = OptionsParserSTBB.parse(args)
+             params = Params.new(options,bbtools) 
+             params.set_param('plugin_list','PluginLowComplexity')
+             outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"low_complexity_stats.txt")
 
-    outstats = File.join(File.expand_path(OUTPUT_PATH),"low_complexity_stats.txt")
-    nativelibdir = File.join($BBPATH,'jni')
-    classp = File.join($BBPATH,'current')
+           # Single-ended sample
+             params.set_param('sample_type','single-ended')
+             default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 'f'}
+             bbtools.store_default(default_options)
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=f entropy=0.01 entropywindow=50 minlength=50 t=1 -Xmx50m 2> #{outstats}"             
+             manager = PluginManager.new('PluginLowComplexity',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginLowComplexity']['cmd']
+             assert_equal(result,plugin_cmd)
 
-    max_ram = '1G'
-    cores = '1'
-    sample_type = 'paired'
-    save_unpaired = 'false'
-    
-    options['max_ram'] = max_ram
-    options['workers'] = cores
-    options['sample_type'] = sample_type
-    options['write_in_gzip'] = 'true'
-    options['save_unpaired'] = save_unpaired
-    options['complexity_threshold'] = 0.01
-    options['minlength'] = 50
-    options['low_complexity_aditional_params'] = nil
-    plugin_list = 'PluginLowComplexity'
+           # Saving singles
+             params.set_param('sample_type','paired')
+             params.set_param('save_unpaired',true)
+             default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
+             bbtools.store_default(default_options)
+             outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_low_complexity_filtering.fastq.gz")
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t entropy=0.01 entropywindow=50 minlength=50 outs=#{outsingles} t=1 -Xmx50m 2> #{outstats}"             
+             manager = PluginManager.new('PluginLowComplexity',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginLowComplexity']['cmd']
+             assert_equal(result,plugin_cmd)
 
-    faketemplate = File.join($DB_PATH,"faketemplate.txt")
+          # Minlength < 50
+             params.set_param('minlength',40)
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t entropy=0.01 entropywindow=40 minlength=40 outs=#{outsingles} t=1 -Xmx50m 2> #{outstats}"             
+             manager = PluginManager.new('PluginLowComplexity',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginLowComplexity']['cmd']
+             assert_equal(result,plugin_cmd)
 
-    params = Params.new(faketemplate,options)
+          #Aditional params
+             params.set_param('low_complexity_aditional_params','add_param=test')
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t entropy=0.01 entropywindow=40 minlength=40 outs=#{outsingles} add_param=test t=1 -Xmx50m 2> #{outstats}"             
+             manager = PluginManager.new('PluginLowComplexity',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginLowComplexity']['cmd']
+             assert_equal(result,plugin_cmd)
+           #CLEAN UP
+            clean_up
 
-# Filtering single-ended sample
+      end
 
-    options['sample_type'] = 'single-ended'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} entropy=0.01 entropywindow=50 in=stdin.fastq out=stdout.fastq 2> #{outstats}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-    options['sample_type'] = 'paired'
-
-    params = Params.new(faketemplate,options)
-
-# Minlength < 50
-
-    options['minlength'] = 49
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} entropy=0.01 entropywindow=49 int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-    options['minlength'] = 50
-
-    params = Params.new(faketemplate,options)
-
- # Saving singles
-
-    options['save_unpaired'] = 'true'
-
-    params = Params.new(faketemplate,options)
-
-    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_low_complexity_filtering.fastq.gz")
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} entropy=0.01 entropywindow=50 outs=#{outsingles} int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-    options['save_unpaired'] = 'false'
-
-    params = Params.new(faketemplate,options)
-
- # Adding additional params
-
-    options['low_complexity_aditional_params'] = 'add_param=test'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} entropy=0.01 entropywindow=50 int=t add_param=test in=stdin.fastq out=stdout.fastq 2> #{outstats}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-  end
 end

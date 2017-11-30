@@ -13,11 +13,10 @@
 # Help: <li>PluginUserFilter: filter sequences matching any entry in the user contaminant database saving them in a separate file. </li>
 # Help: </ul>
 
-plugin_list = PluginAdapters,PluginContaminants,PluginQuality,PluginUserFilter,PluginLowComplexity
+plugin_list = PluginAdapters,PluginContaminants,PluginQuality,PluginLowComplexity,PluginUserFilter
 
-# Minimum insert size for every trimmed sequence
-
+# Minimal read length for every trimmed sequence
 minlength=80
-
-user_filter_db = #Type here the folder or file to use in filtering
+#Type here the folder or file to use in filtering
+user_filter_db = 
 

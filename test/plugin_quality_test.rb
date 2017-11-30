@@ -2,110 +2,62 @@ require 'test_helper'
 
 class PluginQualityTest < Minitest::Test
 
-  def test_plugin_quality
+      def test_plugin_quality
 
-    outstats = File.join(OUTPUT_PATH,"quality_trimming_stats.txt")
-    nativelibdir = File.join($BBPATH,'jni')
-    classp = File.join($BBPATH,'current')
-    max_ram = '1G'
-    cores = '1'
-    sample_type = 'paired'
-    save_unpaired = 'false'
+           #SETUP
+             setup_temp
+             nativelibdir = File.join(BBPATH,'jni')
+             classp = File.join(BBPATH,'current')
+             bbtools = BBtools.new(BBPATH)
+             stbb_db = DatabasesSupportHandler.new({:workers => 1},'',bbtools)
+             args = ['-w','1','-t',File.join(ROOT_PATH,"files","faketemplate.txt") ]
+             options = OptionsParserSTBB.parse(args)
+             params = Params.new(options,bbtools) 
+             params.set_param('plugin_list','PluginQuality')
+             outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"quality_trimming_stats.txt")
+  
+           # Saving singles
+             params.set_param('sample_type','paired')
+             params.set_param('save_unpaired',true)
+             default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
+             bbtools.store_default(default_options)
+             outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_quality_trimming.fastq.gz")
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=rl t=1 -Xmx50m 2> #{outstats}"             
+             manager = PluginManager.new('PluginQuality',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginQuality']['cmd']
+             assert_equal(result,plugin_cmd)
 
-    options = {}
+          #Aditional params
+             params.set_param('quality_aditional_params','add_param=test')
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=rl add_param=test t=1 -Xmx50m 2> #{outstats}"             
+             manager = PluginManager.new('PluginQuality',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginQuality']['cmd']
+             assert_equal(result,plugin_cmd)
 
-    options['max_ram'] = max_ram
-    options['workers'] = cores
-    options['write_in_gzip'] = 'true'
-    options['sample_type'] = sample_type
-    options['save_unpaired'] = save_unpaired
+          #Trimming left
+             params.set_param('quality_trimming_position','left')
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=l add_param=test t=1 -Xmx50m 2> #{outstats}"             
+             manager = PluginManager.new('PluginQuality',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginQuality']['cmd']
+             assert_equal(result,plugin_cmd)
 
-    threshold = 20
+          #Trimming right
+             params.set_param('quality_trimming_position','right')
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=r add_param=test t=1 -Xmx50m 2> #{outstats}"             
+             manager = PluginManager.new('PluginQuality',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginQuality']['cmd']
+             assert_equal(result,plugin_cmd)
+           #CLEAN UP
+               clean_up
 
-    options['quality_threshold'] = threshold
-    options['quality_trimming_position'] = 'both'
-    options['quality_aditional_params'] = nil
-
-    plugin_list = 'PluginQuality'
-
-    faketemplate = File.join($DB_PATH,"faketemplate.txt")
-
-    params = Params.new(faketemplate,options)
-
-# Trimming single-ended sample
-
-    options['sample_type'] = 'single-ended'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{threshold} qtrim=rl in=stdin.fastq out=stdout.fastq 2> #{outstats}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-    options['sample_type'] = 'paired'
-
-    params = Params.new(faketemplate,options)
-
-# Trimming mode: left
-
-    options['quality_trimming_position'] = 'left'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{threshold} qtrim=l int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
- # Trimming mode: right
-
-    options['quality_trimming_position'] = 'right'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{threshold} qtrim=r int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
- # Trimming mode: both
-
-    options['quality_trimming_position'] = 'both'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{threshold} qtrim=rl int=t in=stdin.fastq out=stdout.fastq 2> #{outstats}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
- # Aditional params
-
-    options['quality_aditional_params'] = 'add_param=test'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} trimq=#{threshold} qtrim=rl int=t add_param=test in=stdin.fastq out=stdout.fastq 2> #{outstats}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-  end
+      end
 
 end

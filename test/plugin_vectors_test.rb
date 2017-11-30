@@ -2,163 +2,63 @@ require 'test_helper'
 
 class PluginVectorsTest < Minitest::Test
 
-  def test_plugin_vectors
-
-    db = 'vectors'
-
-    temp_folder = File.join(RT_PATH,"temp")
-
-    if Dir.exists?(temp_folder)
-      FileUtils.remove_dir(temp_folder)
-    end
-
-    Dir.mkdir(temp_folder)
-    FileUtils.cp_r $DB_PATH, temp_folder
-    $DB_PATH = File.join(temp_folder,"DB")
-
-    nativelibdir = File.join($BBPATH,'jni')
-    classp = File.join($BBPATH,'current')
-    max_ram = '1g'
-    cores = '1'
-    sample_type = 'paired'
-    save_unpaired = 'false'
-    minratio = 0.80
-
-    options={}
-
-    options['max_ram'] = max_ram
-    options['workers'] = cores
-    options['write_in_gzip'] = 'true'
-    options['sample_type'] = sample_type
-    options['save_unpaired'] = save_unpaired
-
-    options['vectors_db'] = db
-    options['vectors_trimming_position'] = 'both'
-    options['vectors_kmer_size'] = 31
-    options['vectors_min_external_kmer_size'] = 11
-    options['vectors_max_mismatches'] = 1
-    options['vectors_trimming_aditional_params'] = nil
-    options['vectors_filtering_aditional_params'] = nil
-
-    outstats1 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats.txt")
-    outstats3 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_trimming_stats_cmd.txt")
-    outstats2 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_filtering_stats.txt")
-    outstats4 = File.join(File.expand_path(OUTPLUGINSTATS),"vectors_filtering_stats_cmd.txt")
-
-    outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_vectors_trimming.fastq.gz")
-
-    options['vectors_minratio'] = minratio
-
-    faketemplate = File.join($DB_PATH,"faketemplate.txt")
-
-    CheckDatabase.new($DB_PATH,options['workers'],options['max_ram'])
-
-    params = Params.new(faketemplate,options)
-
-    vectors_db = File.join($DB_PATH,'fastas',db,db+'.fasta')
-    vectors_path = File.join($DB_PATH,'indices',db)
-
-    plugin_list = 'PluginVectors'
-
-# Single-ended file
-
-    options['sample_type'] = 'single-ended'
-   
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=11 hdist=1 rref=#{vectors_db} lref=#{vectors_db} in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-    options['sample_type'] = 'paired'
-
-    params = Params.new(faketemplate,options)
-
-# Saving singles
-
-    options['save_unpaired'] = 'true'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=11 hdist=1 outs=#{outsingles} rref=#{vectors_db} lref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-    options['save_unpaired'] = 'false'
-
-    params = Params.new(faketemplate,options)
-
-# Vectors trimming position: left
-
-    options['vectors_trimming_position'] = 'left'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=11 hdist=1 lref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-# Vectors trimming position: right
-
-    options['vectors_trimming_position'] = 'right'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=11 hdist=1 rref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-# Vectors trimming position: both
-
-    options['vectors_trimming_position'] = 'both'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=11 hdist=1 rref=#{vectors_db} lref=#{vectors_db} int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t path=#{vectors_path} in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-# Adding aditional params
-
-    options['vectors_trimming_aditional_params'] = 'add_param=test'
-    options['vectors_filtering_aditional_params'] = 'add_param=test'
-
-    params = Params.new(faketemplate,options)
-
-    result = "java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -Xms#{max_ram} -cp #{classp} jgi.BBDuk2 t=#{cores} k=31 mink=11 hdist=1 rref=#{vectors_db} lref=#{vectors_db} add_param=test int=t in=stdin.fastq out=stdout.fastq stats=#{outstats1} restrictleft=58 restrictright=58 2> #{outstats3} | java -Djava.library.path=#{nativelibdir} -ea -Xmx#{max_ram} -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 t=#{cores} minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 minratio=#{minratio} int=t path=#{vectors_path} add_param=test in=stdin.fastq out=stdout.fastq refstats=#{outstats2} 2> #{outstats4}"
-
-    manager = PluginManager.new(plugin_list,params)
-
-    test = manager.execute_plugins()
-
-    assert_equal(result,test[0])
-
-    # Deleting $DB_PATH
-
-    FileUtils.remove_dir(temp_folder)
-
-    $DB_PATH = File.join(RT_PATH, "DB")
-
-  end
+      def test_plugin_vectors
+
+             db = 'vectors'
+          #SETUP
+             setup_databases   
+             db_path = File.join(OUTPUT_PATH,'DB')
+           #PARAMS
+             nativelibdir = File.join(BBPATH,'jni')
+             classp = File.join(BBPATH,'current')
+             bbtools = BBtools.new(BBPATH)
+             base_ram = 720 
+             stbb_db = DatabasesSupportHandler.new({:workers => 1},db_path,bbtools)
+             stbb_db.init_internal({:databases_action => 'replace', :databases_list => ['vectors']})
+             stbb_db.maintenance_internal({:check_db => true})
+             args = ['-w','1','-t',File.join(ROOT_PATH,"files","faketemplate.txt") ]
+             options = OptionsParserSTBB.parse(args)
+             params = Params.new(options,bbtools)
+             params.set_param('plugin_list','PluginVectors')
+             vectors_db = File.join(db_path,'fastas/vectors/vectors.fasta.gz')
+             r_outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"vectors_3_trimming_stats.txt")
+             l_outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"vectors_5_trimming_stats.txt")
+             r_outstats2 = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"vectors_3_trimming_stats_cmd.txt")
+             l_outstats2 = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"vectors_5_trimming_stats_cmd.txt")
+             c_outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{db}_vectors_filtering_stats.txt")
+             c_outstats2 = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{db}_vectors_filtering_stats_cmd.txt")
+             ram = (stbb_db.get_info(db,'index_size')/2.0**20).round(0) + base_ram  
+          # Adding aditional params
+             params.set_param('sample_type','paired')
+             params.set_param('vectors_trimming_aditional_params','add_param=test')
+             params.set_param('vectors_filtering_aditional_params','add_param=test')
+             default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
+             bbtools.store_default(default_options)             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 in=stdin.fastq int=t minratio=0.80 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} add_param=test outu=stdout.fastq t=1 -Xmx#{ram}m 2> #{c_outstats2} | java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t ref=#{vectors_db} k=31 mink=11 hdist=1 ktrim=r stats=#{r_outstats} tbo tpe add_param=test restrictleft=58 restrictright=58 t=1 -Xmx51m 2> #{r_outstats2} | java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t ref=#{vectors_db} k=31 mink=11 hdist=1 ktrim=l stats=#{l_outstats} tbo tpe add_param=test restrictleft=58 restrictright=58 t=1 -Xmx51m 2> #{l_outstats2}"
+             manager = PluginManager.new('PluginVectors',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginVectors']['cmd']
+             assert_equal(result,plugin_cmd)           
+           # Triming mode: Left
+             params.set_param('vectors_trimming_position','left')
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 in=stdin.fastq int=t minratio=0.80 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} add_param=test outu=stdout.fastq t=1 -Xmx#{ram}m 2> #{c_outstats2} | java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t ref=#{vectors_db} k=31 mink=11 hdist=1 ktrim=l stats=#{l_outstats} tbo tpe add_param=test restrictleft=58 restrictright=58 t=1 -Xmx51m 2> #{l_outstats2}"             
+             manager = PluginManager.new('PluginVectors',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginVectors']['cmd']
+             assert_equal(result,plugin_cmd)
+           # Triming mode: right
+             params.set_param('vectors_trimming_position','right')                
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 in=stdin.fastq int=t minratio=0.80 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} add_param=test outu=stdout.fastq t=1 -Xmx#{ram}m 2> #{c_outstats2} | java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t ref=#{vectors_db} k=31 mink=11 hdist=1 ktrim=r stats=#{r_outstats} tbo tpe add_param=test restrictleft=58 restrictright=58 t=1 -Xmx51m 2> #{r_outstats2}"             
+             manager = PluginManager.new('PluginVectors',params,bbtools,stbb_db)
+             manager.check_plugins_params   
+             manager.execute_plugins
+             plugin_cmd = manager.plugin_result['PluginVectors']['cmd']
+             assert_equal(result,plugin_cmd)
+           #CLEAN UP
+             clean_up
+               
+      end
 
 end
