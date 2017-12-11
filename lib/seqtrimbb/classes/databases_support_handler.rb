@@ -32,21 +32,26 @@ class DatabasesSupportHandler
       end
   #MAINTENANCE
       def maintenance_internal(options)
-
+             
           #Build DB structure if it's not present
              @internal_databases.check_structure(@dir)
           #IF it is requested, proceeds to install or reinstall databases
-           # if options[:install_db]
-                #    require 'databases_support_install.rb'
-                #    DatabasesSupportInstall.new(options[:install_db_name])
-                #    save_json if save?
-                #    exit(-1)
-           # end
+             if options[:install_db]
+                     require 'databases_support_install.rb'
+                     @databases_installer = DatabasesSupportInstall.new
+                     if !options[:install_db_name].empty? && options[:install_db_name].first.downcase == 'update'
+                             @databases_installer.update(info)
+                     else
+                             @databases_installer.install(options[:install_db_name],info)
+                     end
+                     trigger_exit(true)
+             end
           #Unless -c option is passed, proceeds to check databases status
              if options[:check_db]
                      @internal_databases.check_databases(@info['databases'],@info,@bbtools)
+                     trigger_exit(true) if @internal_databases.exit?
              else
-                    STDERR.puts "Skipping checking and indexing databases step."
+                     STDERR.puts "Skipping checking and indexing databases step."
              end
 
       end
@@ -79,13 +84,16 @@ class DatabasesSupportHandler
       def maintenance_external(paths_to_dbs)
             
              @external_databases.check_databases(paths_to_dbs,@external_db_info,@bbtools)
+             trigger_exit(false) if @external_databases.exit?
 
       end
   #SET EXCLUDING! ...
       def set_excluding(refs)
              
              init_external?
-             return @external_databases.update_database_by_refs(refs,@external_db_info,@bbtools)
+             db_name = @external_databases.update_database_by_refs(refs,@external_db_info,@bbtools)             
+             trigger_exit(false) if @external_databases.exit?             
+             return db_name
 
       end
   #TEST if INIT
@@ -105,6 +113,14 @@ class DatabasesSupportHandler
 
       end
 
+#TRIGGER EXIT
+      def trigger_exit(save_trigger)
+
+             save_json(@info,File.join(@dir,'status_info','databases_status_info.json')) if (save? && save_trigger)
+             STDERR.puts "Exiting ..."
+             exit(-1)
+
+      end
 #SAVE JSON
       def save_json(info,file)
              

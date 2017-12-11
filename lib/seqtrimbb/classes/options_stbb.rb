@@ -95,7 +95,7 @@ class OptionsParserSTBB
                   #Install databases trigger, an list of databases to install
                      options[:install_db] = false
                      options[:install_db_name] = Array.new
-                     opts.on( '-i', '--install_databases [DB_NAME]',Array,'If no DB_NAME is specified, install (or reinstall) all default databases provided with SeqTrimBB. Default databases can be modified with --default_databases options.') do |value|
+                     opts.on( '-i', '--install_databases [DB_NAME]',Array,'If no DB_NAME is specified, install (or reinstall) all default databases provided with SeqTrimBB. Default databases can be modified with --databases_action,--databases_list options. If DB_NAME is update, SeqTrimBB will update provided databases.') do |value|
                              options[:install_db] = true
                              options[:install_db_name] = value if !value.nil?
                      end

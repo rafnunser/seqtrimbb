@@ -58,7 +58,7 @@ class DatabasesSupportExternal < DatabasesSupport
              super
 
       end
-
+   #UPDATE INDEX 
       def update_database_by_refs(refs,info,bbtools)
              
           #Database essential hash building

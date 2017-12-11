@@ -8,15 +8,17 @@ class DatabasesSupportInternal < DatabasesSupport
       def initialize(dir,info)
 
       #Load previous info from JSON, if exists. Or create new info structure
-            if File.exist?(File.join(dir,'status_info','databases_status_info.json'))
+             if File.exist?(File.join(dir,'status_info','databases_status_info.json'))
                      load_info = JSON.parse(File.read(File.join(dir,'status_info','databases_status_info.json')))
           #Merge! loaded info
                      info.merge!(load_info)
-            else
+      #Init exit trigger
+                    @exit_trigger = false
+             else
                      super(info)
                      info['dir'] = dir
                      info['installed_databases'] = Array.new
-            end
+             end
 
       end
 #SET DEFAULT DATABASES
@@ -50,36 +52,31 @@ class DatabasesSupportInternal < DatabasesSupport
             end
 
       end
-#CHECKS DB STATUS
-      def check_database_status(db_name,info,current_fastas)
-
-           #Checks installation
-             installation_test = !check_installation(info['dir'],[db_name]).empty?
-             info['installed_databases'].push(db_name) if (!info['installed_databases'].include?(db_name) && installation_test)
-             info['installed_databases'].delete(db_name) if (info['installed_databases'].include?(db_name) && !installation_test)
-
-             super
-
-      end
 #CHECK INFO
       def check_databases(databases,info,bbtools)
 
              databases = databases.split(/ |,/) if !databases.is_a?(Array)
   #Info
              STDERR.puts "Checking databases status at #{info['dir']}"
+  #Get info about installation
+             installation_status = check_installation_status(info['dir'],databases)
+             installation_status['installed'].map { |db| info['installed_databases'].push(db) if !info['installed_databases'].include?(db) }
+             if !installation_status['failed'].empty?
+                     STDERR.puts "ERROR. Databases: #{failed_dbs.join(" ")} are empty or not installed.\n Databases can be installed (or reinstalled) with --install_databases option."
+                     installation_status['failed'].map { |db| info['installed_databases'].delete(db) if info['installed'].include?(db) }
+                     @exit_trigger = true
+                     return
+             end
+             if !installation_status['obsolete'].empty?
+                     STDERR.puts "WARNING. Databases: #{installation_status['obsolete']} are NOT updated. You can update them with -i update"
+             end 
   #Check internal databases status
              databases.each do |db|
                      check_database_status(db,info,get_current_fastas(db,info['dir']))
-             end
-  #Get info about installation
-             failed_dbs = databases.select { |d| !info['installed_databases'].include?(d) }
-             if !failed_dbs.empty?
-                     STDERR.puts "ERROR. Databases: #{failed_dbs.join(" ")} are empty or not installed.\n Databases can be reinstalled with --install_databases option."
-                     exit(-1)
-             end             
+             end            
   #Get info for obsolete databases
              if !info['obsolete_databases'].empty?
-                     STDERR.puts "The following databases are obsolete:\n #{info['obsolete_databases'].join("\n\s")}"
+                     STDERR.puts "The following databases indices are obsolete:\n #{info['obsolete_databases'].join("\n\s")}"
                      get_dbs_info(info['obsolete_databases'].select { |d| databases.include?(d) },info)
                      info['modified'] = true                   
                    #Check writing permissions

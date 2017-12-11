@@ -6,7 +6,7 @@ class BBtools
 
 #INIT
        def initialize(dir)
-
+             #TODO: read modules from sh files in bbtools path
              #BBTools dirs
                classp = File.join(dir,'current')
                nativelibdir = File.join(dir,'jni')

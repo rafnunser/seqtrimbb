@@ -4,15 +4,14 @@
 
 class DatabasesSupport
 
-      @@provided_databases = ['adapters','contaminants','contaminants_seqtrim1','cont_bacteria','cont_fungi','cont_mitochondrias','cont_plastids','cont_ribosome','cont_viruses','vectors']
-      @@provided_databases.freeze
 #INIT
 	    def initialize(info)
 
              info['databases'] = Array.new
              info['indexed_databases'] = Array.new
              info['obsolete_databases'] = Array.new
-
+      #Init exit trigger
+             @exit_trigger = false
 	    end
 #METHODS
   #SET DATABASES
@@ -48,12 +47,12 @@ class DatabasesSupport
   #CHECKS DB STATUS
       def check_database_status(db_name,info,current_fastas)
 
-                     if info.key?(db_name) && !info['obsolete_databases'].include?(db_name) # Exists a previous execution 
-                             check_index(db_name,info,current_fastas)
-                     elsif !info.key?(db_name) # First time update
-                             info['obsolete_databases'] << db_name
-                             info[db_name] = {}
-                     end
+             if info.key?(db_name) && !info['obsolete_databases'].include?(db_name) # Exists a previous execution 
+                     check_index(db_name,info,current_fastas)
+             elsif !info.key?(db_name) # First time update
+                     info['obsolete_databases'] << db_name
+                     info[db_name] = {}
+             end
 
       end
   #CHECKS INDEX
@@ -69,7 +68,6 @@ class DatabasesSupport
    #UPDATE INDEX
       def update_index(databases,info,bbtools)
         
-             exit_trigger = false
              databases = databases.split(/ |,/) if !databases.is_a?(Array)
              STDERR.puts "Updating databases indices:"
            # Updating obsolete databases
@@ -92,22 +90,14 @@ class DatabasesSupport
                              info[db_name]['index_size'] = index_size
                      else
            #Exit_trigger = true if database indexing failed
-                             exit_trigger = error if !exit_trigger
+                             @exit_trigger = error if !@exit_trigger
            #Remove failed index
                              FileUtils.rm_rf(info[db_name]['index']) 
                      end              
              end
            #Exit if at least one error was found
-             if exit_trigger
+             if @exit_trigger
                      STDERR.puts"One o more errors were found in databases update"
-                     if info.key?('modified')
-                             STDERR.puts "Saving internal databases info"
-                             File.open(File.join(File.dirname(info[databases.first]['update_error_file']),'databases_status_info.json'),"w") do |f|
-                                     f.write(JSON.pretty_generate(info.except('modified')))
-                             end 
-                     end
-                     STDERR.puts "Exiting"                    
-                     exit(-1)
              end 
 
       end
@@ -135,13 +125,59 @@ class DatabasesSupport
              end
 
       end
-   #CHECK INSTALLATION
-      def check_installation(dir,databases)
+   #CHECK INSTALLATION STATUS
+      def check_installation_status(dir,databases)
 
+             require 'databases_support_install_checker.rb'
              databases = databases.split(/ |,/) if !databases.is_a?(Array)
-             installed_dbs = databases.select { |d| ( Dir.exist?(File.join(dir,'fastas',d)) || !Dir[File.join(dir,'fastas',d,"*.fasta*")].empty? ) }
-             return installed_dbs
+             databases_to_check = databases.map { |db| File.exist?(db) ? db.gsub(/\Wfasta(\Wgz)?/,'') : db }
+             result = {}
+           #Check install
+             result['installed'] = DatabasesSupportInstallChecker.check_installation(dir,databases_to_check)
+             result['failed'] = [] + (databases_to_check - result['installed'])
+           #Check update
+             if !connected_to_internet?
+                     STDERR.puts "WARNING. No internet connection. Skipping checking databases updates."
+                     result['updated'] = []
+                     result['obsolete'] = []
+                     return result
+             end
+             result['updated'] = DatabasesSupportInstallChecker.check_update(dir,result['installed'].select { |db| @@provided_databases.include?(db) })
+             result['obsolete'] = [] + (result['installed'].select { |db| @@provided_databases.include?(db) } - result['updated'])
+             return result
 
+      end
+   #EXIT?
+      def exit?
+
+             return true if @exit_trigger
+
+      end
+   #Internet connection?
+      def connected_to_internet?
+             require 'open-uri'
+             begin
+                     true if open("http://www.google.com/")
+             rescue
+                     false
+             end
+      end 
+#Finally SET provided databases constant (svn)
+      require 'open-uri'
+      begin
+             connected = true if open("http://www.google.com/")
+      rescue
+             connected = false
+      end
+      if connected
+             svn_call = IO.popen("svn ls https://github.com/rafnunser/seqtrimbb-databases/trunk | egrep '/'")
+             @@provided_databases = svn_call.read.split(/\n/).map! { |db| db.chomp!('/') }
+             svn_call.close
+             @@provided_databases.freeze
+      else 
+             STDERR.puts "WARNING. Missing info: unable to set SeqTrimBBs provided databases. No internet connection."
+             @@provided_databases = []
+             @@provided_databases.freeze
       end
 
 end

@@ -10,8 +10,10 @@ class DatabasesTest < Minitest::Test
               # PATHs options hashes
                  setup_databases
                  db_path = File.join(OUTPUT_PATH,'DB')
-                 databases = ['adapters','contaminants','contaminants_seqtrim1','cont_bacteria','cont_fungi','cont_mitochondrias','cont_plastids','cont_ribosome','cont_viruses','vectors']
-                 json = File.join(db_path,'status_info','databases_status_info.json')
+                 svn_call = IO.popen("svn ls https://github.com/rafnunser/seqtrimbb-databases/trunk | egrep '/'")                 
+                 databases = svn_call.read.split(/\n/).map! { |db| db.chomp!('/') }
+                 svn_call.close
+                 json = File.join(db_path,'status_info','databases_status_info.json')                
                  bb_path = BBPATH
                  bbtools = BBtools.new(bb_path)
               ## Initialize databases object
@@ -44,6 +46,7 @@ class DatabasesTest < Minitest::Test
                  random_info['index_size'] = Dir[File.join(random_info['index'],'ref',"*/*/*")].map { |file| File.size?(file) }.inject(:+)
                  assert_equal(stbb_db.info[random_database],random_info)
               # Test Save
+                 json = 
                  stbb_db.save_json(stbb_db.info,json)
                  old_info = stbb_db.info
                  old_info.delete('modified')
