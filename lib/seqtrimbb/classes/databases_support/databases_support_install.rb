@@ -36,10 +36,10 @@ class DatabasesSupportInstall < DatabasesSupport
          #Remove databases files to reinstall it, if it's installed
                      if @@provided_databases.include?(database)
          #Checks connection
-                                     if !connected_to_internet?
-                                             STDERR.puts "ERROR. No internet connection. Failed to install database #{database}"
-                                             return
-                                     end
+                                    # if !connected_to_internet?
+                                    #         STDERR.puts "ERROR. No internet connection. Failed to install database #{database}"
+                                     #        return
+                                     #end
          #if they're provided by STBB, download it, unpack it, and add it to obsolete databases
                                      reinstall_check(database,info)
                                      download_and_unpack(database,info)
@@ -68,10 +68,10 @@ class DatabasesSupportInstall < DatabasesSupport
       def update(info)
 
          #Checks connection
-             if !connected_to_internet?
-                     STDERR.puts "ERROR. No internet connection. Unable to update databases"
-                     return
-             end         
+            # if !connected_to_internet?
+             #        STDERR.puts "ERROR. No internet connection. Unable to update databases"
+              #       return
+             #end         
          #Launch update!
              installation_status = check_installation_status(info['dir'],@@provided_databases)
              if installation_status['obsolete'].empty?

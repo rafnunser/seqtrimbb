@@ -136,12 +136,12 @@ class DatabasesSupport
              result['installed'] = DatabasesSupportInstallChecker.check_installation(dir,databases_to_check)
              result['failed'] = [] + (databases_to_check - result['installed'])
            #Check update
-             if !connected_to_internet?
-                     STDERR.puts "WARNING. No internet connection. Skipping checking databases updates."
-                     result['updated'] = []
-                     result['obsolete'] = []
-                     return result
-             end
+             #if !connected_to_internet?
+              #       STDERR.puts "WARNING. No internet connection. Skipping checking databases updates."
+               #      result['updated'] = []
+                #     result['obsolete'] = []
+                 #    return result
+             #end
              result['updated'] = DatabasesSupportInstallChecker.check_update(dir,result['installed'].select { |db| @@provided_databases.include?(db) })
              result['obsolete'] = [] + (result['installed'].select { |db| @@provided_databases.include?(db) } - result['updated'])
              return result
@@ -154,30 +154,24 @@ class DatabasesSupport
 
       end
    #Internet connection?
-      def connected_to_internet?
-             require 'open-uri'
-             begin
-                     true if open("http://www.google.com/")
-             rescue
-                     false
-             end
-      end 
+    #  def connected_to_internet?
+     #        require 'open-uri'
+      #       begin
+       #              true if open("http://www.google.com/")
+        #     rescue
+         #            false
+          #   end
+      #end 
 #Finally SET provided databases constant (svn)
-      require 'open-uri'
+      #require 'open-uri'
       begin
-             connected = true if open("http://www.google.com/")
-      rescue
-             connected = false
-      end
-      if connected
              svn_call = IO.popen("svn ls https://github.com/rafnunser/seqtrimbb-databases/trunk | egrep '/'")
              @@provided_databases = svn_call.read.split(/\n/).map! { |db| db.chomp!('/') }
              svn_call.close
              @@provided_databases.freeze
-      else 
-             STDERR.puts "WARNING. Missing info: unable to set SeqTrimBBs provided databases. No internet connection."
-             @@provided_databases = []
-             @@provided_databases.freeze
+      rescue Exception => e
+             STDERR.puts "WARNING. Missing info: unable to set SeqTrimBBs provided databases:\n #{e}"
+             exit(-1)
       end
 
 end
