@@ -123,7 +123,7 @@ class OptionsParserSTBB
                      end
                   #To overwrite params that will be loaded later
                      options[:overwrite_params] = nil
-                     opts.on('-p','--overwrite_params "PARAM1" "PARAM1;PARAM2"','Params and their values to overwrite default and templates parameters' ) do |oparams|
+                     opts.on('-P','--overwrite_params "PARAM1" "PARAM1;PARAM2"','Params and their values to overwrite default and templates parameters' ) do |oparams|
                              options[:overwrite_params] = oparams
                      end
                   #Adds a cmd to the pipe
