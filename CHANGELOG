@@ -18,6 +18,11 @@ Rewrited all plugins and their tests.
 Reduced pre-processing workflow to bin/seqtrimbb executable file. Removing seqtrim class.
 Removed scbi_header, and added a simpler header.
 Plugins_stats folder renamed Plugins_logs.
+2.0.3
+CHANGES:
+Moved all svn call to install databases
+Modified params resourcer
+Added repository's information JSON
 
 
 

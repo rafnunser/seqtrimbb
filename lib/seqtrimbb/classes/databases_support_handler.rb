@@ -38,7 +38,7 @@ class DatabasesSupportHandler
           #IF it is requested, proceeds to install or reinstall databases
              if options[:install_db]
                      require 'databases_support_install.rb'
-                     @databases_installer = DatabasesSupportInstall.new
+                     @databases_installer = DatabasesSupportInstall.new(info)
                      if !options[:install_db_name].empty? && options[:install_db_name].first.downcase == 'update'
                              @databases_installer.update(info)
                      else

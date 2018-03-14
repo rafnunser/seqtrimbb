@@ -2,7 +2,7 @@
 # This class provide shared methods to check provided databases installation
 #########################################
 
-class DatabasesSupportInstallChecker
+class DatabasesSupportInstallChecker < DatabasesSupport
 
    #CHECK INSTALLATION
       def self.check_installation(dir,databases)
@@ -15,11 +15,8 @@ class DatabasesSupportInstallChecker
       def self.check_update(dir,databases)
 
              updated_dbs = []
-             svn_call = 'svn ls --xml https://github.com/rafnunser/seqtrimbb-databases/trunk/'
-             ls_call = "ls --full-time #{dir}/fastas"
-             repo_databases_info = parse_xml(svn_call)
-             local_databases_info = parse_ls(ls_call)
-             repo_databases_info.keys.map { |db| updated_dbs << db if (!local_databases_info.key?(db) || repo_databases_info.dig(db) <= local_databases_info.dig(db)) && databases.include?(db) }
+             local_databases_info = parse_ls("ls --full-time #{dir}/fastas")
+             @@repo_info['databases'].map { |db| updated_dbs << db if (!local_databases_info.key?(db) || @@repo_info.dig(db,'date') <= local_databases_info.dig(db)) && databases.include?(db) }
              #check files
              updated_dbs.reject! { |db| !self.get_obsolete_files(db,dir).empty? }
              return updated_dbs
@@ -27,13 +24,14 @@ class DatabasesSupportInstallChecker
       end
    #Get obsolete files!
       def self.get_obsolete_files(database,dir)
-          
+             require 'digest'          
              obsolete_files = []
-             svn_call = "svn ls --xml https://github.com/rafnunser/seqtrimbb-databases/trunk/#{database}"
-             ls_call = "ls --full-time #{dir}/fastas/#{database}"
-             repo_database_info = parse_xml(svn_call)
-             local_database_info = parse_ls(ls_call)
-             repo_database_info.keys.map { |entry| obsolete_files << entry if !local_database_info.key?(entry) || repo_database_info.dig(entry) > local_database_info.dig(entry) }
+             local_hash = {}
+             local_hash['files_checksum'] = {}
+             Dir[File.join(dir,"fastas",database,"*.fasta*")].sort.each do |entry|
+                     local_hash['files_checksum'][File.basename(entry)] = Digest::MD5.file(entry).hexdigest
+             end
+             @@repo_info[database]['files_checksum'].keys.map { |entry| obsolete_files << entry if !local_hash['files_checksum'].key?(entry) || @@repo_info[database]['files_checksum'].dig(entry) != local_hash['files_checksum'].dig(entry) }
              return obsolete_files
 
       end

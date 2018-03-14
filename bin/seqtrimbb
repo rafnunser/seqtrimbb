@@ -112,7 +112,7 @@ def check_previous_execution(output_folders,force_execution)
                              STDERR.puts "WARNING. " + msg
                              FileUtils.rm_rf(folder)
                        else
-                             msg << "To retry, remove it or add --force_execution parameter to the command line."
+                             msg << "To retry, remove it or add --force parameter to the command line."
                              STDERR.puts "ERROR. " + msg
                              exit(-1)
                        end
@@ -194,7 +194,7 @@ bbtools = BBtools.new(bb_path)
 ## Works related to internal databases
 
 # Check subversion
-check_external_requirements('Subversion','svn --version','http://subversion.apache.org/')
+#check_external_requirements('Subversion','svn --version','http://subversion.apache.org/')
 # First initialize DatabasesSupport object
 stbb_databases = DatabasesSupportHandler.new(options[:workers],db_path,bbtools)
 # Second initialize(load) internal databases info

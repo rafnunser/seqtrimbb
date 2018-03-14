@@ -101,6 +101,8 @@ def setup_databases
        db_path = File.join(OUTPUT_PATH,'DB')
        Dir.mkdir(db_path)
        FileUtils.cp_r File.join(source_path,'fastas'),db_path
+       Dir.mkdir(File.join(db_path,'status_info'))
+       FileUtils.cp File.join(db_path,'fastas','repository_databases_info.json'),File.join(db_path,'status_info')
 
 end
 

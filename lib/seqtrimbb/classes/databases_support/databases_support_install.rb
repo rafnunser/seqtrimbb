@@ -7,15 +7,22 @@ class DatabasesSupportInstall < DatabasesSupport
      
      attr_accessor :installed_databases
       
-      def initialize;end
+      def initialize(info)
+  #RETRIEVE REPOSITORY INFO!
+             if check_repository_info(info['dir'])
+                 download_repository_info(info['dir'])
+                 #reload
+                 load_repository_info(info['dir'])
+             end
+      end
   #INSTALL DATABASES
       def install(databases,info)
         
              databases_list = databases.is_a?(Array) ? databases : databases.split(/ |,/)
          #Add STBBs provided databases if list is empty. Avoid reinstalling databases.
-             if databases_list.empty? && !@@provided_databases.empty?
-                     previously_installed = DatabasesSupportInstallChecker.check_installation(info['dir'],@@provided_databases)
-                     databases_list = @@provided_databases - previously_installed
+             if databases_list.empty? && !@@repo_info['databases'].empty?
+                     previously_installed = DatabasesSupportInstallChecker.check_installation(info['dir'],@@repo_info['databases'])
+                     databases_list = @@repo_info['databases'] - previously_installed
                      previously_installed.each do |database|
                              databases_list << database if !DatabasesSupportInstallChecker.get_obsolete_files(database,info['dir']).empty?                   
                      end 
@@ -23,7 +30,10 @@ class DatabasesSupportInstall < DatabasesSupport
                      if databases_list.empty?
                              STDERR.puts "All databases are installed."
                              return
-                     end   
+                     end
+             elsif @@repo_info['databases'].empty?
+                    STDERR.puts "ERROR. Repository databases list is empty."
+                    return 
              end
          #Checks writing permissions
              if !File.writable?(File.join(info['dir'],'fastas'))
@@ -34,12 +44,7 @@ class DatabasesSupportInstall < DatabasesSupport
              databases_list.each_with_index do |database,i|
                      STDERR.puts "Installing database #{database} at: #{File.join(info['dir'],'fastas')}"
          #Remove databases files to reinstall it, if it's installed
-                     if @@provided_databases.include?(database)
-         #Checks connection
-                                    # if !connected_to_internet?
-                                    #         STDERR.puts "ERROR. No internet connection. Failed to install database #{database}"
-                                     #        return
-                                     #end
+                     if @@repo_info['databases'].include?(database)
          #if they're provided by STBB, download it, unpack it, and add it to obsolete databases
                                      reinstall_check(database,info)
                                      download_and_unpack(database,info)
@@ -57,7 +62,7 @@ class DatabasesSupportInstall < DatabasesSupport
              installation_status = check_installation_status(info['dir'],databases_list)
              STDERR.puts "Completed installation of databases:\n #{installation_status['installed'].join("\n\s")}" if !installation_status['installed'].empty?
              STDERR.puts "ERROR. Failed to install databases:\n #{installation_status['failed'].join("\n\s")}\nYou can retry failed databases installation with -i failed databases list (comma separated)" if !installation_status['failed'].empty?
-             STDERR.puts "ERROR. The following databases are missing one or more files:\n #{installation_status['obsolete'].join("\n\s")}\nYou can reinstall the whole database, or use -i update option to retrieve the missing files" if !installation_status['obsolete'].empty?
+             #STDERR.puts "ERROR. The following databases are missing one or more files:\n #{installation_status['obsolete'].join("\n\s")}\nYou can reinstall the whole database, or use -i update option to retrieve the missing files" if !installation_status['obsolete'].empty?
          #Add installed to info
              installation_status['installed'].map { |d| info['installed_databases'] << d if !info['installed_databases'].include?(d) }
          #Modified?
@@ -66,15 +71,10 @@ class DatabasesSupportInstall < DatabasesSupport
       end
  #UPDATE!
       def update(info)
-
-         #Checks connection
-            # if !connected_to_internet?
-             #        STDERR.puts "ERROR. No internet connection. Unable to update databases"
-              #       return
-             #end         
+       
          #Launch update!
-             installation_status = check_installation_status(info['dir'],@@provided_databases)
-             if installation_status['obsolete'].empty?
+             update_status = check_update_status(info['dir'],@@repo_info['databases'])
+             if update_status['obsolete'].empty?
                      STDERR.puts "All Databases are updated."
                      return                     
              end
@@ -84,13 +84,13 @@ class DatabasesSupportInstall < DatabasesSupport
                      return
              end
          #Update obsolete databases
-             installation_status['obsolete'].each do |db|
+             update_status['obsolete'].each do |db|
                      STDERR.puts "Updating database #{db}"
                      update_database(db,info)
              end
          #Update status
-             updated = DatabasesSupportInstallChecker.check_update(info['dir'],installation_status['obsolete'])
-             failed_to_update = installation_status['obsolete'] - updated
+             updated = DatabasesSupportInstallChecker.check_update(info['dir'],update_status['obsolete'])
+             failed_to_update = update_status['obsolete'] - updated
              if !failed_to_update.empty?
                      STDERR.puts "ERROR. Unable to update databases:\n#{failed_to_update.join("\n")}"
              end
@@ -181,5 +181,24 @@ class DatabasesSupportInstall < DatabasesSupport
              end
 
       end
-
+    #Check repo info
+      def check_repository_info(dir)
+             if File.exist?(File.join(dir,'status_info','repository_databases_info.json'))
+                 repository_date = DatabasesSupportInstallChecker.parse_xml("svn ls --xml https://github.com/rafnunser/seqtrimbb-databases/trunk/")["repository_databases_info.json"]
+                 local_date = DatabasesSupportInstallChecker.parse_ls("ls --full-time #{dir}/status_info")["repository_databases_info.json"]
+                 if repository_date > local_date
+                     return true    
+                 else
+                     return false
+                 end
+             else
+                 return true
+             end      
+      end
+    #Download repo info
+      def download_repository_info(dir)
+             STDERR.puts "INFO. Downloading databases repository info."
+             File.delete(File.join(dir,'status_info','repository_databases_info.json')) if File.exist?(File.join(dir,'status_info','repository_databases_info.json'))
+             system("svn export https://github.com/rafnunser/seqtrimbb-databases/trunk/repository_databases_info.json #{File.join(dir,'status_info','repository_databases_info.json')}")
+      end
 end

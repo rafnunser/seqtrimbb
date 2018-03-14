@@ -65,12 +65,12 @@ class OptionsParserSTBB
                      #end
                   #Generate output in gzip
                      options[:write_in_gzip] = true
-                     opts.on( '-z', '--no_gzip', 'Avoid generating output files in gzip format.' ) do
+                     opts.on( '-z','--no_gzip', 'Avoid generating output files in gzip format.' ) do
                              options[:write_in_gzip] = false
                      end
                   #Force execution
                      options[:force_execution] = false
-                     opts.on( '--force', 'Force SeqtrimBB execution deleting previous output files' ) do
+                     opts.on( '-F','--force', 'Force SeqtrimBB execution deleting previous output files' ) do
                              options[:force_execution] = true
                      end
                   #Generate stats with FastQC

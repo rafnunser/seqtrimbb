@@ -1,0 +1,79 @@
+{
+  "databases": [
+    "contaminants_seqtrim1",
+    "cont_ribosome",
+    "cont_bacteria",
+    "adapters",
+    "cont_mitochondrias",
+    "cont_fungi",
+    "cont_plastids",
+    "vectors",
+    "cont_viruses",
+    "contaminants"
+  ],
+  "contaminants_seqtrim1": {
+    "date": 20171201100521,
+    "files_checksum": {
+      "Contaminant_four.fasta.gz": "11fa347a88b40a33ceabfba672ecef47",
+      "Contaminant_three.fasta.gz": "78dd520b38bc1033d8caafadac5fa247"
+    }
+  },
+  "cont_ribosome": {
+    "date": 20171201100521,
+    "files_checksum": {
+      "rrna_lsu90.fasta.gz": "9e54b26faf0aad959abdf6776a1d0a16",
+      "rrna_ssu90.fasta.gz": "ebacff84a8fb10f22872e2b50aa13e55"
+    }
+  },
+  "cont_bacteria": {
+    "date": 20171201100521,
+    "files_checksum": {
+      "Contaminant_five.fasta.gz": "01dbb4c9613095ad7fa5a8528ad25a1f",
+      "Contaminant_six.fasta.gz": "c8ade47b1422e0e4cf9516541de4a23d"
+    }
+  },
+  "adapters": {
+    "date": 20171201100521,
+    "files_checksum": {
+      "adapters.fasta.gz": "b4324ac845412d1bd99f3830465755ad"
+    }
+  },
+  "cont_mitochondrias": {
+    "date": 20171201100521,
+    "files_checksum": {
+      "mitochondrial_genomes.fasta.gz": "7ff23207f30ff304798c5f0220502e6a"
+    }
+  },
+  "cont_fungi": {
+    "date": 20171201100521,
+    "files_checksum": {
+      "Contaminant_seven.fasta.gz": "cdba3272429ceff3337743c65a24a2d5"
+    }
+  },
+  "cont_plastids": {
+    "date": 20171201100521,
+    "files_checksum": {
+      "plastids_genomes.fasta.gz": "163dc4617f0af5c753278fb5e84faf74"
+    }
+  },
+  "vectors": {
+    "date": 20171201100521,
+    "files_checksum": {
+      "vectors.fasta.gz": "6860fd449cf8e221be7a4bd1f32428a4"
+    }
+  },
+  "cont_viruses": {
+    "date": 20171201100521,
+    "files_checksum": {
+      "Bacteriophage.fasta.gz": "08469dcbb803c6158c191dd8e7ca1901"
+    }
+  },
+  "contaminants": {
+    "date": 20171201100521,
+    "files_checksum": {
+      "Another_contaminant.fasta.gz": "a19eec548cd38b2eed2b6fae738ecf1f",
+      "Contaminant_one.fasta.gz": "88ce307ed694080346597eb9c898d07d",
+      "Contaminant_two.fasta.gz": "0a7dc5bdcf60a1f41a61ec43476acac2"
+    }
+  }
+}

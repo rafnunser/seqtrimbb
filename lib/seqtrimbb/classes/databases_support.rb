@@ -135,17 +135,27 @@ class DatabasesSupport
            #Check install
              result['installed'] = DatabasesSupportInstallChecker.check_installation(dir,databases_to_check)
              result['failed'] = [] + (databases_to_check - result['installed'])
-           #Check update
-             #if !connected_to_internet?
-              #       STDERR.puts "WARNING. No internet connection. Skipping checking databases updates."
-               #      result['updated'] = []
-                #     result['obsolete'] = []
-                 #    return result
-             #end
-             result['updated'] = DatabasesSupportInstallChecker.check_update(dir,result['installed'].select { |db| @@provided_databases.include?(db) })
-             result['obsolete'] = [] + (result['installed'].select { |db| @@provided_databases.include?(db) } - result['updated'])
              return result
 
+      end
+   #CHECK UPDATE STATUS(dir,databases)
+      def check_update_status(dir,databases)
+
+             result = check_installation_status(dir,databases)
+           #Check update
+             result['updated'] = DatabasesSupportInstallChecker.check_update(dir,result['installed'].select { |db| @@repo_info['databases'].include?(db) })
+             result['obsolete'] = [] + (result['installed'].select { |db| @@repo_info['databases'].include?(db) } - result['updated'])
+             return result
+
+      end
+  #LOAD REPO INFO
+      def load_repository_info(dir)
+             if File.exist?(File.join(dir,'status_info','repository_databases_info.json'))
+                     @@repo_info = JSON.parse(File.read(File.join(dir,'status_info','repository_databases_info.json')))
+             else
+                     STDERR.puts "WARNING. Databases repository information is not available. Run seqtrimbb with -i option to retrieve it."
+                     @@repo_info = {'databases' => Array.new}
+             end
       end
    #EXIT?
       def exit?
@@ -153,25 +163,4 @@ class DatabasesSupport
              return true if @exit_trigger
 
       end
-   #Internet connection?
-    #  def connected_to_internet?
-     #        require 'open-uri'
-      #       begin
-       #              true if open("http://www.google.com/")
-        #     rescue
-         #            false
-          #   end
-      #end 
-#Finally SET provided databases constant (svn)
-      #require 'open-uri'
-      begin
-             svn_call = IO.popen("svn ls https://github.com/rafnunser/seqtrimbb-databases/trunk | egrep '/'")
-             @@provided_databases = svn_call.read.split(/\n/).map! { |db| db.chomp!('/') }
-             svn_call.close
-             @@provided_databases.freeze
-      rescue Exception => e
-             STDERR.puts "WARNING. Missing info: unable to set SeqTrimBBs provided databases:\n #{e}"
-             exit(-1)
-      end
-
 end

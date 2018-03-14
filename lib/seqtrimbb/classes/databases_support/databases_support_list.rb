@@ -35,7 +35,7 @@ class DatabasesSupportList < DatabasesSupport
                                      puts ""
                                      puts "Databases provided by SeqTrimBB:"
                                      puts "-"
-                                     @@provided_databases.sort.map { |d| puts d }
+                                     @@repo_info['databases'].sort.map { |d| puts d }
                                      puts ""
                                      puts "Indexed databases:"
                                      puts "-"
