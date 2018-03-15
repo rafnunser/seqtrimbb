@@ -56,7 +56,7 @@ To add a **piped call to an external tool**:
   
 To **modify** cleaning parameters directly from your call to SeqTrimBB, use **--overwrite_params** option. To modify more than one parameter use ";" as separator. For example, to change minimal read length to 100 bases:
 
-`seqtrimbb -t genomics.txt -Q p1.fastq,p2.fastq --overwrite_params "minlength=100"`
+  `seqtrimbb -t genomics.txt -Q p1.fastq,p2.fastq --overwrite_params "minlength=100"`
 
 To get **additional help** and list of available templates and databases:
 
@@ -213,7 +213,15 @@ This will install SeqTrimBB and all the required gems.
 
 #### Install SeqTrimBB's core databases
 
-TODO
+To install SeqTrimBB's core databases:
+
+  `seqtrimbb -i`
+
+To update SeqTrimBB's core databases:
+
+  `seqtrimbb -i update`
+
+Databases installation uses Subversion to download files from databases repository. If your system does not support svn, you can clone databases repository (https://github.com/rafnunser/seqtrimbb-databases.git). By default cloned files must be placed inside SeqTrimBB's root, in a folder called 'DB'.
 
 ### Database modifications
 

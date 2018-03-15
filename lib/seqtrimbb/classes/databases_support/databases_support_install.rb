@@ -112,7 +112,7 @@ class DatabasesSupportInstall < DatabasesSupport
 
           #Download database. From google drive temporary, Hash to store databases Google Drives IDs
              dir_out = File.join(info['dir'],'fastas',database)
-             url = "https://github.com/rafnunser/seqtrimbb-databases/trunk/#{database}"
+             url = "https://github.com/rafnunser/seqtrimbb-databases/trunk/fastas/#{database}"
              download_cmd = "svn export #{url} #{dir_out}"
              STDERR.puts "Downloading database: #{database}"
              system(download_cmd)
@@ -146,7 +146,7 @@ class DatabasesSupportInstall < DatabasesSupport
 
              obsolete_files = DatabasesSupportInstallChecker.get_obsolete_files(database,info['dir'])
              STDERR.puts "Missing or obsolete files:\n#{obsolete_files.join("\n")}"
-             url = "https://github.com/rafnunser/seqtrimbb-databases/trunk/#{database}"
+             url = "https://github.com/rafnunser/seqtrimbb-databases/trunk/fastas/#{database}"
              obsolete_files.each do |file|
                      download_file(url,info['dir'],database,file)
                      if !check_download(info['dir'],database)
@@ -184,7 +184,7 @@ class DatabasesSupportInstall < DatabasesSupport
     #Check repo info
       def check_repository_info(dir)
              if File.exist?(File.join(dir,'status_info','repository_databases_info.json'))
-                 repository_date = DatabasesSupportInstallChecker.parse_xml("svn ls --xml https://github.com/rafnunser/seqtrimbb-databases/trunk/")["repository_databases_info.json"]
+                 repository_date = DatabasesSupportInstallChecker.parse_xml("svn ls --xml https://github.com/rafnunser/seqtrimbb-databases/trunk/status_info")["repository_databases_info.json"]
                  local_date = DatabasesSupportInstallChecker.parse_ls("ls --full-time #{dir}/status_info")["repository_databases_info.json"]
                  if repository_date > local_date
                      return true    
@@ -199,6 +199,6 @@ class DatabasesSupportInstall < DatabasesSupport
       def download_repository_info(dir)
              STDERR.puts "INFO. Downloading databases repository info."
              File.delete(File.join(dir,'status_info','repository_databases_info.json')) if File.exist?(File.join(dir,'status_info','repository_databases_info.json'))
-             system("svn export https://github.com/rafnunser/seqtrimbb-databases/trunk/repository_databases_info.json #{File.join(dir,'status_info','repository_databases_info.json')}")
+             system("svn export https://github.com/rafnunser/seqtrimbb-databases/trunk/status_info/repository_databases_info.json #{File.join(dir,'status_info','repository_databases_info.json')}")
       end
 end
