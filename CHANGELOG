@@ -23,6 +23,14 @@ CHANGES:
 Moved all svn call to install databases
 Modified params resourcer
 Added repository's information JSON
+2.0.4
+CHANGES:
+Prefixed amount of RAM to update databases(16g)
+Changed methods to load bbtools modules.
+2.0.5
+CHANGES:
+Added reporter and repor classes
+
 
 
 

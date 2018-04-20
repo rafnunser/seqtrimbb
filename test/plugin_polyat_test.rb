@@ -22,7 +22,7 @@ class PluginPolyAtTest < Minitest::Test
              default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
              bbtools.store_default(default_options)
              outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_polyat_trimming.fastq.gz")
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t trimpolya=9 outs=#{outsingles} t=1 -Xmx50m 2> #{outstats}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t trimpolya=9 outs=#{outsingles} 2> #{outstats}"             
              manager = PluginManager.new('PluginPolyAt',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -31,7 +31,7 @@ class PluginPolyAtTest < Minitest::Test
 
           #Aditional params
              params.set_param('polyat_aditional_params','add_param=test')
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF in=stdin.fastq out=stdout.fastq int=t trimpolya=9 outs=#{outsingles} add_param=test t=1 -Xmx50m 2> #{outstats}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t trimpolya=9 outs=#{outsingles} add_param=test 2> #{outstats}"             
              manager = PluginManager.new('PluginPolyAt',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins

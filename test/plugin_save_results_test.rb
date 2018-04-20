@@ -24,7 +24,7 @@ class PluginOutputTest < Minitest::Test
              options = OptionsParserSTBB.parse(args)
              params = Params.new(options,bbtools)
              params.set_param('plugin_list','PluginSaveResultsBb')
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=stdin.fastq out=#{outfile_interleaved} int=t minlength=50 t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=stdin.fastq out=#{outfile_interleaved} int=t minlength=50 2> #{outstats}"
              manager = PluginManager.new('PluginSaveResultsBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -35,7 +35,7 @@ class PluginOutputTest < Minitest::Test
              options = OptionsParserSTBB.parse(args)
              params = Params.new(options,bbtools)
              params.set_param('plugin_list','PluginSaveResultsBb')
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=stdin.fastq out=#{outfiles[0]} int=t out2=#{outfiles[1]} minlength=50 t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=stdin.fastq out=#{outfiles[0]} int=t out2=#{outfiles[1]} minlength=50 2> #{outstats}"
              manager = PluginManager.new('PluginSaveResultsBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -46,7 +46,7 @@ class PluginOutputTest < Minitest::Test
              options = OptionsParserSTBB.parse(args)
              params = Params.new(options,bbtools)
              params.set_param('plugin_list','PluginSaveResultsBb')
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=stdin.fastq out=#{outfile_single} int=f minlength=50 t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=stdin.fastq out=#{outfile_single} int=f minlength=50 2> #{outstats}"
              manager = PluginManager.new('PluginSaveResultsBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -54,7 +54,7 @@ class PluginOutputTest < Minitest::Test
              assert_equal(result,plugin_cmd)
           #Minlength
              params.set_param('minlength',70)
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=stdin.fastq out=#{outfile_single} int=f minlength=70 t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=stdin.fastq out=#{outfile_single} int=f minlength=70 2> #{outstats}"
              manager = PluginManager.new('PluginSaveResultsBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -66,7 +66,7 @@ class PluginOutputTest < Minitest::Test
              params = Params.new(options,bbtools)
              params.set_param('plugin_list','PluginSaveResultsBb')
              outfile_single = File.join(File.expand_path(OUTPUT_PATH),"sequences_.fastq")             
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=stdin.fastq out=#{outfile_single} int=f minlength=50 t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=stdin.fastq out=#{outfile_single} int=f minlength=50 2> #{outstats}"
              manager = PluginManager.new('PluginSaveResultsBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -78,7 +78,7 @@ class PluginOutputTest < Minitest::Test
              params = Params.new(options,bbtools)
              params.set_param('plugin_list','PluginSaveResultsBb')
              outfile_single = File.join(File.expand_path(OUTPUT_PATH),"sequences_.fastq")             
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=stdin.fastq out=stdout.fastq int=f minlength=50 t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=stdin.fastq out=stdout.fastq int=f minlength=50 2> #{outstats}"
              manager = PluginManager.new('PluginSaveResultsBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins

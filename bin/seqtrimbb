@@ -25,6 +25,8 @@ $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes'))
 $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes','databases_support'))
 # Finds classes in 'classes/params' folder
 $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes','params'))
+# Finds classes in 'classes/report' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes','report'))
 # Finds classes in 'plugins' folder
 $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','plugins'))
 
@@ -34,91 +36,103 @@ $: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','plugins'))
 
 # Decamelize strings
 class String  
-   def decamelize 
-           self.to_s. 
-                   gsub(/([A-Z\d]+)([A-Z][a-z])/, '\1_\2'). 
-                   gsub(/([a-z]+)([A-Z\d])/, '\1_\2'). 
-                   gsub(/([A-Z]{2,})(\d+)/i, '\1_\2'). 
-                   gsub(/(\d+)([a-z])/i, '\1_\2'). 
-                   gsub(/(.+?)\&(.+?)/, '\1_&_\2'). 
-                   gsub(/\s/, '_').downcase 
-   end
+   	def camelize
+			self.to_s.split('_').collect(&:capitalize).join
+   	end	
+	def decamelize 
+		self.to_s.gsub(/([A-Z\d]+)([A-Z][a-z])/, '\1_\2').
+			gsub(/([a-z]+)([A-Z\d])/, '\1_\2'). 
+			gsub(/([A-Z]{2,})(\d+)/i, '\1_\2'). 
+			gsub(/(\d+)([a-z])/i, '\1_\2'). 
+			gsub(/(.+?)\&(.+?)/, '\1_&_\2'). 
+			gsub(/\s/, '_').downcase 
+	end
 end
 
 # Slice hashes (extract a subhash)
 class Hash
-   def slice(*keys)
-           ::Hash[[keys, self.values_at(*keys)].transpose]
-   end
-   def except(*keys)
-           dup.except!(*keys)
-   end
-   def except!(*keys)
-           keys.each { |key| delete(key) }
-           self
-   end
+	def slice(*keys)
+		::Hash[[keys, self.values_at(*keys)].transpose]
+	end
+	def except(*keys)
+		dup.except!(*keys)
+	end
+	def except!(*keys)
+		keys.each { |key| delete(key) }
+		self
+	end
 end
 
 # PATCH OLD_RUBY
 ## DIG
 module RubyDig
-       def dig(key, *rest)
-               if value = (self[key] rescue nil)
-                       if rest.empty?
-                               value
-                       elsif value.respond_to?(:dig)
-                               value.dig(*rest)
-                       end
-               end
-       end
+	def dig(key, *rest)
+		if value = (self[key] rescue nil)
+			if rest.empty?
+				value
+			elsif value.respond_to?(:dig)
+				value.dig(*rest)
+			end
+		end
+	end
 end
 ##PATCH!
 if RUBY_VERSION < '2.3'
-       Array.send(:include, RubyDig)
-       Hash.send(:include, RubyDig)
+	Array.send(:include, RubyDig)
+	Hash.send(:include, RubyDig)
 end
 
 #Check external requirements. Takes a external call, and test if it can execute
 def check_external_requirements(req,req_call,source_url,version=nil)
-     #Checks if external requirement is present
-       begin
-               cmd = IO.popen(req_call)
-       rescue
-               STDERR.puts "Unable to find external requirement: #{req}\nYou can download it from #{source_url}"
-               exit (-1)
-       end
-     #Checks version
-       if !version.nil?
-             #Extract version 
-               version_from_cmd = cmd.read.split("\n")[0].gsub(/\D/,'').to_i
-               if version_from_cmd < version.to_s.gsub(/\D/,'').to_i
-                       STDERR.puts "Detected an old #{req} version. An updated is required."
-                       exit(-1)
-               end
-       end
-       cmd.close
-
+	#Checks if external requirement is present
+	begin
+		cmd = IO.popen(req_call)
+	rescue
+		STDERR.puts "Unable to find external requirement: #{req}\nYou can download it from #{source_url}"
+		exit (-1)
+	end
+	#Checks version
+	if !version.nil?
+	#Extract version 
+		version_from_cmd = cmd.read.split("\n")[0].gsub(/\D/,'').to_i
+		if version_from_cmd < version.to_s.gsub(/\D/,'').to_i
+			STDERR.puts "Detected an old #{req} version. An updated is required."
+			exit(-1)
+		end
+	end
+	cmd.close
 end
 
 #Check for previous execution (looks for outputs folder/s existence)
 def check_previous_execution(output_folders,force_execution)
+	# test each folder existence
+	output_folders.each do |folder|
+		if Dir.exist?(folder)
+			msg = "Output folder #{folder} already exists. "
+			if force_execution
+				msg << "Force execution parameter is set to true. Removing #{folder}"
+				STDERR.puts "WARNING. " + msg
+				FileUtils.rm_rf(folder)
+			else
+				msg << "To retry, remove it or add --force parameter to the command line."
+				STDERR.puts "ERROR. " + msg
+				exit(-1)
+			end
+		end
+	end
 
-   # test each folder existence
-       output_folders.each do |folder|
-               if Dir.exist?(folder)
-                       msg = "Output folder #{folder} already exists. "
-                       if force_execution
-                             msg << "Force execution parameter is set to true. Removing #{folder}"
-                             STDERR.puts "WARNING. " + msg
-                             FileUtils.rm_rf(folder)
-                       else
-                             msg << "To retry, remove it or add --force parameter to the command line."
-                             STDERR.puts "ERROR. " + msg
-                             exit(-1)
-                       end
-               end
-       end
-
+end
+#Store general stats
+def store_general_stats(params,stats)
+	#Adding General info about input
+	stats = {}
+	stats['file'] = params.get_param('file').join(" ")
+	stats['type'] = params.get_param('sample_type').to_s
+	stats['file_format'] = params.get_param('file_format').to_s
+	stats['output_file'] = params.get_param('outputfile').join(" ")
+	stats['read_length'] = params.get_param('read_length').to_s
+	#Return            
+	return stats
 end
 
 ###############################################################################
@@ -136,6 +150,7 @@ require 'databases_support_handler'
 require 'plugin'
 require 'plugin_manager'
 require 'bbtools'
+require 'fastqc_handler'
 
 ###############################################################################
 # WORKING PATHS AND HEADER
@@ -145,16 +160,16 @@ require 'bbtools'
 OUTPUT_PATH = File.expand_path('output_files_tmp')
 #If there is a BBDB environment var (databases location), then use it
 if ENV['BBDB']
-       db_path = ENV['BBDB']
+	db_path = ENV['BBDB']
 else # otherwise use SEQTRIM_PATH + DB
-       db_path = File.expand_path(File.join(SEQTRIM_PATH, "DB"))
+	db_path = File.expand_path(File.join(SEQTRIM_PATH, "DB"))
 end
 
 #First set a BBtools path, then checks if BBtools is properly installed. If there is a BBTOOLS_PATH environment var, then use it
 if ENV['BBTOOLS_PATH']
-       bb_path = ENV['BBTOOLS_PATH']
+	bb_path = ENV['BBTOOLS_PATH']
 else # otherwise use the result of which bbmap.sh
-       bb_path  = File.expand_path(File.dirname(%x[which bbmap.sh]))
+	bb_path  = File.expand_path(File.dirname(%x[which bbmap.sh]))
 end
 check_external_requirements('BBtools',"java -Xmx80m -cp #{File.join(bb_path,'current')} driver.BBVersion","http://sourceforge.net/projects/bbmap/","37.53")
 
@@ -177,7 +192,7 @@ options = OptionsParserSTBB.parse(ARGV)
 # Print options from input
 STDERR.puts " - Using options:  "
 options.each do |option,value|
-       STDERR.puts "\t- #{option}: #{value}"
+	STDERR.puts "\t- #{option}: #{value}"
 end
 STDERR.puts "-----------------------------------------------\n"
 
@@ -201,9 +216,9 @@ stbb_databases = DatabasesSupportHandler.new(options[:workers],db_path,bbtools)
 stbb_databases.init_internal(options.slice(:databases_action,:databases_list))
 # OPT: list databases
 if options[:list_db]
-     # List database entries in a database
-       stbb_databases.list_databases(options[:list_db_name])
-       exit(-1)
+	# List database entries in a database
+	stbb_databases.list_databases(options[:list_db_name])
+	exit(-1)
 end
 # DATABASES MAINTENANCE (If its needed or requested. Build databases structure, install databases, check and update index)
 stbb_databases.maintenance_internal(options.slice(:install_db,:install_db_name,:check_db))
@@ -212,8 +227,8 @@ stbb_databases.save_json(stbb_databases.info,File.join(db_path,'status_info','da
 
 ## Checks for required options
 if (ARGV.count != 0) || ([:file,:template].map { |opt| options[opt].empty? }.any?) 
-       STDERR.puts "\nTo preprocess a sample you must provide all required options (input file:-Q,template:-t).\n"
-       puts OptionsParserSTBB.help
+	STDERR.puts "\nTo preprocess a sample you must provide all required options (input file:-Q,template:-t).\n"
+	puts OptionsParserSTBB.help
 end
 ## Checks for a previous execution!
 check_previous_execution([OUTPUT_PATH,options[:final_output_path]],options[:force_execution])
@@ -225,39 +240,45 @@ check_previous_execution([OUTPUT_PATH,options[:final_output_path]],options[:forc
 # Reads parameters from template
 STDERR.puts "Reading params"
 STDERR.puts "Using params file: #{options[:template]}"
+
 # Initialize params object and load params from template and options
 params = Params.new(options,bbtools)
-
 # Finally checks plugin_list param. If it fails, exit.
 params.check_param(pl_error = [],'plugin_list','PluginList',nil,'Plugins applied to every sequence, separated by commas. Order is important')
 if !pl_error.empty?
-       STDERR.puts pl_error
-       exit(-1)
+	STDERR.puts pl_error
+	exit(-1)
 end
 
 # Make working directory and subdirectories
 if File.writable?(File.dirname(OUTPUT_PATH))
-       [OUTPUT_PATH,File.join(OUTPUT_PATH,'plugins_logs')].map{ |d| Dir.mkdir(d) if !Dir.exist?(d) }
+	[OUTPUT_PATH,File.join(OUTPUT_PATH,'plugins_logs')].map{ |d| Dir.mkdir(d) if !Dir.exist?(d) }
 else
-       STDERR.puts "Error in writing permissions. Impossible to make output folder: #{OUTPUT_PATH}."
-       exit(-1)
+	STDERR.puts "Error in writing permissions. Impossible to make output folder: #{OUTPUT_PATH}."
+	exit(-1)
 end
+
+# Init stats hash
+stats = {}
+# Store general stats
+stats['general'] = store_general_stats(params,stats)
 
 ###############################################################################
 # INITIAL STATS
 ###############################################################################
 
-check_external_requirements('FastQC','fastqc -v',"http://www.bioinformatics.babraham.ac.uk/projects/fastqc/")
-
 # Extract initial global stats
 if params.exist?('generate_initial_stats') && params.get_param('generate_initial_stats').to_s=='true'
-       STDERR.puts "Calculating initial stats: i.e. FastQC"
-# fastqc cmd 
-       Dir.mkdir(File.join(OUTPUT_PATH,'initial_stats'))
-       cmd="fastqc -q -o #{File.join(OUTPUT_PATH,'initial_stats')} -t #{params.get_param('workers')} #{params.get_param('file').join(" ")}"
-       system(cmd)
+	STDERR.puts "Calculating initial stats: i.e. FastQC"
+	check_external_requirements('FastQC','fastqc -v',"http://www.bioinformatics.babraham.ac.uk/projects/fastqc/")
+# fastqc
+	Dir.mkdir(File.join(OUTPUT_PATH,'initial_stats'))
+	initial_fastqc = Fastqc.new(params.get_param('file'),params.get_param('workers'),File.join(OUTPUT_PATH,'initial_stats'))
+# store fastqc stats
+	stats['fastqc'] ||= {}
+	stats['fastqc']['initial'] = initial_fastqc.load_stats
 else
-       STDERR.puts "Skipping initial stats phase."
+	STDERR.puts "Skipping initial stats phase."
 end
 
 ###############################################################################
@@ -274,10 +295,10 @@ plugin_manager = PluginManager.new(plugin_list,params,bbtools,stbb_databases)
 # load and check plugins params
 STDERR.puts "Checking plugins params"
 if !plugin_manager.check_plugins_params
-       STDERR.puts "ERROR. Plugin check failed!"
-    # save used params to file
-       params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
-       exit(-1)
+	STDERR.puts "ERROR. Plugin check failed!"
+	# save used params to file
+	params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
+	exit(-1)
 end
 
 # EXECUTE PLUGINS:
@@ -285,8 +306,8 @@ plugin_manager.execute_plugins
 STDERR.puts "-----------------------------------------------\n"
 STDERR.puts "PLUGINS RESULTS:"
 plugin_manager.plugin_result.each do |plugin,plugin_hash|
-       cmd = plugin_hash['cmd']
-       STDERR.puts "\s#{plugin}:\n#{cmd}"
+	cmd = plugin_hash['cmd']
+	STDERR.puts "\s#{plugin}:\n#{cmd}"
 end
 STDERR.puts "-----------------------------------------------\n"
 # Pipe! plugins and launch cmd
@@ -300,51 +321,57 @@ system(cmd_to_execute)
 STDERR.puts "...Finalizing cleaning process..."
 
 # Storing all plugins stats and error checking
-stats = plugin_manager.extract_stats
+plugin_manager.extract_stats(stats)
 #Clean up!
 plugin_manager.clean_garbage!
-# Saving stats
-File.open("#{OUTPUT_PATH}/stats.json","w") do |f|
-       f.write(JSON.pretty_generate(stats))
-end
-# Save used params to file
-params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
 
 ###############################################################################
 # FINAL STATS
 ###############################################################################
 
-# Extract initial global stats
+# Extract final global stats
 if params.exist?('generate_final_stats') && params.get_param('generate_final_stats').to_s=='true'
-       STDERR.puts "Calculating final stats: i.e. FastQC"
-# fastqc cmd 
-       Dir.mkdir(File.join(OUTPUT_PATH,'final_stats'))
-       cmd="fastqc -q -o #{File.join(OUTPUT_PATH,'final_stats')} -t #{params.get_param('workers')} #{params.get_param('outputfile').join(" ")}"
-       system(cmd)
+	STDERR.puts "Calculating final stats: i.e. FastQC"
+	check_external_requirements('FastQC','fastqc -v',"http://www.bioinformatics.babraham.ac.uk/projects/fastqc/")
+# fastqc
+	Dir.mkdir(File.join(OUTPUT_PATH,'final_stats'))
+	initial_fastqc = Fastqc.new(params.get_param('outputfile'),params.get_param('workers'),File.join(OUTPUT_PATH,'final_stats'))
+# store fastqc stats
+	stats['fastqc'] ||= {}
+	stats['fastqc']['final'] = initial_fastqc.load_stats
 else
-       STDERR.puts "Skipping final stats phase."
+	STDERR.puts "Skipping final stats phase."
 end
-
 
 ###############################################################################
 # REPORT
 ###############################################################################
 
+# Saving stats
+File.open("#{OUTPUT_PATH}/stats.json","w") do |f|
+	f.write(JSON.pretty_generate(stats))
+end
+# Save used params to file
+params.save_file(File.join(OUTPUT_PATH,'used_params.txt'))
+
 #generate report
-
-#if !options[:skip_report] && system("which generate_report.rb > /dev/null ")
-#  cmd="generate_report.rb #{OUTPUT_PATH} 2> report_generation_errors.log"
- # $LOG.info "Generating report #{cmd}"
-  # `#{cmd}`
-#else
- # skip_text=','
-  #if options[:skip_report]
-   # skip_text=' and remove the -R option from the command line.'
-  #end
-
-  #$LOG.info "If you want a detailed report in PDF format, be sure you have installed the optional seqtrimbb_report gem (gem install seqtrimbb_report)#{skip_text}"
-  #$LOG.info "Closing"
-#end
+if !options[:skip_report]
+	STDERR.puts "Generating report ..."
+	require 'reporter'
+	require 'report_html'	
+	#Init Reporter
+	reporter = Reporter.new([stats],false)
+	#Build template and container
+	reporter.get_ready
+	#Build report
+	report_dir = File.join(OUTPUT_PATH,'report_files')
+	if !Dir.exist?(report_dir)
+		Dir.mkdir(report_dir)
+	end
+	reporter.build_report(report_dir)	
+else
+	STDERR.puts "Skipping reporting step!"
+end
 
 ###############################################################################
 # EXIT

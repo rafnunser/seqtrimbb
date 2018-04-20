@@ -21,7 +21,7 @@ class PluginInputTest < Minitest::Test
              options = OptionsParserSTBB.parse(args)
              params = Params.new(options,bbtools)
              params.set_param('plugin_list','PluginReadInputBb')
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=#{file_interleaved} out=stdout.fastq int=t t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=#{file_interleaved} out=stdout.fastq int=t 2> #{outstats}"
              manager = PluginManager.new('PluginReadInputBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -32,7 +32,7 @@ class PluginInputTest < Minitest::Test
              options = OptionsParserSTBB.parse(args)
              params = Params.new(options,bbtools)
              params.set_param('plugin_list','PluginReadInputBb')
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=#{file1} out=stdout.fastq int=f in2=#{file2} t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=#{file1} out=stdout.fastq int=f in2=#{file2} 2> #{outstats}"
              manager = PluginManager.new('PluginReadInputBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -43,7 +43,7 @@ class PluginInputTest < Minitest::Test
              options = OptionsParserSTBB.parse(args)
              params = Params.new(options,bbtools)
              params.set_param('plugin_list','PluginReadInputBb')
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=#{file_single} out=stdout.fastq int=f t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=#{file_single} out=stdout.fastq int=f 2> #{outstats}"
              manager = PluginManager.new('PluginReadInputBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -56,7 +56,7 @@ class PluginInputTest < Minitest::Test
              options = OptionsParserSTBB.parse(args)
              params = Params.new(options,bbtools)
              params.set_param('plugin_list','PluginReadInputBb')
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=#{ffile1} out=stdout.fastq int=f in2=#{ffile2} q=40 t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=#{ffile1} out=stdout.fastq int=f in2=#{ffile2} q=40 2> #{outstats}"
              manager = PluginManager.new('PluginReadInputBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -69,7 +69,7 @@ class PluginInputTest < Minitest::Test
              options = OptionsParserSTBB.parse(args)
              params = Params.new(options,bbtools)
              params.set_param('plugin_list','PluginReadInputBb')
-             result = "java -ea -cp #{classp} jgi.ReformatReads in=#{ffile1} out=stdout.fastq int=f in2=#{ffile2} qfin=#{qual1} qfin2=#{qual2} t=1 -Xmx50m 2> #{outstats}"
+             result = "java -ea -cp #{classp} jgi.ReformatReads t=1 -Xmx50m in=#{ffile1} out=stdout.fastq int=f in2=#{ffile2} qfin=#{qual1} qfin2=#{qual2} 2> #{outstats}"
              manager = PluginManager.new('PluginReadInputBb',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins

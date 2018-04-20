@@ -46,14 +46,14 @@ class OptionsParamsTest < Minitest::Test
              #Generate stats
                args = ['-G']
                options = OptionsParserSTBB.parse(args)
-               assert(options[:generate_initial_stats])
-               assert(options[:generate_final_stats])
+               assert(!options[:generate_initial_stats])
+               assert(!options[:generate_final_stats])
                args = ['-G','initial']
                options = OptionsParserSTBB.parse(args)
-               assert(options[:generate_initial_stats])
+               assert(!options[:generate_initial_stats])
                args = ['-G','final']
                options = OptionsParserSTBB.parse(args)
-               assert(options[:generate_final_stats])
+               assert(!options[:generate_final_stats])
              #Install
                args = ['-i']
                options = OptionsParserSTBB.parse(args)

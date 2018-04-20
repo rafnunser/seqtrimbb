@@ -1,0 +1,188 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
+#     ReporterSTBB: Reporter for SeqTrimBB
+#     Copyright (C) <2017>
+#     Authors: Rafael Nuñez Serrano
+
+#     email: soporte@scbi.uma.es - http://www.scbi.uma.es
+
+###############################################################################
+# FINDS
+###############################################################################
+
+ROOT_PATH = File.dirname(__FILE__)
+SEQTRIM_PATH = File.dirname(ROOT_PATH)
+
+# Finds classes in 'lib' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib'))
+# Finds classes in 'seqtrimbb' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb'))
+# Finds classes in 'classes' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes'))
+# Finds classes in 'classes/databases_support' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes','databases_support'))
+# Finds classes in 'classes/params' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes','params'))
+# Finds classes in 'classes/report' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','classes','report'))
+# Finds classes in 'plugins' folder
+$: << File.expand_path(File.join(SEQTRIM_PATH,'lib','seqtrimbb','plugins'))
+
+###############################################################################
+# METHODS
+###############################################################################
+
+# Decamelize strings
+class String  
+   def camelize
+			self.to_s.split('_').collect(&:capitalize).join
+   end
+   def decamelize 
+		   self.to_s. 
+				   gsub(/([A-Z\d]+)([A-Z][a-z])/, '\1_\2'). 
+				   gsub(/([a-z]+)([A-Z\d])/, '\1_\2'). 
+				   gsub(/([A-Z]{2,})(\d+)/i, '\1_\2'). 
+				   gsub(/(\d+)([a-z])/i, '\1_\2'). 
+				   gsub(/(.+?)\&(.+?)/, '\1_&_\2'). 
+				   gsub(/\s/, '_').downcase 
+   end
+end
+
+# Slice hashes (extract a subhash)
+class Hash
+   def slice(*keys)
+		   ::Hash[[keys, self.values_at(*keys)].transpose]
+   end
+   def except(*keys)
+		   dup.except!(*keys)
+   end
+   def except!(*keys)
+		   keys.each { |key| delete(key) }
+		   self
+   end
+end
+
+# PATCH OLD_RUBY
+## DIG
+module RubyDig
+	   def dig(key, *rest)
+			   if value = (self[key] rescue nil)
+					   if rest.empty?
+							   value
+					   elsif value.respond_to?(:dig)
+							   value.dig(*rest)
+					   end
+			   end
+	   end
+end
+
+##PATCH!
+if RUBY_VERSION < '2.3'
+	   Array.send(:include, RubyDig)
+	   Hash.send(:include, RubyDig)
+end
+
+###############################################################################
+# REQUIRE
+###############################################################################
+
+require 'seqtrimbb'
+require 'fileutils'
+require 'optparse'
+require 'json'
+require 'plugin'
+require 'reporter'
+require 'report_html'
+
+#Puts header
+STDERR.puts "###############################################"
+STDERR.puts "SeqTrimBB Reporter v#{Seqtrimbb::SEQTRIM_VERSION}"
+STDERR.puts "###############################################"
+STDERR.puts " - cmd: #{$0} #{$*.join(' ')}"
+STDERR.puts " - SeqtrimBB path: #{SEQTRIM_PATH}"
+
+###############################################################################
+# OPTION PARSING!
+###############################################################################
+
+usage_help = "Usage: /path/to/reporterstbb -f stats_json_file [options]"
+options = {}
+optparse = OptionParser.new do |opts|
+	opts.banner = usage_help
+   #Input Json files
+	options[:json] = Array.new
+	opts.on( '-f', '--file json_FILE json_FILE1,json_FILE2',Array, 'Input json file' ) do |file|
+		if !file.empty? && file.map { |f| File.exist?(File.expand_path(f)) }.all?
+			options[:json] = file
+		else
+			STDERR.puts "ERROR. Json file: #{file.select{ |f| !File.exist?(f) }.join(" ")} does not exists"
+			exit(-1)
+		end
+		if file.map { |f| File.extname(f) != ".json" }.any?
+			STDERR.puts file
+			STDERR.puts File.extname(file[0])
+			STDERR.puts "ERROR File: #{file.select { |f| File.extname(f) != ".json" }.join(" ")} is not a json file"
+		end
+	end   	
+   #Comparative tag
+	options[:comparative] = false
+	# opts.on( '-C','--comparative','Use this tag to generate a comparative report.') do
+	# 	options[:comparative] = true
+	# end
+   #Output path
+	options[:final_output_path] = File.expand_path('report_files')
+	opts.on( '-O', '--ouput output_folder', 'Output folder. It should not exists. output_files by default') do |folder|
+		options[:final_output_path] = folder
+	end
+   #HELP
+	opts.on_tail('-h', '--help', 'Display this screen') do
+		STDERR.puts "-----------------------------------------------\n"
+		STDERR.puts opts
+		exit(-1)
+	end
+end
+optparse.parse!(ARGV)
+
+STDERR.puts " - Using options:  "
+options.each do |option,value|
+	STDERR.puts "\t- #{option}: #{value}"
+end
+STDERR.puts "-----------------------------------------------\n"
+
+###############################################################################
+# MAKE REPORT
+###############################################################################
+
+#Check if -C tag is active and :file contains more than one json file
+# if options[:comparative] && options[:json].count <= 1
+# 	STDERR.puts ""
+# 	exit(-1)
+# end
+
+if options[:json].empty?
+	STDERR.puts optparse.help
+	exit(-1)
+end
+#Load Json files!
+loaded_json = options[:json].map { |json| JSON.parse(File.read(json)) }
+STDERR.puts "INFO: Json files loaded:"
+options[:json].each_with_index do |file,i| 
+	STDERR.puts %( - #{file}, with keys: #{loaded_json[i].keys.join(" ")})
+end
+#Init Reporter
+reporter = Reporter.new(loaded_json,options[:comparative])
+#Build template and container
+reporter.get_ready
+#Build report
+if !Dir.exist?(options[:final_output_path])
+	Dir.mkdir(options[:final_output_path])
+end
+reporter.build_report(options[:final_output_path])
+# Exiting
+STDERR.puts "EXITING"
+exit
+
+
+
+

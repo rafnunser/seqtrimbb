@@ -33,7 +33,7 @@ class PluginContaminantsTest < Minitest::Test
              manager.check_plugins_params   
              manager.execute_plugins
              plugin_cmd = manager.plugin_result['PluginContaminants']['cmd']
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} add_param=test outu=stdout.fastq t=1 -Xmx#{ram}m 2> #{c_outstats2}"
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 t=1 -Xmx#{ram}m in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} add_param=test outu=stdout.fastq 2> #{c_outstats2}"
              assert_equal(result,plugin_cmd)
              params.set_param('contaminants_aditional_params',nil)
           # Exclude mode : species
@@ -48,7 +48,7 @@ class PluginContaminantsTest < Minitest::Test
              plugin_cmd = manager.plugin_result['PluginContaminants']['cmd']
              c_outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{db}_contaminants_filtering_stats.txt")
              c_outstats2 = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{db}_contaminants_filtering_stats_cmd.txt")
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} outu=stdout.fastq t=1 -Xmx#{ram}m 2> #{c_outstats2}"
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 t=1 -Xmx#{ram}m in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} outu=stdout.fastq 2> #{c_outstats2}"
              assert_equal(result,plugin_cmd)
           # Exclude mode :  genus
              index_path = File.join(OUTPUT_PATH,'temp_indices','contaminants')
@@ -62,7 +62,7 @@ class PluginContaminantsTest < Minitest::Test
              plugin_cmd = manager.plugin_result['PluginContaminants']['cmd']
              c_outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{db}_contaminants_filtering_stats.txt")
              c_outstats2 = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{db}_contaminants_filtering_stats_cmd.txt")
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} outu=stdout.fastq t=1 -Xmx#{ram}m 2> #{c_outstats2}"
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 t=1 -Xmx#{ram}m in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} outu=stdout.fastq 2> #{c_outstats2}"
              assert_equal(result,plugin_cmd)            
           # External single file database
              db = File.join(db_path,'fastas/contaminants','Contaminant_one.fasta.gz')
@@ -74,7 +74,7 @@ class PluginContaminantsTest < Minitest::Test
              c_outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{db_name}_contaminants_filtering_stats.txt")
              c_outstats2 = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{db_name}_contaminants_filtering_stats_cmd.txt")
              ram = (stbb_db.get_info(db,'index_size')/2.0**20).round(0) + base_ram             
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} outu=stdout.fastq t=1 -Xmx#{ram}m 2> #{c_outstats2}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 t=1 -Xmx#{ram}m in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} outu=stdout.fastq 2> #{c_outstats2}"             
              manager.execute_plugins
              plugin_cmd = manager.plugin_result['PluginContaminants']['cmd']
              assert_equal(result,plugin_cmd)
@@ -87,7 +87,7 @@ class PluginContaminantsTest < Minitest::Test
              c_outstats = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{db_name}_contaminants_filtering_stats.txt")
              c_outstats2 = File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"#{db_name}_contaminants_filtering_stats_cmd.txt")
              ram = (stbb_db.get_info(db,'index_size')/2.0**20).round(0) + base_ram             
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} outu=stdout.fastq t=1 -Xmx#{ram}m 2> #{c_outstats2}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 t=1 -Xmx#{ram}m in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db,'index')} refstats=#{c_outstats} outu=stdout.fastq 2> #{c_outstats2}"             
              manager.execute_plugins
              plugin_cmd = manager.plugin_result['PluginContaminants']['cmd']
              assert_equal(result,plugin_cmd)
@@ -104,7 +104,7 @@ class PluginContaminantsTest < Minitest::Test
              manager.check_plugins_params   
              manager.execute_plugins
              plugin_cmd = manager.plugin_result['PluginContaminants']['cmd']
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db[0],'index')} refstats=#{c1_outstats} outu=stdout.fastq t=1 -Xmx#{ram1}m 2> #{c1_outstats2} | java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db[1],'index')} refstats=#{c2_outstats} outu=stdout.fastq t=1 -Xmx#{ram2}m 2> #{c2_outstats2}"
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 t=1 -Xmx#{ram1}m in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db[0],'index')} refstats=#{c1_outstats} outu=stdout.fastq 2> #{c1_outstats2} | java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 t=1 -Xmx#{ram2}m in=stdin.fastq int=t minratio=0.56 path=#{stbb_db.get_info(db[1],'index')} refstats=#{c2_outstats} outu=stdout.fastq 2> #{c2_outstats2}"
              assert_equal(result,plugin_cmd)  
            #CLEAN UP
                clean_up

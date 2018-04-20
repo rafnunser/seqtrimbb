@@ -56,7 +56,8 @@ class ManagerMergerTest < Minitest::Test
            #Call
                system(piped_cmd)
            #Extract stats!
-               stats = plugin_manager.extract_stats          
+               stats = {}
+               plugin_manager.extract_stats(stats)         
            #WITHOUT MERGE
              #Load options
                args = ['-w','12','-Q',"#{File.join(ROOT_PATH,"files","testfiles","testfile_1.fastq.gz")},#{File.join(ROOT_PATH,"files","testfiles","testfile_2.fastq.gz")}",'-t',File.join(ROOT_PATH,"files","faketemplate.txt") ]
@@ -84,7 +85,8 @@ class ManagerMergerTest < Minitest::Test
            #Execute piped_cmd
                system(piped_cmd)
            #Extract stats!
-               stats = plugin_manager.extract_stats
+               stats = {}
+               plugin_manager.extract_stats(stats)
            #clean
                plugin_manager.clean_garbage!
            #CLEAN UP
