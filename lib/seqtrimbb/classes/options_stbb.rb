@@ -73,6 +73,11 @@ class OptionsParserSTBB
 			opts.on( '-F','--force', 'Force SeqtrimBB execution deleting previous output files' ) do
 				options[:force_execution] = true
 			end
+			#Full throttle
+			options[:full_throttle] = false
+			opts.on( '--full_throttle', 'Avoid distributing cores, allocate -w value to each plugin.') do
+				options[:full_throttle] = true
+			end
 			#Generate stats with FastQC
 			options[:generate_initial_stats] = true
 			options[:generate_final_stats] = true
