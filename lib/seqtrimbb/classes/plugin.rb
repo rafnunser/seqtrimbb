@@ -85,31 +85,52 @@ class Plugin
 	end
   #Get plugins stats line
 	def get_stats(expr,stat_file)
+		if !File.exist?(stat_file)
+			STDERR.puts "ERROR. Stats file #{stat_file} does no exist. Something went wrong during plugins execution."
+			show_execution(stat_file.sub(/.txt$/,'_cmd.txt'))
+			exit(-1)
+		end
+		return extract_lines(expr,stat_file)    		 
+	end
+  #Execution errors check
+	def check_execution_errors(cmds_array)			 
+		cmds_array.each do |cmd_file|
+			if !File.exist?(cmd_file)
+				STDERR.puts "ERROR. Plugin log file #{cmd_file} does no exist. Something went wrong during plugins execution."
+				exit(-1)
+			end
+			lines = extract_lines(%q(.*(Exception in thread|Error(?!.*Rate.*)|ERROR|error).*),cmd_file)
+			if !lines.empty?
+				STDERR.puts "Internal error in BBtools execution."
+				show_execution(cmd_file)
+				exit(-1)
+			end
+		end
+	end
+  #Show execution
+  	def show_execution(cmd_file)
+		plugin = cmd_file.match(/^.*(plugin.*)_stats.*/).captures.first.sub(/_/,"\s").upcase
+		if File.exist?(cmd_file)
+			STDERR.puts "#{plugin} execution LOG:"
+			STDERR.puts "-----------------------------------------------------------------------"
+			STDERR.puts extract_lines('',cmd_file).join("\n")
+		else
+			STDERR.puts "ERROR. File #{cmd_file} not found. Is not possible to show #{plugin} execution"
+		end
+  	end
+  #Extract lines from files
+  	def extract_lines(expr,file)
 		lines_to_return = []
-		open_stat_file = File.open(stat_file)
-		open_stat_file.each do |line|
+		open_file = File.open(file)
+		open_file.each do |line|
 			line.chomp!
 			if !line.empty? && (line =~ /#{expr}/)
 				lines_to_return << line
 			end
 		end
-		open_stat_file.close
-		return lines_to_return      		 
-	end
-  #Execution errors check
-	def check_execution_errors(cmds_array)			 
-		cmds_array.each do |cmd_file|
-			open_cmd_file= File.open(cmd_file)
-			open_cmd_file.each do |line|
-				line.chomp!
-				if !line.empty? && ((line =~ /Exception in thread/) || (line =~ /Error\S/))
-					STDERR.puts "Internal error in BBtools execution.\n#{line}\n For more details: #{cmd_file}"
-					exit(-1)
-				end
-			end
-			open_cmd_file.close
-		end
-	end
+		open_file.close 
+		return lines_to_return
+  	end
   #Clean up operations
 	def clean_up
 
