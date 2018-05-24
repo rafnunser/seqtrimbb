@@ -76,7 +76,7 @@ class ParamsReader < Params
 					prefix = 'sequences_'
 			end
 		elsif get_param('outfilename') == 'default'
-			prefix = get_param('file').first.to_s.sub(/.fastq(.gz)?$/,'')
+			prefix = File.basename(get_param('file').first).to_s.sub(/.fastq(.gz)?$/,'')
 			prefix.sub!(/_?(pair|R)?(1|2)$/,'') if get_param('sample_type') == 'paired'
 			prefix = prefix + '_cleaned'
 		else
