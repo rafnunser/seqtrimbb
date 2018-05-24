@@ -28,7 +28,7 @@ class DatabasesSupportInstallChecker < DatabasesSupport
 			local_hash['files_checksum'][File.basename(entry)] = Digest::MD5.file(entry).hexdigest
 		end
 		@@repo_info[database]['files_checksum'].keys.each { |entry| obsolete_files << entry if !local_hash['files_checksum'].key?(entry) || @@repo_info[database]['files_checksum'].dig(entry) != local_hash['files_checksum'].dig(entry) }
-		return obsolete_filess
+		return obsolete_files
 	end
    #PARSE XML from SVN ls
 	def self.parse_xml(call_from_svn)			 

@@ -136,6 +136,15 @@ class OptionsParserSTBB
 			opts.on('--external_cmd EXTERNAL_CALL to insert in the pipe', 'Add one call (or more already piped between them) to an assembler or mapping tool' ) do |cmd|
 				options[:ext_cmd] = cmd
 			end
+			#Change default outputfile name
+			options[:outfilename] = ''
+			opts.on('--outfilename [PREFIX]','Change output filename, by default use input filename as prefix') do |outname|
+				if outname.to_s.empty?
+					options[:outfilename] = 'default'
+				else
+					options[:outfilename] = outname
+				end
+			end
 			#merge
 			options[:merge_cmd] = false
 			opts.on('-M','--merge_cmd','Merge input plugin with the first plugin in the list, and output plugin with the lasts (if they are mergeable)') do

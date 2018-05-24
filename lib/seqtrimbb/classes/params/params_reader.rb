@@ -65,14 +65,33 @@ class ParamsReader < Params
 	end
 	 #Preset outpufiles
 	def preset_outputfiles
+		#Save prefix
+		if get_param('outfilename').empty?
+			case get_param('sample_type')
+				when 'paired'
+					prefix = 'paired'
+				when 'interleaved'
+					prefix = 'interleaved'
+				when 'single-ended'
+					prefix = 'sequences_'
+			end
+		elsif get_param('outfilename') == 'default'
+			prefix = get_param('file').first.to_s.sub(/.fastq(.gz)?$/,'')
+			prefix.sub!(/_?(pair|R)?(1|2)$/,'') if get_param('sample_type') == 'paired'
+			prefix = prefix + '_cleaned'
+		else
+			prefix = get_param('outfilename')
+		end
+		#Return
 		case get_param('sample_type')
 			when 'paired'
-				return [File.join(File.expand_path(OUTPUT_PATH),"paired_1#{get_param('suffix')}"),File.join(File.expand_path(OUTPUT_PATH),"paired_2#{get_param('suffix')}")]
+				return [File.join(File.expand_path(OUTPUT_PATH),"#{prefix}_1#{get_param('suffix')}"),File.join(File.expand_path(OUTPUT_PATH),"#{prefix}_2#{get_param('suffix')}")]
 			when 'interleaved'
-				return [File.join(File.expand_path(OUTPUT_PATH),"interleaved#{get_param('suffix')}")]
+				return [File.join(File.expand_path(OUTPUT_PATH),"#{prefix}#{get_param('suffix')}")]
 			when 'single-ended'
-				return [File.join(File.expand_path(OUTPUT_PATH),"sequences_#{get_param('suffix')}")]
+				return [File.join(File.expand_path(OUTPUT_PATH),"#{prefix}#{get_param('suffix')}")]
 		end
+
 	end
 	  
 end

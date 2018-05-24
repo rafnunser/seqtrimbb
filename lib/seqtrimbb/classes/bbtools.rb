@@ -47,7 +47,16 @@ class BBtools
 		redirection = options.delete('redirection') if options.key?('redirection')
 		options.each do |opt,arg|
 			if opt == "ram" || opt == "cores"
-				cmd.each { |frag| frag.gsub!(/INSERT_#{opt.upcase}/,arg.to_s)}
+				if arg.nil? && opt == "cores"
+					expr = "t=INSERT_#{opt.upcase}"
+					arg = ''			
+				elsif arg.nil? && opt == "ram"
+					expr = "-Xm(x|s)INSERT_#{opt.upcase}"
+					arg = ''									
+				else
+					expr = "INSERT_#{opt.upcase}"				
+				end
+				cmd.each { |frag| frag.gsub!(/#{expr}/,arg.to_s)}
 				next
 			end
 			if !arg.is_a?(Array) && !arg.nil?
