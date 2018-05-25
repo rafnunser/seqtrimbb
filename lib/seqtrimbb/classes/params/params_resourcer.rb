@@ -66,10 +66,12 @@ class ParamsResourcer < Params
 	end
 
 	def distribute_ram(final_plugin_list)
+		bbmap_based = %w(plugin_contaminants plugin_user_filter plugin_vectors)
 		#Adds RAM for extra thread
 		final_plugin_list.each do |plugin|
 			@plugin_ram[plugin].each_with_index do |ram,i|
-				@plugin_ram[plugin][i] = ram + 70*(@plugin_cores[plugin][i] - 1)
+				@plugin_ram[plugin][i] = ram + 70*(@plugin_cores[plugin][i] - 1) if bbmap_based.include?(plugin)
+				@plugin_ram[plugin][i] = ram + 10*(@plugin_cores[plugin][i] - 1) if !bbmap_based.include?(plugin)
 			end
 		end
 	end
