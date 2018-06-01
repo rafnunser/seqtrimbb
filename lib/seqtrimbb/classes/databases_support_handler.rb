@@ -112,14 +112,35 @@ class DatabasesSupportHandler
 	end
 #GET INFO
 	def get_info(*levels)
-		if @info.key?(levels[0]) #Database is internal
+		## TODO!...check every level
+		if check_levels(@info,levels) #Database is internal
 			return @info.dig(*levels)
-		elsif @external_db_info.key?(levels[0]) #Database is external
+		elsif check_levels(@external_db_info,levels) #Database is external
 			return @external_db_info.dig(*levels)
 		else 
 			STDERR.puts '#{levels.join('')} info does not exists. Returning nil'
 			return nil
 		end
+	end
+#check levels
+	def check_levels(in_hash,levels)			
+		look_h = in_hash
+		levels.each do |level|
+			if look_h.is_a?(Hash)
+				if look_h.key?(level)
+					look_h = look_h.dig(level)
+				else
+					return false
+				end
+			elsif look_h.is_a?(Array)
+				if look_h[level]
+					look_h = look_h.dig(level)
+				else
+					return false
+				end
+			end
+		end
+		return true
 	end
 #CHECK ON DATABASE STATUS (INFO LEVEL). Return found errors.
 	def check_status(info,database)				 

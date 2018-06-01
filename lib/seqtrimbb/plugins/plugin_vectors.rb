@@ -16,20 +16,7 @@ class PluginVectors < Plugin
 		errors=[]    
 		#Check params (errors,param_name,param_class,default_value,comment) 
 		@params.check_param(errors,'vectors_db','DB','vectors','Sequences of vectors to use in trimming: list of fasta files (comma separated)',@stbb_db)
-		#Adds 1 core for each database
-		@params.get_param('vectors_db').split(/ |,/).each do |database|
-			cores << 1
-			ram << (@stbb_db.get_info(database,'index_size')/2.0**20).round(0) + base_ram
-			ram_sum += (@stbb_db.get_info(database,'index_size')/2.0**20).round(0)
-		end
 		@params.check_param(errors,'vectors_trimming_position','String','both','Trim vectors in which position: right, left or both (default)')
-		#if plugins trims reads in both tips, double the requirements
-		j = @params.get_param('vectors_trimming_position') == 'both' ? 2:1
-		ram_sum = 
-		j.times do        
-			cores << 1
-			ram << 50 + ram_sum
-		end 
 		@params.check_param(errors,'vectors_kmer_size','Integer',31,'Main kmer size to use in vectors trimming')
 		@params.check_param(errors,'vectors_min_external_kmer_size','Integer',11,'Minimal kmer size to use in read tips during vectors trimming')	
 		@params.check_param(errors,'vectors_max_mismatches','Integer',1,'Max number of mismatches accepted during vectors trimming')   
@@ -39,6 +26,21 @@ class PluginVectors < Plugin
 		@params.check_param(errors,'vectors_filtering_aditional_params','String',nil,'Aditional BBsplit parameters for vectors filtering, add them together between quotation marks and separated by one space')
 		@params.check_param(errors,'vectors_merging_pairs_trimming','String','true','Trim vectors of paired reads using mergind reads methods for vectors trimming')
 		#Set resources
+		if errors.empty?
+			#Adds 1 core for each database			
+			@params.get_param('vectors_db').split(/ |,/).each do |database|
+				cores << 1
+				ram << (@stbb_db.get_info(database,'index_size')/2.0**20).round(0) + base_ram
+				ram_sum += (@stbb_db.get_info(database,'index_size')/2.0**20).round(0)
+			end
+			#if plugins trims reads in both tips, double the requirements
+			j = @params.get_param('vectors_trimming_position') == 'both' ? 2:1
+			ram_sum = 
+			j.times do        
+				cores << 1
+				ram << 50 + ram_sum
+			end
+		end
 		@params.resource('set_requirements',{ 'plugin' => 'PluginVectors','opts' => {'cores' => cores,'priority' => priority,'ram'=>ram}})
 		return errors
 	end

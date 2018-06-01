@@ -15,15 +15,18 @@ class PluginUserFilter < Plugin
 		errors=[]  
 		#Check params (errors,param_name,param_class,default_value,comment) 
 		@params.check_param(errors,'user_filter_db','DB','','Databases to use in Filtering: internal name or full path to fasta file or full path to a folder containing an external database in fasta format',@stbb_db)
-		#Adds 1 core for each database
-		@params.get_param('user_filter_db').split(/ |,/).each do |database|
-			cores << 1
-			ram << (@stbb_db.get_info(database,'index_size')/2.0**20).round(0) + base_ram 
-		end
 		@params.check_param(errors,'user_filter_minratio','String','0.56','Minimal ratio of sequence of interest kmers in a read to be filtered')
 		@params.check_param(errors,'user_filter_species','String',nil,'list of species (fasta files names in database comma separated) to filter out')	
 		@params.check_param(errors,'user_filter_aditional_params','String',nil,'Aditional BBsplit parameters, add them together between quotation marks and separated by one space')
 		#Set resources
+		if errors.empty?
+			#Adds 1 core for each database
+			@params.get_param('user_filter_db').split(/ |,/).each do |database|
+				cores << 1
+				ram << (@stbb_db.get_info(database,'index_size')/2.0**20).round(0) + base_ram 
+			end
+			@params.resource('set_requirements',{ 'plugin' => 'PluginContaminants','opts' => {'cores' => cores,'priority' => priority,'ram'=>ram}})
+		end		
 		@params.resource('set_requirements',{ 'plugin' => 'PluginUserFilter','opts' => {'cores' => cores,'priority' => priority,'ram'=>ram}})
 		#Make filtered directory
 		Dir.mkdir(File.join(File.expand_path(OUTPUT_PATH),'filtered_files')) if !Dir.exist?(File.join(File.expand_path(OUTPUT_PATH),'filtered_files'))

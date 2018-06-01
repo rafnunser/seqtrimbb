@@ -22,6 +22,53 @@ class Plugin
 	def get_cmd
 		return 'CMD to execute external tool'
 	end
+	#Get input
+	def get_input
+		module_options = {}
+		case @params.get_param('sample_type')
+			when 'interleaved'
+				module_options["in"] = @params.get_param('file')[0]
+				module_options["int"] = "t"
+			when 'single-ended'
+				module_options["in"] = @params.get_param('file')[0]
+				module_options["int"] = "f"
+			when 'paired'
+				module_options["in"] = @params.get_param('file')[0]
+				module_options["in2"] = @params.get_param('file')[1]
+				module_options["int"] = "f"
+		end   
+		#Adding input info, vital for a proper processing of samples in fasta format
+		if @params.get_param('file_format') == "fasta"
+			if !@params.get_param('qual').empty?
+				if @params.get_param('sample_type') == "paired"
+									 module_options["qfin"] = @params.get_param('qual')[0]
+									 module_options["qfin2"] = @params.get_param('qual')[1]
+				else
+									 module_options["qfin"] = @params.get_param('qual')[0]
+				end
+			else
+				module_options["q"] = 40
+			end
+		end
+		return module_options
+	end
+	#Get output
+	def get_output
+		module_options = {}
+		case @params.get_param('sample_type')
+			when 'interleaved'
+				module_options["out"] = @params.get_param('outputfile')[0] if @params.get_param('ext_cmd').nil?
+				module_options["int"] = "t"
+			when 'single-ended'
+				module_options["out"] = @params.get_param('outputfile')[0] if @params.get_param('ext_cmd').nil?
+				module_options["int"] = "f"
+			when 'paired'
+				module_options["out"] = @params.get_param('outputfile')[0] if @params.get_param('ext_cmd').nil?
+				module_options["out2"] = @params.get_param('outputfile')[1] if @params.get_param('ext_cmd').nil?
+				module_options["int"] = "t"
+		end 
+		return module_options
+	end
 	#Get database filtering module
 	def get_filtering_module(db,plugin)		  
 		 # Creates a hash to store modules options
@@ -99,7 +146,7 @@ class Plugin
 				STDERR.puts "ERROR. Plugin log file #{cmd_file} does no exist. Something went wrong during plugins execution."
 				exit(-1)
 			end
-			lines = extract_lines(%q(.*(Exception in thread|Error(?!.*Rate.*)|ERROR|error).*),cmd_file)
+			lines = extract_lines(%q(.*(Exception in thread|Error(?!.*Rate.*)|ERROR|error(?!-free.*)).*),cmd_file)
 			if !lines.empty?
 				STDERR.puts "Internal error in BBtools execution."
 				show_execution(cmd_file)

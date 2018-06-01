@@ -44,7 +44,10 @@ class ParamsChecker < Params
 		pl_list = get_param(param_name)
 		raise ArgumentError.new('PluginList is nil or empty') if (pl_list.nil? || pl_list.empty? || !(pl_list =~ /^\s*$/).nil?)
 	 # split and strips pl_list (String to Array of strings). The first plugin is always the reader, and last plugin is always the writer
-		list = ['PluginReadInputBb'] + pl_list.strip.split(',').map!{|e| e.strip}.reject{|p| ['PluginReadInputBb','PluginSaveResultsBb'].include?(p)} + ['PluginSaveResultsBb']
+		read_plugin = pl_list.include?('PluginFilterBadTiles') ? 'PluginFilterBadTiles' : 'PluginReadInputBb'
+		write_plugin = 'PluginSaveResultsBb'
+		list = [read_plugin] + pl_list.strip.split(',').map!{|e| e.strip}.reject{|p| ['PluginReadInputBb','PluginSaveResultsBb',read_plugin,write_plugin].include?(p)} + [write_plugin]
+		list[0] = 'PluginFilterBadTiles' if pl_list.include?('PluginFilterBadTiles')	 
 	 # checks plugins_names
 		current_plugins = Dir[File.join(SEQTRIM_PATH,'lib','seqtrimbb','plugins',"*.rb")].map!{|p| File.basename(p,'.rb')} + ['',' ',nil]
 		list.each do |plugin_name|

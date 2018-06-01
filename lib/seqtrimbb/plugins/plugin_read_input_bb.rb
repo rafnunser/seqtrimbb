@@ -23,31 +23,7 @@ class PluginReadInputBb < Plugin
 		#Module options Hash
 		module_options = {}
 		#Adding input info, for a proper processing of paired samples
-		case @params.get_param('sample_type')
-			when 'interleaved'
-				module_options["in"] = @params.get_param('file')[0]
-				module_options["int"] = "t"
-			when 'single-ended'
-				module_options["in"] = @params.get_param('file')[0]
-				module_options["int"] = "f"
-			when 'paired'
-				module_options["in"] = @params.get_param('file')[0]
-				module_options["in2"] = @params.get_param('file')[1]
-				module_options["int"] = "f"
-		end   
-		#Adding input info, vital for a proper processing of samples in fasta format
-		if @params.get_param('file_format') == "fasta"
-			if !@params.get_param('qual').empty?
-				if @params.get_param('sample_type') == "paired"
-									 module_options["qfin"] = @params.get_param('qual')[0]
-									 module_options["qfin2"] = @params.get_param('qual')[1]
-				else
-									 module_options["qfin"] = @params.get_param('qual')[0]
-				end
-			else
-				module_options["q"] = 40
-			end
-		end
+		module_options.merge!(get_input)
 		# Adding commandline redirection
 		module_options['redirection'] = ["2>",File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"input_stats.txt")]    
 		#Add hash to array and return

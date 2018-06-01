@@ -26,18 +26,7 @@ class PluginSaveResultsBb < Plugin
 		#Module options Hash
 		module_options = {}
 		# Adding input info, vital for a output of paired samples
-		case @params.get_param('sample_type')
-			when 'interleaved'
-				module_options["out"] = @params.get_param('outputfile')[0] if @params.get_param('ext_cmd').nil?
-				module_options["int"] = "t"
-			when 'single-ended'
-				module_options["out"] = @params.get_param('outputfile')[0] if @params.get_param('ext_cmd').nil?
-				module_options["int"] = "f"
-			when 'paired'
-				module_options["out"] = @params.get_param('outputfile')[0] if @params.get_param('ext_cmd').nil?
-				module_options["out2"] = @params.get_param('outputfile')[1] if @params.get_param('ext_cmd').nil?
-				module_options["int"] = "t"
-		end     
+		module_options.merge!(get_output)    
 		# Adding plugins options for reformar module
 		module_options['minlength'] = @params.get_param('minlength')
 		# Adding commandline redirection
@@ -53,7 +42,7 @@ class PluginSaveResultsBb < Plugin
 	end
   #Get stats
 	def get_stats(stats_files,stats)
-		plugin_stats["sequences"] = {} if !stats.key?("sequences")
+		stats["sequences"] = {} if !stats.key?("sequences")
 		#Extract stats
 		regexp = "^(Output:|Result:|Short)"
 		lines = super(regexp,stats_files['cmd'].first)

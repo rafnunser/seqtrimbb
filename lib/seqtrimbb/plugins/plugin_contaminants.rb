@@ -15,17 +15,19 @@ class PluginContaminants < Plugin
 		errors=[]  
 	   #Check params (errors,param_name,param_class,default_value,comment)             
 		@params.check_param(errors,'contaminants_db','DB','contaminants','Databases to use in decontamination: internal name or full path to fasta file or full path to a folder containing an external database in fasta format',@stbb_db)
-		#Adds 1 core for each database
-		@params.get_param('contaminants_db').split(/ |,/).each do |database|
-			cores << 1
-			ram << (@stbb_db.get_info(database,'index_size')/2.0**20).round(0) + base_ram 
-		end
 		@params.check_param(errors,'contaminants_minratio','String','0.56','Minimal ratio of contaminants kmers in a read to be deleted')
 		@params.check_param(errors,'contaminants_decontamination_mode','String','regular','Decontamination mode: regular to just delete contaminated reads, or excluding to avoid deleting reads using contaminant species similar (genus or species) to the samples species, use excluding genus for a conservative approach or excluding species for maximal sensibility.')
 		@params.check_param(errors,'sample_species','String',nil,'Species of the sample to process')	
 		@params.check_param(errors,'contaminants_aditional_params','String',nil,'Aditional BBsplit parameters, add them together between quotation marks and separated by one space')
 		#Set resources
-		@params.resource('set_requirements',{ 'plugin' => 'PluginContaminants','opts' => {'cores' => cores,'priority' => priority,'ram'=>ram}})
+		if errors.empty?
+			#Adds 1 core for each database
+			@params.get_param('contaminants_db').split(/ |,/).each do |database|
+				cores << 1
+				ram << (@stbb_db.get_info(database,'index_size')/2.0**20).round(0) + base_ram 
+			end
+			@params.resource('set_requirements',{ 'plugin' => 'PluginContaminants','opts' => {'cores' => cores,'priority' => priority,'ram'=>ram}})
+		end
 		return errors    
 	end
   #Get options

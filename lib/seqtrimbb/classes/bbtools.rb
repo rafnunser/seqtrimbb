@@ -17,6 +17,7 @@ class BBtools
 		@modules['bbsplit'] = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 t=INSERT_CORES -XmxINSERT_RAM"
 		@modules['splitnextera'] = "java -ea -cp #{classp} jgi.SplitNexteraLMP t=INSERT_CORES -XmxINSERT_RAM"
 		@modules['testformat'] = "java -ea -cp #{classp} fileIO.FileFormat -XmxINSERT_RAM"
+		@modules['filterbytile'] = "java -ea -cp #{classp} hiseq.AnalyzeFlowCell t=INSERT_CORES -XmxINSERT_RAM -XmsINSERT_RAM"
 		#Default options
 		@default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
 		#Define modules
