@@ -67,7 +67,7 @@ class DatabasesSupport
 			FileUtils.rm(info[db_name]['update_error_file']) if File.exist?(info[db_name]['update_error_file'])
 			Dir.mkdir(info[db_name]['index'])
 		# Loading BBtools module and cmd execution
-			cmd = bbtools.load_bbsplit({'ram' => nil, 'cores' => nil,'ref' =>  info[db_name]['path'], 'path' => info[db_name]['index'], 'in' => nil, 'out' => nil, 'int' => nil, 'redirection' => ['2>',info[db_name]['update_error_file']]})
+			cmd = bbtools.load_bbsplit({'ram' => (info[db_name]['size']/2.0**20).round(0)*25 + 820, 'cores' => 1,'ref' =>  info[db_name]['path'], 'path' => info[db_name]['index'], 'in' => nil, 'out' => nil, 'int' => nil, 'redirection' => ['2>',info[db_name]['update_error_file']]})
 			STDERR.puts "CMD to update #{db_name} index: #{cmd}"
 			system(cmd)
 		# Look for errors
