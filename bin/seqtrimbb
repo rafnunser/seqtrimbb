@@ -209,7 +209,7 @@ bbtools = BBtools.new(bb_path)
 ## Works related to internal databases
 
 # Check subversion
-#check_external_requirements('Subversion','svn --version','http://subversion.apache.org/')
+check_external_requirements('Subversion','svn --version','http://subversion.apache.org/')
 # First initialize DatabasesSupport object
 stbb_databases = DatabasesSupportHandler.new(options[:workers],db_path,bbtools)
 # Second initialize(load) internal databases info
