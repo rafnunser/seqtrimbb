@@ -14,7 +14,7 @@ class PluginPolyAt < Plugin
 		errors=[]  
 	   #Check params (errors,param_name,param_class,default_value,comment)
 		@params.check_param(errors,'polyat_min_size','Integer',9,'Minimal size of PolyAT')
-		@params.check_param(errors,'polyat_aditional_params','String',nil,'Aditional BBduk2 parameters for polyat trimming, add them together between quotation marks and separated by one space')       
+		@params.check_param(errors,'polyat_aditional_params','String',nil,'Aditional BBduk parameters for polyat trimming, add them together between quotation marks and separated by one space')       
 	   #Set resources
 		@params.resource('set_requirements',{ 'plugin' => 'PluginPolyAt','opts' => {'cores' => cores,'priority' => priority,'ram'=>ram}})			 
 		return errors			 
@@ -45,7 +45,7 @@ class PluginPolyAt < Plugin
 	end
  #Get cmd
 	def get_cmd(result_hash)		   
-		#Return  
+		#Return
 		return @bbtools.load_bbduk(result_hash['opts'].first)
 	end
  #Get stats
@@ -53,7 +53,7 @@ class PluginPolyAt < Plugin
 		stats["plugin_poly_at"] = {} if !stats.key?('plugin_poly_at')
 		stats["plugin_poly_at"]["sequences_with_poly_at"] = {} if !stats['plugin_poly_at'].key?('sequences_with_poly_at')
 		 #Extracting stats 
-		regexp_str = "^Poly-A:"
+		regexp_str = "^Poly"
 		lines = super(regexp_str,stats_files['cmd'].first)
 		splitted_line = lines[0].split(/\t/)
 		stats["plugin_poly_at"]["sequences_with_poly_at"] = splitted_line[1].split(" ")[0].to_i

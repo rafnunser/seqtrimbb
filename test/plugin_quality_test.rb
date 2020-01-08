@@ -22,7 +22,7 @@ class PluginQualityTest < Minitest::Test
              default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
              bbtools.store_default(default_options)
              outsingles = File.join(File.expand_path(OUTPUT_PATH),"singles_quality_trimming.fastq.gz")
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=rl 2> #{outstats}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=rl 2> #{outstats}"             
              manager = PluginManager.new('PluginQuality',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -31,7 +31,7 @@ class PluginQualityTest < Minitest::Test
 
           #Aditional params
              params.set_param('quality_aditional_params','add_param=test')
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=rl add_param=test 2> #{outstats}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=rl add_param=test 2> #{outstats}"             
              manager = PluginManager.new('PluginQuality',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -40,7 +40,7 @@ class PluginQualityTest < Minitest::Test
 
           #Trimming left
              params.set_param('quality_trimming_position','left')
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=l add_param=test 2> #{outstats}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=l add_param=test 2> #{outstats}"             
              manager = PluginManager.new('PluginQuality',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -49,7 +49,7 @@ class PluginQualityTest < Minitest::Test
 
           #Trimming right
              params.set_param('quality_trimming_position','right')
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=r add_param=test 2> #{outstats}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t trimq=20 outs=#{outsingles} qtrim=r add_param=test 2> #{outstats}"             
              manager = PluginManager.new('PluginQuality',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins

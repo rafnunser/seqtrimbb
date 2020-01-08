@@ -34,7 +34,7 @@ class PluginMatePairsTest < Minitest::Test
              params.set_param('linker_literal_seq','MOCKSEQUENCE')
              default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
              bbtools.store_default(default_options)             
-             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t kmask=J k=19 mink=11 hdist=1 hdist2=0 literal=MOCKSEQUENCE 2> #{outstats3} | java -ea -cp #{classp} jgi.SplitNexteraLMP t=1 -Xmx50m in=stdin.fastq out=stdout.fastq int=t outu=stdout.fastq stats=#{outstats} 2> #{outstats1}"
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=1 -Xmx50m -Xms50m in=stdin.fastq out=stdout.fastq int=t kmask=J k=19 mink=11 hdist=1 hdist2=0 literal=MOCKSEQUENCE 2> #{outstats3} | java -ea -cp #{classp} jgi.SplitNexteraLMP t=1 -Xmx50m in=stdin.fastq out=stdout.fastq int=t outu=stdout.fastq stats=#{outstats} 2> #{outstats1}"
              manager = PluginManager.new('PluginMatePairs',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins

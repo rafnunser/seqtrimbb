@@ -13,7 +13,7 @@ class BBtools
 		#Store modules in a hash
 		@modules = {}
 		@modules['reformat'] = "java -ea -cp #{classp} jgi.ReformatReads t=INSERT_CORES -XmxINSERT_RAM"
-		@modules['bbduk'] = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDukF t=INSERT_CORES -XmxINSERT_RAM -XmsINSERT_RAM"
+		@modules['bbduk'] = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=INSERT_CORES -XmxINSERT_RAM -XmsINSERT_RAM"
 		@modules['bbsplit'] = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} align2.BBSplitter ow=t fastareadlen=500 minhits=1 maxindel=20 qtrim=rl untrim=t trimq=6 t=INSERT_CORES -XmxINSERT_RAM"
 		@modules['splitnextera'] = "java -ea -cp #{classp} jgi.SplitNexteraLMP t=INSERT_CORES -XmxINSERT_RAM"
 		@modules['testformat'] = "java -ea -cp #{classp} fileIO.FileFormat -XmxINSERT_RAM"

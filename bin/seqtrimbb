@@ -87,14 +87,21 @@ def check_external_requirements(req,req_call,source_url,version=nil)
 	#Checks if external requirement is present
 	begin
 		cmd = IO.popen(req_call)
+        cmd_text = cmd.read
+        if cmd_text.split("\n")[0].nil?
+            puts "entra"
+            STDERR.puts "Unable to find external requirement: #{req}\nYou can download it from #{source_url}"
+            exit (-1)
+        end
 	rescue
 		STDERR.puts "Unable to find external requirement: #{req}\nYou can download it from #{source_url}"
 		exit (-1)
 	end
+    cmd.close
 	#Checks version
 	if !version.nil?
 	#Extract version 
-		version_from_cmd = cmd.read.split("\n")[0].gsub(/\D/,'').to_i
+		version_from_cmd = cmd_text.split("\n")[0].gsub(/\D/,'').to_i
 		if version_from_cmd < version.to_s.gsub(/\D/,'').to_i
 			STDERR.puts "Detected an old #{req} version. An updated is required."
 			exit(-1)
@@ -171,7 +178,7 @@ if ENV['BBTOOLS_PATH']
 else # otherwise use the result of which bbmap.sh
 	bb_path  = File.expand_path(File.dirname(%x[which bbmap.sh]))
 end
-check_external_requirements('BBtools',"java -Xmx80m -cp #{File.join(bb_path,'current')} driver.BBVersion","http://sourceforge.net/projects/bbmap/","37.53")
+check_external_requirements('BBtools',"java -Xmx80m -cp #{File.join(bb_path,'current')} driver.BBVersion","http://sourceforge.net/projects/bbmap/","38.75")
 
 #Puts header
 STDERR.puts "###############################################"

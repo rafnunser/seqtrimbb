@@ -24,7 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "minitest", "~> 5.4",">= 5.4.2"
-  spec.add_runtime_dependency 'report_html'
-  spec.add_runtime_dependency 'rubyzip'
+  spec.add_runtime_dependency 'report_html', "~> 0.3"
+  spec.add_runtime_dependency 'rubyzip', "~> 1.2.2"
 
 end

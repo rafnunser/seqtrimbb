@@ -68,6 +68,7 @@ class DatabasesSupportExternal < DatabasesSupport
 		info[db]['index'] = File.join(OUTPUT_PATH,'temp_indices',info[db]['name'])
 		Dir.mkdir(File.join(OUTPUT_PATH,'temp_indices')) if !Dir.exist?(File.join(OUTPUT_PATH,'temp_indices'))
 		info[db]['update_error_file'] = File.join(info[db]['index'],'update_stderror_'+info[db]['name']+'.txt')
+		info[db]['size'] = refs.map { |file| File.size?(file) }.inject(:+)
 		#Update!
 		update_index(db,info,bbtools)
 		#Return
