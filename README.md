@@ -1,6 +1,5 @@
 # SeqTrimBB
-
-URL to SeqTrimBB
+https://github.com/rafnunser/seqtrimbb
 
 #### DESCRIPTION:
 
