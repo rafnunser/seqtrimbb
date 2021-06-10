@@ -23,7 +23,7 @@ class Fastqc
 		data['summary']['head'] = header
 		#Load data for each file
 		@files_array.each do |file|
-			filename = File.basename(file).sub(/\Wfastq(\Wgz)?/,'')
+			filename = File.basename(file).sub(/\Wfastq(\Wgz)?/,'').sub(/\Wfq(\Wgz)?/,'')
 			data[filename] = {}
 			data[filename]['raw'] = {}			
 			#Load Raw data
