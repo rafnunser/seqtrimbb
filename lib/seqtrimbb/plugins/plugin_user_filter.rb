@@ -141,7 +141,7 @@ class PluginUserFilter < Plugin
 	def remove_short_reads(files,to_remove,to_add)
 		files.each do |file_array|
 			outfiles = file_array.map { |file| file.sub(/#{to_remove}/,to_add) }
-			h = { 'in' => file_array[0],'out' => outfiles[0],'minlength' => @params.get_param('minlength'),'ow' => 't','redirection' => ['2>','/dev/null']}
+			h = {'cores' => 1, 'ram' => 720, 'in' => file_array[0],'out' => outfiles[0],'minlength' => @params.get_param('minlength'),'ow' => 't','redirection' => ['2>','/dev/null']}
 			if @params.get_param('sample_type') == 'paired' && outfiles.count == 2
 				h['in2'] = file_array[1]
 				h['out2'] = outfiles[1]
