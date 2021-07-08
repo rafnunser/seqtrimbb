@@ -147,7 +147,7 @@ class PluginUserFilter < Plugin
 				h['out2'] = outfiles[1]
 				h['int'] = 'f'
 			end
-			system(@bbtools.load_reformat(h))
+			system(@bbtools.load_reformat(h) + " 2> #{File.join(File.expand_path(OUTPUT_PATH),'plugins_logs',"virus_ref_user_filter_filtering_stats_by_length")}")
 			file_array.each_with_index { |file,i| FileUtils.rm(file) if File.exist?(outfiles[i]) }
 		end
 	end
