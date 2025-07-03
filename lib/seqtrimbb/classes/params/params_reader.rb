@@ -45,12 +45,22 @@ class ParamsReader < Params
 		set_param('suffix',suffix,"# Output files file extension")
 	 # test inputfiles format
 		if !get_param('file').nil? && File.exist?(get_param('file')[0].to_s)
-			format_info = %x[#{bbtools.load_testformat({'ram' => '50m', 'in' => nil,'int' => nil,'out' => nil,'files' => [get_param('file')[0]]})}].split(" ")
-	 # Set format info (test number of files for paired)
-			set_param('qual_format',format_info[0],"# Quality format value from input files")
-			set_param('file_format',format_info[1],"# File format value from input files")
-			set_param('sample_type',get_param('file').count == 2 ? 'paired' : format_info[3],"# Sample type value from input files")
-			set_param('read_length',format_info[4],"# Read read_length")
+			cmd = bbtools.load_testformat({'ram' => '50m', 'in' => nil,'int' => nil,'out' => nil,'files' => [get_param('file')[0]]})
+			format_info = %x[#{cmd}].split(" ")
+		 	# Set format info (test number of files for paired)
+			if !format_info.empty?
+				set_param('qual_format',format_info[0],"# Quality format value from input files")
+				set_param('file_format',format_info[1],"# File format value from input files")
+				set_param('sample_type',get_param('file').count == 2 ? 'paired' : format_info[3],"# Sample type value from input files")
+				set_param('read_length',format_info[4],"# Read read_length")
+			else
+				STDERR.puts "The following command for check input files has failed. We assume default values"
+				STDERR.puts "#{cmd}"
+				set_param('qual_format', 'sanger', "# Quality format value from input files")
+				set_param('file_format', 'fastq' ,"# File format value from input files")
+				set_param('sample_type',get_param('file').count == 2 ? 'paired' : 'single-ended',"# Sample type value from input files")
+				set_param('read_length', 'Unknown',"# Read read_length")
+			end
 	 # Preloading output params 
 	 # Setting outputfiles 
 			set_param('outputfile',preset_outputfiles,"# Preloaded output files")
