@@ -50,7 +50,7 @@ class PluginAdaptersTest < Minitest::Test
              params.set_param('sample_type','paired')
              default_options = {'in' => 'stdin.fastq', 'out' => 'stdout.fastq', 'int' => 't'}
              bbtools.store_default(default_options)             
-             result = "java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDuk t=1 -Xmx100m -Xms100m in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=21 mink=11 hdist=1 ktrim=l stats=#{l_outstats} tbo tpe 2> #{l_outstats2}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=1 -Xmx100m -Xms100m in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=21 mink=11 hdist=1 ktrim=l stats=#{l_outstats} tbo tpe 2> #{l_outstats2}"             
              manager = PluginManager.new('PluginAdapters',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -58,7 +58,7 @@ class PluginAdaptersTest < Minitest::Test
              assert_equal(result,plugin_cmd)
            # Triming mode: right
              params.set_param('adapters_trimming_position','right')             
-             result = "java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDuk t=1 -Xmx100m -Xms100m in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} tbo tpe 2> #{r_outstats2}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=1 -Xmx100m -Xms100m in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} tbo tpe 2> #{r_outstats2}"             
              manager = PluginManager.new('PluginAdapters',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -66,7 +66,7 @@ class PluginAdaptersTest < Minitest::Test
              assert_equal(result,plugin_cmd)           
            # Trimming mode: paired without merging
              params.set_param('adapters_merging_pairs_trimming','false')
-             result = "java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDuk t=1 -Xmx100m -Xms100m in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} 2> #{r_outstats2}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=1 -Xmx100m -Xms100m in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} 2> #{r_outstats2}"             
              manager = PluginManager.new('PluginAdapters',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -75,7 +75,7 @@ class PluginAdaptersTest < Minitest::Test
            # Adding some additional params
              params.set_param('adapters_aditional_params',"add_param=test")
              params.set_param('adapters_merging_pairs_trimming','false')
-             result = "java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDuk t=1 -Xmx100m -Xms100m in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} add_param=test 2> #{r_outstats2}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=1 -Xmx100m -Xms100m in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} add_param=test 2> #{r_outstats2}"             
              manager = PluginManager.new('PluginAdapters',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins
@@ -84,7 +84,7 @@ class PluginAdaptersTest < Minitest::Test
            # Multiple-file database
              adapters_db = Dir[File.join(db_path,'fastas/contaminants/','*.fasta*')].sort.join(",")
              params.set_param('adapters_db','contaminants')
-             result = "java -Djava.library.path=/home/rafa/opt/bbmap/jni -ea -cp /home/rafa/opt/bbmap/current jgi.BBDuk t=1 -Xmx100m -Xms100m in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} add_param=test 2> #{r_outstats2}"             
+             result = "java -Djava.library.path=#{nativelibdir} -ea -cp #{classp} jgi.BBDuk t=1 -Xmx100m -Xms100m in=stdin.fastq out=stdout.fastq int=t ref=#{adapters_db} k=15 mink=8 hdist=1 ktrim=r stats=#{r_outstats} add_param=test 2> #{r_outstats2}"             
              manager = PluginManager.new('PluginAdapters',params,bbtools,stbb_db)
              manager.check_plugins_params   
              manager.execute_plugins

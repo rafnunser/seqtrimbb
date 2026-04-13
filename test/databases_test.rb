@@ -10,8 +10,10 @@ class DatabasesTest < Minitest::Test
               # PATHs options hashes
                  setup_databases
                  db_path = File.join(OUTPUT_PATH,'DB')
+                 # svn no longer works in github, explore git partial clone and the tests should be oriented to test if specifid DB can downloaded and handled not listing remote repository
                  svn_call = IO.popen("svn ls https://github.com/rafnunser/seqtrimbb-databases/trunk/fastas | egrep '/'")                 
-                 databases = svn_call.read.split(/\n/).map! { |db| db.chomp!('/') }
+                 #databases = svn_call.read.split(/\n/).map! { |db| db.chomp!('/') }
+                 databases = ["adapters", "cont_bacteria", "cont_fungi", "cont_mitochondrias", "cont_plastids", "cont_ribosome", "cont_viruses", "contaminants", "contaminants_seqtrim1", "vectors"]
                  svn_call.close
                  json = File.join(db_path,'status_info','databases_status_info.json')                
                  bb_path = BBPATH
